@@ -1,0 +1,81 @@
+name: Lexilo
+options:
+  bundleIdPrefix: com.lexilo
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Lexilo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Lexilo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lexilo.app
+        PRODUCT_NAME: Lexilo
+        INFOPLIST_FILE: Lexilo/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: Lexilo/Lexilo.entitlements
+    dependencies:
+      - target: LexiloWidgetExtension
+        embed: true
+  LexiloWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: LexiloWidget
+      - path: Lexilo/Shared/SharedVocabulary.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lexilo.app.widget
+        PRODUCT_NAME: LexiloWidget
+        INFOPLIST_FILE: LexiloWidget/Info.plist
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_ENTITLEMENTS: LexiloWidget/LexiloWidget.entitlements
+  LexiloTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: LexiloTests
+    dependencies:
+      - target: Lexilo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lexilo.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+  LexiloUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: LexiloUITests
+    dependencies:
+      - target: Lexilo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lexilo.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Lexilo
+schemes:
+  Lexilo:
+    build:
+      targets:
+        Lexilo: all
+        LexiloWidgetExtension: all
+        LexiloTests: [test]
+        LexiloUITests: [test]
+    test:
+      targets:
+        - LexiloTests
+        - LexiloUITests
+

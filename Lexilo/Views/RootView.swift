@@ -1,0 +1,16 @@
+import SwiftUI
+
+struct RootView: View {
+    @State private var selection = 0
+
+    var body: some View {
+        TabView(selection: $selection) {
+            TodayView().tag(0).tabItem { Label("Today", systemImage: "sun.max") }
+            WordsView().tag(1).tabItem { Label("Words", systemImage: "text.book.closed") }
+            ProgressView().tag(2).tabItem { Label("Progress", systemImage: "chart.bar.xaxis") }
+            SettingsView().tag(3).tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
+        }
+        .tint(LexiloTheme.sage)
+    }
+}
+

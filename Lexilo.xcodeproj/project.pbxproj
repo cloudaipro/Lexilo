@@ -1,0 +1,735 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04217CCE4E0FA600C82A65C3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E96309A64C38FAE713B23BFC /* Assets.xcassets */; };
+		1689E6F76FC18E1361211EFD /* LexiloWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A4BB9A57365277412DB426B1 /* LexiloWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		19E81AC91D5EFFA328D76F6E /* LexiloPracticeFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9C955913ECACFEFF07E880 /* LexiloPracticeFlowTests.swift */; };
+		212FC1298EE649F26C15D397 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C37A92A8971A5E4657ABDD7 /* RootView.swift */; };
+		4C11043F7CF256A43B954264 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D523E7D01084B9799E8E66 /* SettingsView.swift */; };
+		4EDFDC202A1D3B3AEBC3F416 /* LexiloWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7281865F3A52D6F74A810467 /* LexiloWidget.swift */; };
+		60E4BF5D5A391042F21293A7 /* SharedVocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */; };
+		6B115A12EE3DFEAF9B0D9B52 /* LexiloTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F245D515E287B6C6F3256F23 /* LexiloTheme.swift */; };
+		720FAD8ACE62C933994EA054 /* LearningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C755FDD5CAB3B660B7F78000 /* LearningModels.swift */; };
+		A190FA5714ABD356335A966E /* LexiloApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */; };
+		AEF6C3CA534D208E6EBFED46 /* ReviewSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0162B337E672F57B7E9DCDDE /* ReviewSchedulerTests.swift */; };
+		AF3C70BCD5F4E9913EC5E379 /* LearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B840428005E9EF9FFA0810 /* LearningService.swift */; };
+		B38CE6510D89E95640C2F5B3 /* PracticeSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */; };
+		CFD5518B4DEECD8C9AC43ED7 /* SharedVocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */; };
+		DE540716678B24E92750DB70 /* WordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCD3B697AE958F3CA8F4064 /* WordsView.swift */; };
+		E02B251DF30D6ACC93D514D0 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */; };
+		F64C24F08B5636FE75A88A3A /* SpeechPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */; };
+		F949ACDDE22778C6FE9974AE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E2BD554E2AE3B3E1649CA /* TodayView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		27EA0FA3A744EB7D2634B42A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B720C2D051E92E1F798D425 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A52195D167DF0A9153A1C99D;
+			remoteInfo = Lexilo;
+		};
+		5578D92C45E6AD627DAC52EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B720C2D051E92E1F798D425 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6BD147A5D15BFFB92E2E5856;
+			remoteInfo = LexiloWidgetExtension;
+		};
+		E7DEFB882D2FDD665B6E9736 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B720C2D051E92E1F798D425 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A52195D167DF0A9153A1C99D;
+			remoteInfo = Lexilo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D2E17AF58AE54C07B07414B9 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1689E6F76FC18E1361211EFD /* LexiloWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0162B337E672F57B7E9DCDDE /* ReviewSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSchedulerTests.swift; sourceTree = "<group>"; };
+		0C37A92A8971A5E4657ABDD7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		0C47593C3B2541640C600017 /* LexiloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LexiloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloApp.swift; sourceTree = "<group>"; };
+		2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeSessionView.swift; sourceTree = "<group>"; };
+		37712E63AF229148A0FB03B4 /* LexiloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LexiloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedVocabulary.swift; sourceTree = "<group>"; };
+		54B840428005E9EF9FFA0810 /* LearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningService.swift; sourceTree = "<group>"; };
+		58A32C7E43E1A4AA4A2D8650 /* Lexilo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lexilo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D9809CF77842E43DD9B8E18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6E9C955913ECACFEFF07E880 /* LexiloPracticeFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloPracticeFlowTests.swift; sourceTree = "<group>"; };
+		7281865F3A52D6F74A810467 /* LexiloWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloWidget.swift; sourceTree = "<group>"; };
+		89727ACEA4F0326F02F6238C /* LexiloWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LexiloWidget.entitlements; sourceTree = "<group>"; };
+		8DCD3B697AE958F3CA8F4064 /* WordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordsView.swift; sourceTree = "<group>"; };
+		90D523E7D01084B9799E8E66 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A4BB9A57365277412DB426B1 /* LexiloWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LexiloWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechPlayer.swift; sourceTree = "<group>"; };
+		B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressView.swift; sourceTree = "<group>"; };
+		BD86545EC27E3429D2CC988A /* Lexilo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lexilo.entitlements; sourceTree = "<group>"; };
+		C60E2BD554E2AE3B3E1649CA /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		C755FDD5CAB3B660B7F78000 /* LearningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningModels.swift; sourceTree = "<group>"; };
+		CBE2F7C79275A8972D855F00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E96309A64C38FAE713B23BFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F245D515E287B6C6F3256F23 /* LexiloTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloTheme.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0A0ECF5E2C83DC0BC9441766 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C755FDD5CAB3B660B7F78000 /* LearningModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		0CDCFCDFEAF678DE63AD59A8 /* LexiloUITests */ = {
+			isa = PBXGroup;
+			children = (
+				6E9C955913ECACFEFF07E880 /* LexiloPracticeFlowTests.swift */,
+			);
+			path = LexiloUITests;
+			sourceTree = "<group>";
+		};
+		1419797ABBF85468C2BFF1C0 /* LexiloTests */ = {
+			isa = PBXGroup;
+			children = (
+				0162B337E672F57B7E9DCDDE /* ReviewSchedulerTests.swift */,
+			);
+			path = LexiloTests;
+			sourceTree = "<group>";
+		};
+		2499EA8F78F7A032F55C1C49 /* Lexilo */ = {
+			isa = PBXGroup;
+			children = (
+				E96309A64C38FAE713B23BFC /* Assets.xcassets */,
+				5D9809CF77842E43DD9B8E18 /* Info.plist */,
+				BD86545EC27E3429D2CC988A /* Lexilo.entitlements */,
+				0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */,
+				0A0ECF5E2C83DC0BC9441766 /* Models */,
+				7CC7448B19425210C60D44F8 /* Services */,
+				31EC9AA9C79BE202201E4776 /* Shared */,
+				D83B4225991B8399745E3704 /* Theme */,
+				5F412E49008A98A8E52444F4 /* Views */,
+			);
+			path = Lexilo;
+			sourceTree = "<group>";
+		};
+		29CEA00DDDB941D0C4529B94 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				58A32C7E43E1A4AA4A2D8650 /* Lexilo.app */,
+				37712E63AF229148A0FB03B4 /* LexiloTests.xctest */,
+				0C47593C3B2541640C600017 /* LexiloUITests.xctest */,
+				A4BB9A57365277412DB426B1 /* LexiloWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		31EC9AA9C79BE202201E4776 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		5F412E49008A98A8E52444F4 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */,
+				B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */,
+				0C37A92A8971A5E4657ABDD7 /* RootView.swift */,
+				90D523E7D01084B9799E8E66 /* SettingsView.swift */,
+				C60E2BD554E2AE3B3E1649CA /* TodayView.swift */,
+				8DCD3B697AE958F3CA8F4064 /* WordsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7CC7448B19425210C60D44F8 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				54B840428005E9EF9FFA0810 /* LearningService.swift */,
+				B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B2D914C75ADA2452C7FEBF8A /* LexiloWidget */ = {
+			isa = PBXGroup;
+			children = (
+				CBE2F7C79275A8972D855F00 /* Info.plist */,
+				89727ACEA4F0326F02F6238C /* LexiloWidget.entitlements */,
+				7281865F3A52D6F74A810467 /* LexiloWidget.swift */,
+			);
+			path = LexiloWidget;
+			sourceTree = "<group>";
+		};
+		D83B4225991B8399745E3704 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				F245D515E287B6C6F3256F23 /* LexiloTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		E012F9577A322516121DB65C = {
+			isa = PBXGroup;
+			children = (
+				2499EA8F78F7A032F55C1C49 /* Lexilo */,
+				1419797ABBF85468C2BFF1C0 /* LexiloTests */,
+				0CDCFCDFEAF678DE63AD59A8 /* LexiloUITests */,
+				B2D914C75ADA2452C7FEBF8A /* LexiloWidget */,
+				29CEA00DDDB941D0C4529B94 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6BD147A5D15BFFB92E2E5856 /* LexiloWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 986C32474A42E3A12D5EF7B1 /* Build configuration list for PBXNativeTarget "LexiloWidgetExtension" */;
+			buildPhases = (
+				452CF6841CE899979D65B943 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LexiloWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = LexiloWidgetExtension;
+			productReference = A4BB9A57365277412DB426B1 /* LexiloWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A52195D167DF0A9153A1C99D /* Lexilo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 083FBDDF828B06E2728E2F38 /* Build configuration list for PBXNativeTarget "Lexilo" */;
+			buildPhases = (
+				E2F17CAC9B760F7688CC5CE8 /* Sources */,
+				AE36E72B02CA1D910C6F5B24 /* Resources */,
+				D2E17AF58AE54C07B07414B9 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA1F66A257A50BCC6E5ABA29 /* PBXTargetDependency */,
+			);
+			name = Lexilo;
+			packageProductDependencies = (
+			);
+			productName = Lexilo;
+			productReference = 58A32C7E43E1A4AA4A2D8650 /* Lexilo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CA8EE7BAA036BE5627B53C9E /* LexiloUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2EEF20BBED016DBCD71F8B92 /* Build configuration list for PBXNativeTarget "LexiloUITests" */;
+			buildPhases = (
+				F914998FF46BE5C1C0EC264B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6E2241CCFA21861D2E49DD1D /* PBXTargetDependency */,
+			);
+			name = LexiloUITests;
+			packageProductDependencies = (
+			);
+			productName = LexiloUITests;
+			productReference = 0C47593C3B2541640C600017 /* LexiloUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		F92BF5BEA81607B1B998CA09 /* LexiloTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 62030D445FD1A5468E4006DE /* Build configuration list for PBXNativeTarget "LexiloTests" */;
+			buildPhases = (
+				1AF90CD2C9B597FF5B648038 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B76B0F14926BE28E83B1027F /* PBXTargetDependency */,
+			);
+			name = LexiloTests;
+			packageProductDependencies = (
+			);
+			productName = LexiloTests;
+			productReference = 37712E63AF229148A0FB03B4 /* LexiloTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4B720C2D051E92E1F798D425 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					6BD147A5D15BFFB92E2E5856 = {
+						ProvisioningStyle = Automatic;
+					};
+					A52195D167DF0A9153A1C99D = {
+						ProvisioningStyle = Automatic;
+					};
+					CA8EE7BAA036BE5627B53C9E = {
+						ProvisioningStyle = Automatic;
+						TestTargetID = A52195D167DF0A9153A1C99D;
+					};
+					F92BF5BEA81607B1B998CA09 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F0C5B5D94F1C71FFE3BB6F82 /* Build configuration list for PBXProject "Lexilo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = E012F9577A322516121DB65C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 29CEA00DDDB941D0C4529B94 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A52195D167DF0A9153A1C99D /* Lexilo */,
+				F92BF5BEA81607B1B998CA09 /* LexiloTests */,
+				CA8EE7BAA036BE5627B53C9E /* LexiloUITests */,
+				6BD147A5D15BFFB92E2E5856 /* LexiloWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AE36E72B02CA1D910C6F5B24 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04217CCE4E0FA600C82A65C3 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1AF90CD2C9B597FF5B648038 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AEF6C3CA534D208E6EBFED46 /* ReviewSchedulerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		452CF6841CE899979D65B943 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4EDFDC202A1D3B3AEBC3F416 /* LexiloWidget.swift in Sources */,
+				CFD5518B4DEECD8C9AC43ED7 /* SharedVocabulary.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2F17CAC9B760F7688CC5CE8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				720FAD8ACE62C933994EA054 /* LearningModels.swift in Sources */,
+				AF3C70BCD5F4E9913EC5E379 /* LearningService.swift in Sources */,
+				A190FA5714ABD356335A966E /* LexiloApp.swift in Sources */,
+				6B115A12EE3DFEAF9B0D9B52 /* LexiloTheme.swift in Sources */,
+				B38CE6510D89E95640C2F5B3 /* PracticeSessionView.swift in Sources */,
+				E02B251DF30D6ACC93D514D0 /* ProgressView.swift in Sources */,
+				212FC1298EE649F26C15D397 /* RootView.swift in Sources */,
+				4C11043F7CF256A43B954264 /* SettingsView.swift in Sources */,
+				60E4BF5D5A391042F21293A7 /* SharedVocabulary.swift in Sources */,
+				F64C24F08B5636FE75A88A3A /* SpeechPlayer.swift in Sources */,
+				F949ACDDE22778C6FE9974AE /* TodayView.swift in Sources */,
+				DE540716678B24E92750DB70 /* WordsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F914998FF46BE5C1C0EC264B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				19E81AC91D5EFFA328D76F6E /* LexiloPracticeFlowTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6E2241CCFA21861D2E49DD1D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A52195D167DF0A9153A1C99D /* Lexilo */;
+			targetProxy = E7DEFB882D2FDD665B6E9736 /* PBXContainerItemProxy */;
+		};
+		AA1F66A257A50BCC6E5ABA29 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6BD147A5D15BFFB92E2E5856 /* LexiloWidgetExtension */;
+			targetProxy = 5578D92C45E6AD627DAC52EE /* PBXContainerItemProxy */;
+		};
+		B76B0F14926BE28E83B1027F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A52195D167DF0A9153A1C99D /* Lexilo */;
+			targetProxy = 27EA0FA3A744EB7D2634B42A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		021116749B027CC2EC215E9C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Lexilo;
+			};
+			name = Debug;
+		};
+		2F2A11258171E44F9159896D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LexiloWidget/LexiloWidget.entitlements;
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				INFOPLIST_FILE = LexiloWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.widget;
+				PRODUCT_NAME = LexiloWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		521198A2D4FA1526A5676235 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Lexilo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app;
+				PRODUCT_NAME = Lexilo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		58F2D225D2DBBD419CC013E0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LexiloWidget/LexiloWidget.entitlements;
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				INFOPLIST_FILE = LexiloWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.widget;
+				PRODUCT_NAME = LexiloWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5F51ED4EFC22D085F7D2F3D7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lexilo.app/Lexilo";
+			};
+			name = Debug;
+		};
+		7E917589870D2DEB07D97F09 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		A46B795A3B6E906A76F47A08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Lexilo;
+			};
+			name = Release;
+		};
+		AE3670601A2720BE6873BEC0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		C583A87DC9AFF3612BC61E4A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lexilo.app/Lexilo";
+			};
+			name = Release;
+		};
+		CF2CFF59F9C119BF92EF376B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Lexilo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app;
+				PRODUCT_NAME = Lexilo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		083FBDDF828B06E2728E2F38 /* Build configuration list for PBXNativeTarget "Lexilo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF2CFF59F9C119BF92EF376B /* Debug */,
+				521198A2D4FA1526A5676235 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2EEF20BBED016DBCD71F8B92 /* Build configuration list for PBXNativeTarget "LexiloUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				021116749B027CC2EC215E9C /* Debug */,
+				A46B795A3B6E906A76F47A08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		62030D445FD1A5468E4006DE /* Build configuration list for PBXNativeTarget "LexiloTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F51ED4EFC22D085F7D2F3D7 /* Debug */,
+				C583A87DC9AFF3612BC61E4A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		986C32474A42E3A12D5EF7B1 /* Build configuration list for PBXNativeTarget "LexiloWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58F2D225D2DBBD419CC013E0 /* Debug */,
+				2F2A11258171E44F9159896D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F0C5B5D94F1C71FFE3BB6F82 /* Build configuration list for PBXProject "Lexilo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE3670601A2720BE6873BEC0 /* Debug */,
+				7E917589870D2DEB07D97F09 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4B720C2D051E92E1F798D425 /* Project object */;
+}

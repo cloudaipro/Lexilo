@@ -1,0 +1,53 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "48DAFD16-730F-41DB-BF2B-41B8B64F3B7C",
+        "deviceName" : "iPhone 17 Pro",
+        "exportedFileName" : "983DDF55-F9AC-41D2-8E10-B3CA8D769164.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "05 Practice complete_0_27E5C278-870F-4B7E-9AFA-286B9F36A06E.png",
+        "timestamp" : 1786341123.843
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "48DAFD16-730F-41DB-BF2B-41B8B64F3B7C",
+        "deviceName" : "iPhone 17 Pro",
+        "exportedFileName" : "EC56A27E-69D9-4AF0-8D3D-1D82F66FC120.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "04 Next card after failure_0_40DC7A87-B7C6-4B2D-8D02-D1FABCD5B872.png",
+        "timestamp" : 1786341091.734
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "48DAFD16-730F-41DB-BF2B-41B8B64F3B7C",
+        "deviceName" : "iPhone 17 Pro",
+        "exportedFileName" : "0928C535-BF10-4F6B-BFDB-63338C9A9300.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "03 Recognition revealed_0_BFC868BF-DE8B-4F37-9F38-5B9A667DDBBA.png",
+        "timestamp" : 1786341090.163
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "48DAFD16-730F-41DB-BF2B-41B8B64F3B7C",
+        "deviceName" : "iPhone 17 Pro",
+        "exportedFileName" : "30360536-659B-43F8-80C4-1496B4EC71CE.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "02 Recognition front_0_F35C32CD-B395-42A0-BF8D-52120320C68A.png",
+        "timestamp" : 1786341088.599
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "48DAFD16-730F-41DB-BF2B-41B8B64F3B7C",
+        "deviceName" : "iPhone 17 Pro",
+        "exportedFileName" : "4CBFE527-C0BD-4CA5-9CFF-963282EB38DA.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "01 Today_0_D74E13EA-8F3D-4C97-8865-FDD0F070C6AB.png",
+        "timestamp" : 1786341086.739
+      }
+    ],
+    "testIdentifier" : "LexiloPracticeFlowTests/testFullPracticeFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/Lexilo/LexiloUITests/LexiloPracticeFlowTests/testFullPracticeFlow"
+  }
+]
