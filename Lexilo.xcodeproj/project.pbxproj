@@ -9,18 +9,32 @@
 /* Begin PBXBuildFile section */
 		04217CCE4E0FA600C82A65C3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E96309A64C38FAE713B23BFC /* Assets.xcassets */; };
 		1689E6F76FC18E1361211EFD /* LexiloWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A4BB9A57365277412DB426B1 /* LexiloWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		193A4E6CA25D7304D5FF6469 /* LexiconStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD7A558C852BBC4D29626D /* LexiconStore.swift */; };
 		19E81AC91D5EFFA328D76F6E /* LexiloPracticeFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9C955913ECACFEFF07E880 /* LexiloPracticeFlowTests.swift */; };
+		1E3096CA9E83ADB69C2AEFEC /* KittenVoice.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 316931D6B78E3F3ACF396E7C /* KittenVoice.bundle */; };
 		212FC1298EE649F26C15D397 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C37A92A8971A5E4657ABDD7 /* RootView.swift */; };
+		29E304FDD6F31DBDE21FC154 /* LexiconModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72A14B75767F8E73248D38C5 /* LexiconModels.swift */; };
+		3A25A259C46498C241E76E52 /* sherpa-onnx.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10B49056EB57257EE554E3EC /* sherpa-onnx.xcframework */; };
+		3C3122FB3A79BAF424FC639E /* lexilo-lexicon.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 9C60BE997B25220E811390B4 /* lexilo-lexicon.sqlite */; };
 		4C11043F7CF256A43B954264 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D523E7D01084B9799E8E66 /* SettingsView.swift */; };
 		4EDFDC202A1D3B3AEBC3F416 /* LexiloWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7281865F3A52D6F74A810467 /* LexiloWidget.swift */; };
+		52D827A25722BE907773F0AB /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 88BD06E6945DF4C019916E8E /* libsqlite3.tbd */; };
 		60E4BF5D5A391042F21293A7 /* SharedVocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */; };
 		6B115A12EE3DFEAF9B0D9B52 /* LexiloTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F245D515E287B6C6F3256F23 /* LexiloTheme.swift */; };
+		6C591D9D090E846975CFC499 /* NEURAL_VOICE_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 0343B3626A7EEAACA68EBDF9 /* NEURAL_VOICE_NOTICES.md */; };
 		720FAD8ACE62C933994EA054 /* LearningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C755FDD5CAB3B660B7F78000 /* LearningModels.swift */; };
+		7B03C0BAAB0B777902C9FA8D /* KittenPronunciationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A698A605E0760AAB573FA73E /* KittenPronunciationEngine.swift */; };
+		8C93C9015DF9A7FA8103F296 /* LICENSE-onnxruntime.txt in Resources */ = {isa = PBXBuildFile; fileRef = BD8711E1565D482C7F2A9B07 /* LICENSE-onnxruntime.txt */; };
+		9AD62AB4784F90753734F30A /* LICENSE-Kitten.txt in Resources */ = {isa = PBXBuildFile; fileRef = D6F4F4DA972852CD0E91FCCB /* LICENSE-Kitten.txt */; };
 		A190FA5714ABD356335A966E /* LexiloApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */; };
 		AEF6C3CA534D208E6EBFED46 /* ReviewSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0162B337E672F57B7E9DCDDE /* ReviewSchedulerTests.swift */; };
 		AF3C70BCD5F4E9913EC5E379 /* LearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B840428005E9EF9FFA0810 /* LearningService.swift */; };
 		B38CE6510D89E95640C2F5B3 /* PracticeSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */; };
+		C0F72307D5D6F81F35C9564D /* LICENSE-sherpa-onnx.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5A3B4304E0CE830FC5D05479 /* LICENSE-sherpa-onnx.txt */; };
+		CAD4EA7800750AE2FA407848 /* ThirdPartyNotices-onnxruntime.txt in Resources */ = {isa = PBXBuildFile; fileRef = 89D8867A0AE885B898B2DF5D /* ThirdPartyNotices-onnxruntime.txt */; };
 		CFD5518B4DEECD8C9AC43ED7 /* SharedVocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */; };
+		D03E730B4DF3E44E7149B90D /* onnxruntime.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F7C517408C856C80F39FD02 /* onnxruntime.xcframework */; };
+		D4C3A91535E1D323E743B906 /* LEXICON_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 95E63356F7CB2611DCEC9FCA /* LEXICON_NOTICES.md */; };
 		DE540716678B24E92750DB70 /* WordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCD3B697AE958F3CA8F4064 /* WordsView.swift */; };
 		E02B251DF30D6ACC93D514D0 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */; };
 		F64C24F08B5636FE75A88A3A /* SpeechPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */; };
@@ -67,36 +81,65 @@
 
 /* Begin PBXFileReference section */
 		0162B337E672F57B7E9DCDDE /* ReviewSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSchedulerTests.swift; sourceTree = "<group>"; };
+		0343B3626A7EEAACA68EBDF9 /* NEURAL_VOICE_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NEURAL_VOICE_NOTICES.md; sourceTree = "<group>"; };
+		0ADD7A558C852BBC4D29626D /* LexiconStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiconStore.swift; sourceTree = "<group>"; };
 		0C37A92A8971A5E4657ABDD7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0C47593C3B2541640C600017 /* LexiloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LexiloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloApp.swift; sourceTree = "<group>"; };
+		10B49056EB57257EE554E3EC /* sherpa-onnx.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = "sherpa-onnx.xcframework"; path = "Vendor/SherpaOnnx/sherpa-onnx.xcframework"; sourceTree = "<group>"; };
 		2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeSessionView.swift; sourceTree = "<group>"; };
+		316931D6B78E3F3ACF396E7C /* KittenVoice.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = KittenVoice.bundle; sourceTree = "<group>"; };
 		37712E63AF229148A0FB03B4 /* LexiloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LexiloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		48FEBB78ABE75DF455963511 /* SharedVocabulary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedVocabulary.swift; sourceTree = "<group>"; };
 		54B840428005E9EF9FFA0810 /* LearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningService.swift; sourceTree = "<group>"; };
 		58A32C7E43E1A4AA4A2D8650 /* Lexilo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lexilo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A3B4304E0CE830FC5D05479 /* LICENSE-sherpa-onnx.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-sherpa-onnx.txt"; sourceTree = "<group>"; };
 		5D9809CF77842E43DD9B8E18 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6E2F0454AA14044B574D693B /* Lexilo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Lexilo-Bridging-Header.h"; sourceTree = "<group>"; };
 		6E9C955913ECACFEFF07E880 /* LexiloPracticeFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloPracticeFlowTests.swift; sourceTree = "<group>"; };
 		7281865F3A52D6F74A810467 /* LexiloWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloWidget.swift; sourceTree = "<group>"; };
+		72A14B75767F8E73248D38C5 /* LexiconModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiconModels.swift; sourceTree = "<group>"; };
+		7F7C517408C856C80F39FD02 /* onnxruntime.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = onnxruntime.xcframework; path = Vendor/SherpaOnnx/onnxruntime.xcframework; sourceTree = "<group>"; };
+		88BD06E6945DF4C019916E8E /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		89727ACEA4F0326F02F6238C /* LexiloWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LexiloWidget.entitlements; sourceTree = "<group>"; };
+		89D8867A0AE885B898B2DF5D /* ThirdPartyNotices-onnxruntime.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ThirdPartyNotices-onnxruntime.txt"; sourceTree = "<group>"; };
 		8DCD3B697AE958F3CA8F4064 /* WordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordsView.swift; sourceTree = "<group>"; };
 		90D523E7D01084B9799E8E66 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		95E63356F7CB2611DCEC9FCA /* LEXICON_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEXICON_NOTICES.md; sourceTree = "<group>"; };
+		9C60BE997B25220E811390B4 /* lexilo-lexicon.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lexilo-lexicon.sqlite"; sourceTree = "<group>"; };
 		A4BB9A57365277412DB426B1 /* LexiloWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LexiloWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A698A605E0760AAB573FA73E /* KittenPronunciationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KittenPronunciationEngine.swift; sourceTree = "<group>"; };
 		B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechPlayer.swift; sourceTree = "<group>"; };
 		B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressView.swift; sourceTree = "<group>"; };
 		BD86545EC27E3429D2CC988A /* Lexilo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lexilo.entitlements; sourceTree = "<group>"; };
+		BD8711E1565D482C7F2A9B07 /* LICENSE-onnxruntime.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-onnxruntime.txt"; sourceTree = "<group>"; };
 		C60E2BD554E2AE3B3E1649CA /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		C755FDD5CAB3B660B7F78000 /* LearningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningModels.swift; sourceTree = "<group>"; };
 		CBE2F7C79275A8972D855F00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D6F4F4DA972852CD0E91FCCB /* LICENSE-Kitten.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-Kitten.txt"; sourceTree = "<group>"; };
 		E96309A64C38FAE713B23BFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F245D515E287B6C6F3256F23 /* LexiloTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexiloTheme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0CE4D95DCDC86061C67191F0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52D827A25722BE907773F0AB /* libsqlite3.tbd in Frameworks */,
+				3A25A259C46498C241E76E52 /* sherpa-onnx.xcframework in Frameworks */,
+				D03E730B4DF3E44E7149B90D /* onnxruntime.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0A0ECF5E2C83DC0BC9441766 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				C755FDD5CAB3B660B7F78000 /* LearningModels.swift */,
+				72A14B75767F8E73248D38C5 /* LexiconModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -122,9 +165,11 @@
 			children = (
 				E96309A64C38FAE713B23BFC /* Assets.xcassets */,
 				5D9809CF77842E43DD9B8E18 /* Info.plist */,
+				6E2F0454AA14044B574D693B /* Lexilo-Bridging-Header.h */,
 				BD86545EC27E3429D2CC988A /* Lexilo.entitlements */,
 				0FF78FF988E5AD73FC4254A9 /* LexiloApp.swift */,
 				0A0ECF5E2C83DC0BC9441766 /* Models */,
+				DFBB7602C7C4DA79CBD06B4C /* Resources */,
 				7CC7448B19425210C60D44F8 /* Services */,
 				31EC9AA9C79BE202201E4776 /* Shared */,
 				D83B4225991B8399745E3704 /* Theme */,
@@ -152,6 +197,16 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		5604B957D8035E5E063B43B2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				88BD06E6945DF4C019916E8E /* libsqlite3.tbd */,
+				7F7C517408C856C80F39FD02 /* onnxruntime.xcframework */,
+				10B49056EB57257EE554E3EC /* sherpa-onnx.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5F412E49008A98A8E52444F4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -165,10 +220,21 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		77F8669E52C60F5484E9AC73 /* Kitten */ = {
+			isa = PBXGroup;
+			children = (
+				316931D6B78E3F3ACF396E7C /* KittenVoice.bundle */,
+				D6F4F4DA972852CD0E91FCCB /* LICENSE-Kitten.txt */,
+			);
+			path = Kitten;
+			sourceTree = "<group>";
+		};
 		7CC7448B19425210C60D44F8 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A698A605E0760AAB573FA73E /* KittenPronunciationEngine.swift */,
 				54B840428005E9EF9FFA0810 /* LearningService.swift */,
+				0ADD7A558C852BBC4D29626D /* LexiconStore.swift */,
 				B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */,
 			);
 			path = Services;
@@ -184,12 +250,34 @@
 			path = LexiloWidget;
 			sourceTree = "<group>";
 		};
+		BF086E3FE49C2E13CE147E48 /* SherpaOnnx */ = {
+			isa = PBXGroup;
+			children = (
+				BD8711E1565D482C7F2A9B07 /* LICENSE-onnxruntime.txt */,
+				5A3B4304E0CE830FC5D05479 /* LICENSE-sherpa-onnx.txt */,
+				89D8867A0AE885B898B2DF5D /* ThirdPartyNotices-onnxruntime.txt */,
+			);
+			name = SherpaOnnx;
+			path = Vendor/SherpaOnnx;
+			sourceTree = "<group>";
+		};
 		D83B4225991B8399745E3704 /* Theme */ = {
 			isa = PBXGroup;
 			children = (
 				F245D515E287B6C6F3256F23 /* LexiloTheme.swift */,
 			);
 			path = Theme;
+			sourceTree = "<group>";
+		};
+		DFBB7602C7C4DA79CBD06B4C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				95E63356F7CB2611DCEC9FCA /* LEXICON_NOTICES.md */,
+				9C60BE997B25220E811390B4 /* lexilo-lexicon.sqlite */,
+				0343B3626A7EEAACA68EBDF9 /* NEURAL_VOICE_NOTICES.md */,
+				77F8669E52C60F5484E9AC73 /* Kitten */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		E012F9577A322516121DB65C = {
@@ -199,6 +287,8 @@
 				1419797ABBF85468C2BFF1C0 /* LexiloTests */,
 				0CDCFCDFEAF678DE63AD59A8 /* LexiloUITests */,
 				B2D914C75ADA2452C7FEBF8A /* LexiloWidget */,
+				BF086E3FE49C2E13CE147E48 /* SherpaOnnx */,
+				5604B957D8035E5E063B43B2 /* Frameworks */,
 				29CEA00DDDB941D0C4529B94 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -229,6 +319,7 @@
 			buildPhases = (
 				E2F17CAC9B760F7688CC5CE8 /* Sources */,
 				AE36E72B02CA1D910C6F5B24 /* Resources */,
+				0CE4D95DCDC86061C67191F0 /* Frameworks */,
 				D2E17AF58AE54C07B07414B9 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -331,6 +422,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				04217CCE4E0FA600C82A65C3 /* Assets.xcassets in Resources */,
+				1E3096CA9E83ADB69C2AEFEC /* KittenVoice.bundle in Resources */,
+				D4C3A91535E1D323E743B906 /* LEXICON_NOTICES.md in Resources */,
+				9AD62AB4784F90753734F30A /* LICENSE-Kitten.txt in Resources */,
+				8C93C9015DF9A7FA8103F296 /* LICENSE-onnxruntime.txt in Resources */,
+				C0F72307D5D6F81F35C9564D /* LICENSE-sherpa-onnx.txt in Resources */,
+				6C591D9D090E846975CFC499 /* NEURAL_VOICE_NOTICES.md in Resources */,
+				CAD4EA7800750AE2FA407848 /* ThirdPartyNotices-onnxruntime.txt in Resources */,
+				3C3122FB3A79BAF424FC639E /* lexilo-lexicon.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,8 +457,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B03C0BAAB0B777902C9FA8D /* KittenPronunciationEngine.swift in Sources */,
 				720FAD8ACE62C933994EA054 /* LearningModels.swift in Sources */,
 				AF3C70BCD5F4E9913EC5E379 /* LearningService.swift in Sources */,
+				29E304FDD6F31DBDE21FC154 /* LexiconModels.swift in Sources */,
+				193A4E6CA25D7304D5FF6469 /* LexiconStore.swift in Sources */,
 				A190FA5714ABD356335A966E /* LexiloApp.swift in Sources */,
 				6B115A12EE3DFEAF9B0D9B52 /* LexiloTheme.swift in Sources */,
 				B38CE6510D89E95640C2F5B3 /* PracticeSessionView.swift in Sources */,
@@ -447,15 +549,28 @@
 				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor/SherpaOnnx\"",
+				);
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Vendor/SherpaOnnx/include",
+				);
 				INFOPLIST_FILE = Lexilo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app;
 				PRODUCT_NAME = Lexilo;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Lexilo/Lexilo-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -668,15 +783,28 @@
 				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = C8EQ7EL7JY;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor/SherpaOnnx\"",
+				);
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Vendor/SherpaOnnx/include",
+				);
 				INFOPLIST_FILE = Lexilo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lexilo.app;
 				PRODUCT_NAME = Lexilo;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "Lexilo/Lexilo-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;

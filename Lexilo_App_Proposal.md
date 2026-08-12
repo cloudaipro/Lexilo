@@ -48,17 +48,17 @@ concise definition - 1--3 example sentences - IPA where available -
 source/license metadata - frequency or difficulty rank \## 3.2 Source
 Strategy Recommended approach: use open or explicitly licensed lexical
 sources for bundled content, such as Wiktionary-derived datasets, and
-keep source attribution/license metadata with each imported record. Do
+keep source attribution and license notices with the bundled dataset. Do
 not make scraping a third-party dictionary website a production
 dependency. Vocabulary.com, Anki decks, and commercial dictionary
 products can be useful references for product behavior and data shape,
 but content redistribution rights must be reviewed separately before any
-definitions, examples, or recordings are bundled. \## 3.3
-Pronunciation - Primary: licensed or openly licensed recorded
-pronunciation when available. - Fallback: Apple AVSpeechSynthesizer for
-reliable on-device speech. - Allow US/UK voice preference where suitable
-voices are available on the device. - Audio playback must remain
-optional and never block study.
+definitions or examples are bundled. \## 3.3 Pronunciation - Primary:
+the bundled Kitten Nano v0.2 model running through sherpa-onnx. Prewarm the
+model after launch and cache the featured and upcoming practice words. Keep
+synthesis fully offline, expose the packaged American and British voices,
+and retain the installed iOS voice only as a runtime failure fallback.
+Audio playback must remain optional and never block study.
 
 # 4. User Experience
 
@@ -87,7 +87,7 @@ optional and never block study.
 -   SwiftData --- vocabulary progress, cards, review logs, and study-day
     state
 -   WidgetKit --- Home Screen widget and timeline
--   AVFoundation / AVSpeechSynthesizer --- pronunciation fallback
+-   sherpa-onnx / ONNX Runtime / AVAudioPlayer --- local Kitten synthesis and cached playback
 -   App Groups --- shared read-only study snapshot for the widget
 -   Bundled SQLite/resource dataset --- initial vocabulary content
 -   CloudKit --- optional later phase for cross-device sync \## 5.2 Core
@@ -103,7 +103,7 @@ optional and never block study.
 
 ## V1 --- Product-Complete Core
 
--   Curated 5,000--10,000 word starter database
+-   Bundled Open English WordNet database with frequency-ranked learning candidates
 -   Word → Definition and Definition → Word cards
 -   Paired-card same-day exclusion rule
 -   ✕ / ✓ study interaction
@@ -192,13 +192,13 @@ optional and never block study.
   -------------------------------- ---------------
   1                                1 day
   2                                2 days
-  3                                4 days
-  4                                7 days
-  5                                14 days
-  6                                30 days
-  7                                60 days
-  8                                120 days
-  9+                               180 days
+  3                                3 days
+  4                                4 days
+  5                                5 days
+  6                                6 days
+  7                                7 days
+  8                                8 days
+  9+                               n days, capped at 180
 
 ## Table 6
 

@@ -1,19 +1,65 @@
 import AVFoundation
 import Combine
+import Foundation
+
+@MainActor
+protocol OfflinePronunciationEngine: AnyObject {
+    func prewarm()
+    func prepare(_ text: String, locale: String)
+    func stop()
+    func speak(_ text: String, locale: String)
+}
+
+extension OfflinePronunciationEngine {
+    func prewarm() {}
+    func prepare(_ text: String, locale: String) {}
+}
+
+@MainActor
+final class AppleOfflinePronunciationEngine: OfflinePronunciationEngine {
+    private let synthesizer = AVSpeechSynthesizer()
+
+    func stop() {
+        synthesizer.stopSpeaking(at: .immediate)
+    }
+
+    func speak(_ text: String, locale: String) {
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: locale) ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.42
+        synthesizer.speak(utterance)
+    }
+}
 
 @MainActor
 final class SpeechPlayer: ObservableObject {
-    private let synthesizer = AVSpeechSynthesizer()
+    private let offlineEngine: any OfflinePronunciationEngine
 
-    func speak(_ text: String) {
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
-        }
+    init(offlineEngine: any OfflinePronunciationEngine = KittenOfflinePronunciationEngine()) {
+        self.offlineEngine = offlineEngine
+    }
 
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = 0.42
-        let accent = UserDefaults.standard.string(forKey: "voiceAccent") == "UK" ? "en-GB" : "en-US"
-        utterance.voice = AVSpeechSynthesisVoice(language: accent)
-        synthesizer.speak(utterance)
+    func prewarm() {
+        guard soundEnabled else { return }
+        offlineEngine.prewarm()
+    }
+
+    func prepare(_ word: VocabularyItem) {
+        guard soundEnabled else { return }
+        offlineEngine.prepare(word.word, locale: pronunciationLocale)
+    }
+
+    func play(_ word: VocabularyItem) {
+        guard soundEnabled else { return }
+        offlineEngine.stop()
+        offlineEngine.speak(word.word, locale: pronunciationLocale)
+    }
+
+    private var soundEnabled: Bool {
+        UserDefaults.standard.object(forKey: "soundEnabled") as? Bool ?? true
+    }
+
+    private var pronunciationLocale: String {
+        UserDefaults.standard.string(forKey: "pronunciationLocale") ?? "en-US"
     }
 }

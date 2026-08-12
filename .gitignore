@@ -5,3 +5,7 @@ DerivedData/
 xcuserdata/
 logs/
 
+# Installed locally by scripts/install_sherpa_runtime.sh. These XCFrameworks
+# contain hundreds of megabytes of static archives and must not enter Git.
+Vendor/SherpaOnnx/onnxruntime.xcframework/
+Vendor/SherpaOnnx/sherpa-onnx.xcframework/

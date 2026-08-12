@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @State private var selection = 0
+    @State private var widgetPracticeRequested = false
 
     var body: some View {
         TabView(selection: $selection) {
@@ -11,6 +12,12 @@ struct RootView: View {
             SettingsView().tag(3).tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
         }
         .tint(LexiloTheme.sage)
+        .onOpenURL { url in
+            guard url.scheme == "lexilo", url.host == "practice" else { return }
+            widgetPracticeRequested = true
+        }
+        .fullScreenCover(isPresented: $widgetPracticeRequested) {
+            PracticeSessionView()
+        }
     }
 }
-

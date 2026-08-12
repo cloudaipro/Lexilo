@@ -3,13 +3,13 @@ import SwiftUI
 struct PracticeSessionView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: LearningStore
+    @EnvironmentObject private var speechPlayer: SpeechPlayer
     @State private var queue: [StudyCard] = []
     @State private var index = 0
     @State private var revealed = false
     @State private var completed = 0
     @State private var correctCount = 0
     @State private var loading = true
-    @StateObject private var speechPlayer = SpeechPlayer()
 
     private var current: StudyCard? { index < queue.count ? queue[index] : nil }
     private var word: VocabularyItem? { current.flatMap { store.word(for: $0.vocabularyID) } }
@@ -25,8 +25,10 @@ struct PracticeSessionView: View {
     }
 
     private func loadSession() {
-        queue = store.sessionCards()
+        let dailyGoal = UserDefaults.standard.object(forKey: "dailyGoal") as? Int ?? 10
+        queue = store.startSession(limit: max(1, dailyGoal))
         loading = false
+        prepareUpcomingAudio()
     }
 
     private func study(card: StudyCard, word: VocabularyItem) -> some View {
@@ -52,7 +54,7 @@ struct PracticeSessionView: View {
                     HStack(spacing: 10) {
                         Text(word.partOfSpeech).italic()
                         Text(word.ipa)
-                        Button { speechPlayer.speak(word.word) } label: { Image(systemName: "speaker.wave.2.fill") }
+                        Button { speechPlayer.play(word) } label: { Image(systemName: "speaker.wave.2.fill") }
                     }.font(.subheadline).foregroundStyle(LexiloTheme.sage)
                 } else {
                     Text(word.conciseDefinition).font(.lexiloDisplay(30, weight: .medium)).multilineTextAlignment(.center).foregroundStyle(LexiloTheme.ink).padding(.horizontal, 8)
@@ -67,7 +69,14 @@ struct PracticeSessionView: View {
                         Text(word.word).font(.lexiloDisplay(43, weight: .medium)).foregroundStyle(LexiloTheme.ink)
                         Text(word.ipa).font(.subheadline).foregroundStyle(LexiloTheme.sage)
                     }
-                    Text("“\(word.example)”").font(.lexiloDisplay(18)).italic().multilineTextAlignment(.center).foregroundStyle(LexiloTheme.muted).padding(.top, 2)
+                    ForEach(Array(word.examples.prefix(3)), id: \.self) { example in
+                        Text("“\(example)”")
+                            .font(.lexiloDisplay(18))
+                            .italic()
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(LexiloTheme.muted)
+                            .padding(.top, 2)
+                    }
                 } else {
                     Text(card.direction == .recognition ? "Do you know this word?" : "Which word fits this meaning?")
                         .font(.body).foregroundStyle(LexiloTheme.muted).padding(.top, 8)
@@ -110,6 +119,15 @@ struct PracticeSessionView: View {
         if correct { correctCount += 1 } else { queue.append(card) }
         revealed = false
         index += 1
+        prepareUpcomingAudio()
+    }
+
+    private func prepareUpcomingAudio() {
+        for card in queue.dropFirst(index).prefix(2) {
+            if let word = store.word(for: card.vocabularyID) {
+                speechPlayer.prepare(word)
+            }
+        }
     }
 
     private var completion: some View {

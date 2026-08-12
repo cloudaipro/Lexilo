@@ -17,6 +17,12 @@ targets:
     platform: iOS
     sources:
       - path: Lexilo
+      - path: Vendor/SherpaOnnx/LICENSE-sherpa-onnx.txt
+        buildPhase: resources
+      - path: Vendor/SherpaOnnx/LICENSE-onnxruntime.txt
+        buildPhase: resources
+      - path: Vendor/SherpaOnnx/ThirdPartyNotices-onnxruntime.txt
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lexilo.app
@@ -26,9 +32,17 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Lexilo/Lexilo.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Lexilo/Lexilo-Bridging-Header.h
+        HEADER_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/Vendor/SherpaOnnx/include"
+        OTHER_LDFLAGS: "$(inherited) -lc++"
     dependencies:
       - target: LexiloWidgetExtension
         embed: true
+      - sdk: libsqlite3.tbd
+      - framework: Vendor/SherpaOnnx/sherpa-onnx.xcframework
+        embed: false
+      - framework: Vendor/SherpaOnnx/onnxruntime.xcframework
+        embed: false
   LexiloWidgetExtension:
     type: app-extension
     platform: iOS
@@ -78,4 +92,3 @@ schemes:
       targets:
         - LexiloTests
         - LexiloUITests
-

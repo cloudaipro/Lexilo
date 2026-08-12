@@ -2,25 +2,15 @@ import SwiftUI
 
 struct TodayView: View {
     @EnvironmentObject private var store: LearningStore
+    @EnvironmentObject private var speechPlayer: SpeechPlayer
     @State private var showingPractice = false
-    @StateObject private var speechPlayer = SpeechPlayer()
+    @AppStorage("dailyGoal") private var configuredGoal = 10
 
-    private var completedToday: Int { store.logs.filter { Calendar.current.isDateInToday($0.reviewedAt) }.count }
+    private var completedToday: Int { store.completedReviews() }
     private var dueToday: Int { store.sessionCards(limit: 100).count }
-    private var goal: Int { UserDefaults.standard.object(forKey: "dailyGoal") as? Int ?? 10 }
+    private var goal: Int { configuredGoal }
     private var progress: Double { min(1, Double(completedToday) / Double(max(goal, 1))) }
-    private var streak: Int {
-        var result = 0
-        var day = Calendar.current.startOfDay(for: .now)
-        while true {
-            let count = store.logs.filter { Calendar.current.isDate($0.reviewedAt, inSameDayAs: day) }.count
-            if count < goal { break }
-            result += 1
-            guard let previous = Calendar.current.date(byAdding: .day, value: -1, to: day) else { break }
-            day = previous
-        }
-        return result
-    }
+    private var streak: Int { store.currentStreak(goal: goal) }
 
     var body: some View {
         NavigationStack {
@@ -40,6 +30,9 @@ struct TodayView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showingPractice) { PracticeSessionView() }
+        }
+        .task(id: store.featuredWord()?.id) {
+            if let word = store.featuredWord() { speechPlayer.prepare(word) }
         }
     }
 
@@ -86,6 +79,7 @@ struct TodayView: View {
                 .padding(.horizontal, 18).frame(height: 54)
                 .background(.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }.buttonStyle(PressableScale())
+                .disabled(!store.lexicon.isAvailable)
         }
         .padding(22)
         .background(LexiloTheme.ink, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -95,7 +89,7 @@ struct TodayView: View {
     private var detailRow: some View {
         HStack(spacing: 12) {
             stat(value: "\(max(dueToday, 0))", label: "Due today", symbol: "clock")
-            stat(value: "\(streak)", label: "Day streak", symbol: "flame")
+            stat(value: "Day \(streak)", label: "Practice streak", symbol: "flame")
         }
     }
 
@@ -110,30 +104,41 @@ struct TodayView: View {
         }.padding(16).background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
+    @ViewBuilder
     private var featuredWord: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            HStack {
-                Text("A WORD TO KEEP CLOSE").font(.caption2.bold()).tracking(1.4).foregroundStyle(LexiloTheme.brass)
-                Spacer()
-                Button {
-                    speechPlayer.speak("elusive")
-                } label: {
-                    Image(systemName: "speaker.wave.2")
-                        .foregroundStyle(LexiloTheme.sage)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Circle())
+        if let word = store.featuredWord() {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack {
+                    Text("A WORD TO KEEP CLOSE").font(.caption2.bold()).tracking(1.4).foregroundStyle(LexiloTheme.brass)
+                    Spacer()
+                    Button {
+                        speechPlayer.play(word)
+                    } label: {
+                        Image(systemName: "speaker.wave.2")
+                            .foregroundStyle(LexiloTheme.sage)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Play pronunciation for \(word.word)")
+                    .accessibilityIdentifier("featured-word-pronunciation")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Play pronunciation for elusive")
-                .accessibilityIdentifier("featured-word-pronunciation")
+                Text(word.word).font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
+                Text(word.conciseDefinition).font(.body).foregroundStyle(LexiloTheme.muted)
+                if let example = word.examples.first {
+                    Divider().overlay(LexiloTheme.brass.opacity(0.35))
+                    Text("“\(example)”").font(.lexiloDisplay(17)).italic().foregroundStyle(LexiloTheme.ink.opacity(0.82))
+                }
             }
-            Text("elusive").font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
-            Text("difficult to find, catch, or achieve").font(.body).foregroundStyle(LexiloTheme.muted)
-            Divider().overlay(LexiloTheme.brass.opacity(0.35))
-            Text("“The answer remained elusive.”").font(.lexiloDisplay(17)).italic().foregroundStyle(LexiloTheme.ink.opacity(0.82))
+            .padding(20).background(LexiloTheme.paperDeep.opacity(0.55), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay { RoundedRectangle(cornerRadius: 22).stroke(LexiloTheme.brass.opacity(0.18)) }
+        } else if !store.lexicon.isAvailable {
+            ContentUnavailableView(
+                "Dictionary unavailable",
+                systemImage: "books.vertical",
+                description: Text("The bundled Open English WordNet database could not be opened.")
+            )
         }
-        .padding(20).background(LexiloTheme.paperDeep.opacity(0.55), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay { RoundedRectangle(cornerRadius: 22).stroke(LexiloTheme.brass.opacity(0.18)) }
     }
 
     private var learningNote: some View {

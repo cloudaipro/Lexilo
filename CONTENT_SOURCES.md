@@ -1,6 +1,6 @@
 # Lexilo content-source policy
 
-Checked: 2026-08-09
+Checked: 2026-08-11
 
 ## Decisions
 
@@ -8,22 +8,22 @@ Checked: 2026-08-09
 - The `anki-english-60k-decks` repository is useful for studying field shape, frequency grouping, atomic senses, and APKG import. Its own material is CC0, but its Merriam-Webster definitions, examples, and audio are explicitly excluded from that grant. Wiktionary-derived text is CC BY-SA 4.0, and every audio file has its own license.
 - Anki’s source is a scheduling and architecture reference, not copied application code. Any future reuse of its AGPL-licensed implementation requires a separate compliance decision.
 
-## V1 implementation
+## Offline implementation
 
-- `LexicalContentProvider` is the boundary for bundled or server-provided lexicons.
-- The included starter lexicon is an original demonstration dataset, labelled `lexilo-starter` per record.
-- Pronunciation uses Apple’s on-device `AVSpeechSynthesizer` by default.
-- A production ingestion pipeline should use a versioned JSON schema with source URL, source revision, text license, audio license, attribution, and change notes on every sense.
+- `scripts/build_lexicon.py` reproducibly builds the bundled SQLite database from the pinned Open English WordNet 2025 JSON release and wordfreq 3.1.1.
+- The app opens the database read-only. Definitions, examples, search, candidate selection, and rotation do not make network requests.
+- The database contains 135,282 lemma/part-of-speech lexemes. A curated 17,725-entry subset has an example and sufficient corpus frequency to enter rotation.
+- Learning state stores stable WordNet sense IDs separately. Replacing the bundled database on an app update refreshes lexical content without resetting cards, history, or mastery.
+- Open English WordNet is the sole vocabulary source. If its bundled database cannot open, the app shows an unavailable state rather than substituting fixed words.
+- Every word is pronounced by the bundled Kitten Nano v0.2 model running through sherpa-onnx. The model is prewarmed at launch; synthesized featured and upcoming-practice words are cached locally. An installed iOS voice is retained only as a runtime failure fallback. Playback never downloads audio.
+- Complete license notices travel with the database in `Lexilo/Resources/LEXICON_NOTICES.md` and with the neural voice pack in `Lexilo/Resources/NEURAL_VOICE_NOTICES.md`.
 
-## Recommended production sources
+## Sources considered but not bundled
 
-- Wiktionary structured extracts through Kaikki.org for definitions and IPA, with CC BY-SA 4.0 attribution and ShareAlike compliance.
-- Wikimedia Commons pronunciation recordings only after preserving each file’s individual license and attribution.
+- Kaikki/Wiktionary provides substantially broader coverage, but its English extract is several gigabytes before app-specific indexing and carries CC BY-SA/GFDL obligations. It remains suitable for an optional build profile, not the compact default app.
+- Forvo’s commercial API for online long-tail coverage only after accepting its commercial terms. Its API audio links expire after two hours and audio caching is prohibited, so it does not fit Lexilo’s offline cache.
 - A commercial dictionary API only under a contract that explicitly permits caching, offline distribution, and end-user display.
 
-## Import roadmap
+## Rebuild
 
-1. JSON lexicon import with validation and provenance fields.
-2. APKG reader for user-owned decks; map one note/sense to one vocabulary item and generate the two Lexilo scheduling cards.
-3. Licensed audio cache keyed by source ID and locale, falling back to device speech.
-
+Install `scripts/requirements-lexicon.txt`, then run `scripts/build_lexicon.py`. The script verifies the pinned upstream SHA-256, validates the schema and row counts, records source versions in the metadata table, and compacts the result with `VACUUM`.
