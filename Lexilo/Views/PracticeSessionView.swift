@@ -57,25 +57,37 @@ struct PracticeSessionView: View {
                         Button { speechPlayer.play(word) } label: { Image(systemName: "speaker.wave.2.fill") }
                     }.font(.subheadline).foregroundStyle(LexiloTheme.sage)
                 } else {
-                    Text(word.conciseDefinition).font(.lexiloDisplay(30, weight: .medium)).multilineTextAlignment(.center).foregroundStyle(LexiloTheme.ink).padding(.horizontal, 8)
+                    spokenPracticeText(
+                        word.conciseDefinition,
+                        label: "Play definition for \(word.word)",
+                        font: .lexiloDisplay(30, weight: .medium),
+                        color: LexiloTheme.ink
+                    )
                     Text(word.partOfSpeech).font(.subheadline).italic().foregroundStyle(LexiloTheme.sage)
                 }
 
                 if revealed {
                     Rectangle().fill(LexiloTheme.brass.opacity(0.35)).frame(width: 44, height: 1).padding(.vertical, 4)
                     if card.direction == .recognition {
-                        Text(word.conciseDefinition).font(.title3).multilineTextAlignment(.center).foregroundStyle(LexiloTheme.ink)
+                        spokenPracticeText(
+                            word.conciseDefinition,
+                            label: "Play definition for \(word.word)",
+                            font: .title3,
+                            color: LexiloTheme.ink
+                        )
                     } else {
                         Text(word.word).font(.lexiloDisplay(43, weight: .medium)).foregroundStyle(LexiloTheme.ink)
                         Text(word.ipa).font(.subheadline).foregroundStyle(LexiloTheme.sage)
                     }
                     ForEach(Array(word.examples.prefix(3)), id: \.self) { example in
-                        Text("“\(example)”")
-                            .font(.lexiloDisplay(18))
-                            .italic()
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(LexiloTheme.muted)
-                            .padding(.top, 2)
+                        spokenPracticeText(
+                            "“\(example)”",
+                            spokenText: example,
+                            label: "Play example for \(word.word)",
+                            font: .lexiloDisplay(18),
+                            color: LexiloTheme.muted,
+                            italic: true
+                        )
                     }
                 } else {
                     Text(card.direction == .recognition ? "Do you know this word?" : "Which word fits this meaning?")
@@ -92,6 +104,35 @@ struct PracticeSessionView: View {
             if revealed { answerButtons(card) } else { revealButton }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: revealed)
+    }
+
+    private func spokenPracticeText(
+        _ displayedText: String,
+        spokenText: String? = nil,
+        label: String,
+        font: Font,
+        color: Color,
+        italic: Bool = false
+    ) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Group {
+                if italic { Text(displayedText).italic() } else { Text(displayedText) }
+            }
+            .font(font)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(color)
+            Button { speechPlayer.play(spokenText ?? displayedText) } label: {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(LexiloTheme.sage)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(label)
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 2)
     }
 
     private var revealButton: some View {

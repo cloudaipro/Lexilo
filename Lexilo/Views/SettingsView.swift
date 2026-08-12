@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var store: LearningStore
+    @EnvironmentObject private var speechPlayer: SpeechPlayer
     @AppStorage("dailyGoal") private var dailyGoal = 10
     @AppStorage("newWordLimit") private var newWordLimit = 5
     @AppStorage("soundEnabled") private var soundEnabled = true
@@ -42,11 +43,14 @@ struct SettingsView: View {
                         }
                     }
                     Section("Offline dictionary") {
-                        Picker("Learning range", selection: $vocabularyBand) {
+                        Picker("Learning level", selection: $vocabularyBand) {
                             ForEach(VocabularyBand.allCases) { band in
                                 Text(band.title).tag(band.rawValue)
                             }
                         }
+                        Text("Suggestions are selected only from the chosen difficulty level.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         Toggle("Include phrases", isOn: $includePhrases)
                         Button {
                             let count = store.replaceUnstartedSuggestions()
@@ -74,6 +78,9 @@ struct SettingsView: View {
                     } footer: { Text("Open. Learn. Remember.") }
                 }.scrollContentBackground(.hidden)
             }.navigationTitle("Settings")
+        }
+        .onChange(of: soundEnabled) { _, enabled in
+            if !enabled { speechPlayer.stop() }
         }
     }
 }

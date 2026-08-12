@@ -121,7 +121,7 @@ final class KittenSynthesizer: @unchecked Sendable {
     }
 
     private static func waveData(samples: UnsafeBufferPointer<Float>, sampleRate: Int) -> Data {
-        var pcm = samples.map { sample -> Int16 in
+        let pcm = samples.map { sample -> Int16 in
             let clamped = max(-1, min(1, sample))
             return Int16(clamped * Float(Int16.max))
         }
@@ -171,8 +171,10 @@ final class KittenAudioCache: @unchecked Sendable {
     }
 
     func key(text: String, speakerID: Int, speed: Float) -> String {
-        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let input = "\(Self.modelVersion)|\(speakerID)|\(String(format: "%.2f", speed))|\(normalized)"
+        // Preserve case: acronyms such as "US" and words such as "us" can be
+        // pronounced differently and must never share a cached waveform.
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = "\(Self.modelVersion)|\(speakerID)|\(speed.bitPattern)|\(normalized)"
         return SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
@@ -182,7 +184,11 @@ final class KittenAudioCache: @unchecked Sendable {
                 return cached as Data
             }
             let url = fileURL(for: key)
-            guard let data = try? Data(contentsOf: url), !data.isEmpty else { return nil }
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            guard Self.isWave(data) else {
+                try? FileManager.default.removeItem(at: url)
+                return nil
+            }
             memory.setObject(data as NSData, forKey: key as NSString, cost: data.count)
             try? FileManager.default.setAttributes([.modificationDate: Date.now], ofItemAtPath: url.path)
             return data
@@ -190,7 +196,7 @@ final class KittenAudioCache: @unchecked Sendable {
     }
 
     func store(_ data: Data, for key: String) {
-        guard !data.isEmpty else { return }
+        guard Self.isWave(data) else { return }
         lock.withLock {
             memory.setObject(data as NSData, forKey: key as NSString, cost: data.count)
             try? data.write(to: fileURL(for: key), options: .atomic)
@@ -200,6 +206,16 @@ final class KittenAudioCache: @unchecked Sendable {
 
     private func fileURL(for key: String) -> URL {
         directory.appending(path: "\(key).wav")
+    }
+
+    private static func isWave(_ data: Data) -> Bool {
+        // Kitten writes canonical 44-byte PCM WAV files. Checking the complete
+        // header keeps a truncated RIFF file from becoming a permanent cache hit.
+        guard data.count >= 44 else { return false }
+        return data.prefix(4).elementsEqual(Data("RIFF".utf8))
+            && data.dropFirst(8).prefix(4).elementsEqual(Data("WAVE".utf8))
+            && data.dropFirst(12).prefix(4).elementsEqual(Data("fmt ".utf8))
+            && data.dropFirst(36).prefix(4).elementsEqual(Data("data".utf8))
     }
 
     private func pruneDiskIfNeeded() {

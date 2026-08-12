@@ -174,7 +174,7 @@ Check that **Play pronunciation** and **Use offline voice when needed** are enab
 
 ### Upcoming words did not change.
 
-Only unstarted suggestions can be replaced. If the queue is already in progress, complete more practice first. You can also widen **Learning range** or enable phrases.
+Only unstarted suggestions can be replaced. If the queue is already in progress, complete more practice first. You can also choose another **Learning level** or enable phrases. Each level selects only words assigned to that difficulty band.
 
 ---
 

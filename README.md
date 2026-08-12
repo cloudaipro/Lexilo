@@ -28,7 +28,7 @@ xcodegen generate
 - SwiftUI app with Today, Words, Progress, and Settings tabs
 - Two-direction daily practice flow with reveal and Know/Don’t Know decisions
 - Deterministic 1/2/3-day linear scheduler (capped at 180 days) and paired-card same-day exclusion
-- Atomic offline JSON persistence and immutable review history
+- Atomic offline JSON persistence with last-known-good recovery and immutable review history
 - Bundled, searchable Open English WordNet SQLite lexicon with 135,282 lexemes and 17,725 learning candidates
 - Deterministic offline vocabulary rotation by learning band, with learner progress stored separately from dictionary content
 - Kitten Nano v0.2 neural pronunciation through sherpa-onnx, launch prewarming, and a bounded on-device audio cache
@@ -46,7 +46,7 @@ Validated on **iPhone 17 Pro, iOS 26.2 Simulator**:
 
 - Full simulator build: passed
 - Practice-flow XCUITest: passed
-- OEWN-only seeding, unavailable-state, rotation, sense repair, migration, scheduler, cache, and real Kitten inference tests: 13 passed
+- OEWN-only seeding, exact-band rotation, unavailable-state, sense repair, persistence recovery, scheduler, cache, greeting, and real Kitten inference tests: 21 passed
 - Unsigned arm64 iPhone build: passed
 - Visual checks: Today, recognition front, revealed answer, failure recycling, and completion
 

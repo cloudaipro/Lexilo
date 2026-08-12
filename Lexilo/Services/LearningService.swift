@@ -64,6 +64,10 @@ final class LearningStore: ObservableObject {
     private var persistedLexiconVersion: String?
     private var retiredLexiconIDs: Set<String> = []
 
+    private var backupPersistenceURL: URL? {
+        persistenceURL?.appendingPathExtension("backup")
+    }
+
     private var configuredDailyGoal: Int {
         let value = UserDefaults.standard.object(forKey: "dailyGoal") as? Int ?? 10
         return max(1, value)
@@ -86,9 +90,15 @@ final class LearningStore: ObservableObject {
         if reset {
             if let persistenceURL = self.persistenceURL {
                 try? FileManager.default.removeItem(at: persistenceURL)
+                try? FileManager.default.removeItem(at: persistenceURL.appendingPathExtension("backup"))
+                try? FileManager.default.removeItem(at: persistenceURL.appendingPathExtension("corrupt"))
             }
-            UserDefaults.standard.removeObject(forKey: "dailyGoal")
-            UserDefaults.standard.removeObject(forKey: "newWordLimit")
+            for key in [
+                "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
+                "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale"
+            ] {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
         }
 
         var changed = false
@@ -150,35 +160,36 @@ final class LearningStore: ObservableObject {
         let needed = max(0, targetUnseen - upcomingWords.count)
         guard needed > 0 else { return 0 }
 
-        let maximumBand = UserDefaults.standard.object(forKey: "vocabularyBand") as? Int ?? VocabularyBand.intermediate.rawValue
+        let selectedBand = UserDefaults.standard.object(forKey: "vocabularyBand") as? Int ?? VocabularyBand.intermediate.rawValue
         let includePhrases = UserDefaults.standard.bool(forKey: "includePhrases")
         let existingLexiconIDs = Set(words.compactMap(\.lexiconID))
         let existingWords = Set(words.map { $0.word.lowercased() })
-        var available: [LexiconEntry] = []
-        var availableWords = existingWords
-        var offset = 0
-        while available.count < needed && offset < lexicon.information.learningCandidateCount {
-            let batch = lexicon.learningCandidates(throughBand: maximumBand, includePhrases: includePhrases, offset: offset)
-            if batch.isEmpty { break }
-            for entry in batch {
-                let normalizedWord = entry.word.lowercased()
-                guard !existingLexiconIDs.contains(entry.id), !retiredLexiconIDs.contains(entry.id), !availableWords.contains(normalizedWord) else { continue }
-                available.append(entry)
-                availableWords.insert(normalizedWord)
-            }
-            offset += batch.count
-        }
-
         let calendar = Calendar.current
         let day = calendar.ordinality(of: .day, in: .era, for: now) ?? 0
         let nonce = UserDefaults.standard.integer(forKey: "rotationNonce")
-        let selected = available.sorted {
-            stableRotationHash("\(day):\(nonce):\($0.id)") < stableRotationHash("\(day):\(nonce):\($1.id)")
-        }.prefix(needed)
+        let references = lexicon.learningCandidateReferences(inBand: selectedBand, includePhrases: includePhrases)
+        let orderedReferences = references.sorted {
+            let lhsHash = stableRotationHash("\(day):\(nonce):\($0.id)")
+            let rhsHash = stableRotationHash("\(day):\(nonce):\($1.id)")
+            return lhsHash == rhsHash ? $0.id < $1.id : lhsHash < rhsHash
+        }
+        var selectedIDs: [String] = []
+        var selectedWords = existingWords
+        for reference in orderedReferences {
+            guard !existingLexiconIDs.contains(reference.id),
+                  !retiredLexiconIDs.contains(reference.id),
+                  !selectedWords.contains(reference.normalizedWord)
+            else { continue }
+            selectedIDs.append(reference.id)
+            selectedWords.insert(reference.normalizedWord)
+            if selectedIDs.count == needed { break }
+        }
+        let entriesByID = Dictionary(uniqueKeysWithValues: lexicon.entries(ids: selectedIDs).map { ($0.id, $0) })
+        let selected = selectedIDs.compactMap { entriesByID[$0] }
         for entry in selected {
             let item = makeVocabularyItem(from: entry)
             words.append(item)
-            appendCards(for: item)
+            appendCards(for: item, now: now)
         }
         if !selected.isEmpty { save() }
         return selected.count
@@ -194,14 +205,20 @@ final class LearningStore: ObservableObject {
 
     func currentStreak(now: Date = .now, goal: Int? = nil, calendar: Calendar = .current) -> Int {
         let effectiveGoal = max(1, goal ?? configuredDailyGoal)
-        var day = calendar.startOfDay(for: now)
-        if !isStudyDayComplete(on: day, goal: effectiveGoal, calendar: calendar) {
+        let today = calendar.startOfDay(for: now)
+        var day = today
+        if !isStudyDayComplete(on: day, currentGoal: effectiveGoal, calendar: calendar) {
             guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { return 0 }
             day = previous
         }
 
         var streak = 0
-        while isStudyDayComplete(on: day, goal: effectiveGoal, calendar: calendar) {
+        while isStudyDayComplete(
+            on: day,
+            currentGoal: calendar.isDate(day, inSameDayAs: today) ? effectiveGoal : nil,
+            fallbackGoal: effectiveGoal,
+            calendar: calendar
+        ) {
             streak += 1
             guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
             day = previous
@@ -345,8 +362,8 @@ final class LearningStore: ObservableObject {
         return related.count == 2 && related.allSatisfy { $0.learningState == .mastered }
     }
 
-    private func appendCards(for item: VocabularyItem) {
-        let start = Calendar.current.startOfDay(for: .now)
+    private func appendCards(for item: VocabularyItem, now: Date = .now) {
+        let start = Calendar.current.startOfDay(for: now)
         cards.append(StudyCard(vocabularyID: item.id, direction: .recognition, nextReviewDate: start))
         cards.append(StudyCard(vocabularyID: item.id, direction: .recall, nextReviewDate: start))
     }
@@ -392,11 +409,19 @@ final class LearningStore: ObservableObject {
         studyDays.sort { $0.date < $1.date }
     }
 
-    private func isStudyDayComplete(on date: Date, goal: Int, calendar: Calendar) -> Bool {
+    private func isStudyDayComplete(
+        on date: Date,
+        currentGoal: Int?,
+        fallbackGoal: Int? = nil,
+        calendar: Calendar
+    ) -> Bool {
         if let day = studyDays.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-            return day.completed || day.reviewedCount >= goal
+            if let currentGoal {
+                return day.reviewedCount >= currentGoal
+            }
+            return day.completed || day.reviewedCount >= day.goal
         }
-        return completedReviews(on: date, calendar: calendar) >= goal
+        return completedReviews(on: date, calendar: calendar) >= (currentGoal ?? fallbackGoal ?? configuredDailyGoal)
     }
 
     private func seed() {
@@ -492,24 +517,50 @@ final class LearningStore: ObservableObject {
 
     @discardableResult
     private func load() -> Bool {
-        guard let persistenceURL,
-              let data = try? Data(contentsOf: persistenceURL),
-              let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data)
-        else { return false }
+        guard let persistenceURL else { return false }
+        if let data = try? Data(contentsOf: persistenceURL),
+           let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) {
+            apply(snapshot)
+            return true
+        }
 
+        if let backupPersistenceURL,
+           let backupData = try? Data(contentsOf: backupPersistenceURL),
+           let snapshot = try? JSONDecoder().decode(Snapshot.self, from: backupData) {
+            apply(snapshot)
+            try? backupData.write(to: persistenceURL, options: .atomic)
+            return true
+        }
+
+        // Preserve the first unreadable snapshot for support/recovery instead
+        // of silently erasing the only copy when a fresh store is seeded.
+        if FileManager.default.fileExists(atPath: persistenceURL.path) {
+            let corruptURL = persistenceURL.appendingPathExtension("corrupt")
+            if !FileManager.default.fileExists(atPath: corruptURL.path) {
+                try? FileManager.default.copyItem(at: persistenceURL, to: corruptURL)
+            }
+        }
+        return false
+    }
+
+    private func apply(_ snapshot: Snapshot) {
         words = snapshot.words
         cards = snapshot.cards
         logs = snapshot.logs
         studyDays = snapshot.studyDays
         persistedLexiconVersion = snapshot.lexiconVersion
         retiredLexiconIDs = snapshot.retiredLexiconIDs
-        return true
     }
 
     private func save() {
         if lexicon.isAvailable { persistedLexiconVersion = lexicon.information.version }
         if let persistenceURL, let data = try? JSONEncoder().encode(Snapshot(words: words, cards: cards, logs: logs, studyDays: studyDays, lexiconVersion: persistedLexiconVersion, retiredLexiconIDs: retiredLexiconIDs)) {
             try? FileManager.default.createDirectory(at: persistenceURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if let currentData = try? Data(contentsOf: persistenceURL),
+               (try? JSONDecoder().decode(Snapshot.self, from: currentData)) != nil,
+               let backupPersistenceURL {
+                try? currentData.write(to: backupPersistenceURL, options: .atomic)
+            }
             try? data.write(to: persistenceURL, options: .atomic)
         }
         publishWidgetSnapshot()

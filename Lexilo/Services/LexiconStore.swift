@@ -71,18 +71,48 @@ final class LexiconStore {
     }
 
     func learningCandidates(
-        throughBand band: Int,
+        inBand band: Int,
         includePhrases: Bool,
         offset: Int,
         limit: Int = 500
     ) -> [LexiconEntry] {
         let phraseClause = includePhrases ? "" : " AND l.is_phrase = 0"
         return query(
-            whereClause: "l.is_learning_candidate = 1 AND l.learning_band <= ?\(phraseClause)",
+            whereClause: "l.is_learning_candidate = 1 AND l.learning_band = ?\(phraseClause)",
             bindings: [String(max(1, min(5, band)))],
             limit: limit,
             offset: max(0, offset)
         )
+    }
+
+    /// Loads only the identifiers needed for deterministic rotation. Avoiding
+    /// definitions/examples here keeps launch and replenishment inexpensive
+    /// even when a band contains several thousand entries.
+    func learningCandidateReferences(inBand band: Int, includePhrases: Bool) -> [LexiconCandidateReference] {
+        guard let database else { return [] }
+        let phraseClause = includePhrases ? "" : " AND l.is_phrase = 0"
+        let sql = """
+        SELECT s.id, l.normalized_lemma
+        FROM lexeme l
+        JOIN sense s ON s.lexeme_id = l.id AND s.sense_order = 0
+        WHERE l.is_learning_candidate = 1 AND l.learning_band = ?\(phraseClause)
+        """
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK, let statement else { return [] }
+        defer { sqlite3_finalize(statement) }
+        sqlite3_bind_int(statement, 1, Int32(max(1, min(5, band))))
+
+        var result: [LexiconCandidateReference] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            result.append(.init(id: Self.string(statement, 0), normalizedWord: Self.string(statement, 1)))
+        }
+        return result
+    }
+
+    func entries(ids: [String]) -> [LexiconEntry] {
+        guard !ids.isEmpty else { return [] }
+        let placeholders = Array(repeating: "?", count: ids.count).joined(separator: ",")
+        return query(whereClause: "s.id IN (\(placeholders))", bindings: ids, limit: ids.count)
     }
 
     private func query(

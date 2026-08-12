@@ -50,9 +50,19 @@ final class SpeechPlayer: ObservableObject {
     }
 
     func play(_ word: VocabularyItem) {
+        play(word.word)
+    }
+
+    func play(_ text: String) {
         guard soundEnabled else { return }
+        let spokenText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !spokenText.isEmpty else { return }
         offlineEngine.stop()
-        offlineEngine.speak(word.word, locale: pronunciationLocale)
+        offlineEngine.speak(spokenText, locale: pronunciationLocale)
+    }
+
+    func stop() {
+        offlineEngine.stop()
     }
 
     private var soundEnabled: Bool {

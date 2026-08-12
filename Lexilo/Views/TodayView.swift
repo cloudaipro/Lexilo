@@ -1,5 +1,15 @@
 import SwiftUI
 
+enum TodayGreeting {
+    static func text(for date: Date, calendar: Calendar = .current) -> String {
+        switch calendar.component(.hour, from: date) {
+        case 0..<12: "Good morning"
+        case 12..<18: "Good afternoon"
+        default: "Good evening"
+        }
+    }
+}
+
 struct TodayView: View {
     @EnvironmentObject private var store: LearningStore
     @EnvironmentObject private var speechPlayer: SpeechPlayer
@@ -41,7 +51,8 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(Date.now.formatted(.dateTime.weekday(.wide).month(.wide).day()))
                     .font(.caption.weight(.semibold)).textCase(.uppercase).tracking(1.2).foregroundStyle(LexiloTheme.brass)
-                Text("Good evening")
+                Text(TodayGreeting.text(for: .now))
+                    .accessibilityIdentifier("today-greeting")
                     .font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
             }
             Spacer()
@@ -124,10 +135,18 @@ struct TodayView: View {
                     .accessibilityIdentifier("featured-word-pronunciation")
                 }
                 Text(word.word).font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
-                Text(word.conciseDefinition).font(.body).foregroundStyle(LexiloTheme.muted)
+                HStack(alignment: .top, spacing: 10) {
+                    Text(word.conciseDefinition).font(.body).foregroundStyle(LexiloTheme.muted)
+                    Spacer(minLength: 8)
+                    spokenTextButton(word.conciseDefinition, label: "Play definition for \(word.word)")
+                }
                 if let example = word.examples.first {
                     Divider().overlay(LexiloTheme.brass.opacity(0.35))
-                    Text("“\(example)”").font(.lexiloDisplay(17)).italic().foregroundStyle(LexiloTheme.ink.opacity(0.82))
+                    HStack(alignment: .top, spacing: 10) {
+                        Text("“\(example)”").font(.lexiloDisplay(17)).italic().foregroundStyle(LexiloTheme.ink.opacity(0.82))
+                        Spacer(minLength: 8)
+                        spokenTextButton(example, label: "Play example for \(word.word)")
+                    }
                 }
             }
             .padding(20).background(LexiloTheme.paperDeep.opacity(0.55), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -139,6 +158,17 @@ struct TodayView: View {
                 description: Text("The bundled Open English WordNet database could not be opened.")
             )
         }
+    }
+
+    private func spokenTextButton(_ text: String, label: String) -> some View {
+        Button { speechPlayer.play(text) } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .foregroundStyle(LexiloTheme.sage)
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private var learningNote: some View {

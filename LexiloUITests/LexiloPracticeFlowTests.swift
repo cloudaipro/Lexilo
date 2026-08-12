@@ -48,7 +48,7 @@ final class LexiloPracticeFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["Back to Today"].exists)
         capture("05 Practice complete")
         app.buttons["Back to Today"].tap()
-        XCTAssertTrue(app.staticTexts["Good evening"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["today-greeting"].waitForExistence(timeout: 3))
     }
 
     private func capture(_ name: String) {

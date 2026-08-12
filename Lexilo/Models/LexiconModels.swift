@@ -14,6 +14,11 @@ struct LexiconEntry: Identifiable, Hashable, Sendable {
     var primaryExample: String { examples.first ?? "" }
 }
 
+struct LexiconCandidateReference: Sendable {
+    let id: String
+    let normalizedWord: String
+}
+
 enum VocabularyBand: Int, CaseIterable, Identifiable {
     case essential = 1
     case everyday

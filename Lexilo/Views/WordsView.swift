@@ -160,6 +160,7 @@ struct StatePill: View {
 }
 
 struct WordDetailView: View {
+    @EnvironmentObject private var speechPlayer: SpeechPlayer
     let word: VocabularyItem
     let state: LearningState
     var body: some View {
@@ -175,17 +176,36 @@ struct WordDetailView: View {
                     Divider().overlay(LexiloTheme.brass.opacity(0.4))
                     VStack(alignment: .leading, spacing: 8) {
                         Text("MEANING").font(.caption.bold()).tracking(1.3).foregroundStyle(LexiloTheme.brass)
-                        Text(word.conciseDefinition).font(.title3).foregroundStyle(LexiloTheme.ink)
+                        HStack(alignment: .top, spacing: 10) {
+                            Text(word.conciseDefinition).font(.title3).foregroundStyle(LexiloTheme.ink)
+                            Spacer(minLength: 8)
+                            spokenTextButton(word.conciseDefinition, label: "Play definition for \(word.word)")
+                        }
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         Text("IN CONTEXT").font(.caption.bold()).tracking(1.3).foregroundStyle(LexiloTheme.brass)
                         ForEach(Array(word.examples.prefix(3)), id: \.self) { example in
-                            Text("“\(example)”").font(.lexiloDisplay(21)).italic().foregroundStyle(LexiloTheme.ink)
+                            HStack(alignment: .top, spacing: 10) {
+                                Text("“\(example)”").font(.lexiloDisplay(21)).italic().foregroundStyle(LexiloTheme.ink)
+                                Spacer(minLength: 8)
+                                spokenTextButton(example, label: "Play example for \(word.word)")
+                            }
                         }
                     }.padding(20).background(LexiloTheme.sageLight.opacity(0.52), in: RoundedRectangle(cornerRadius: 20))
                     HStack(spacing: 10) { Image(systemName: "arrow.left.arrow.right").foregroundStyle(LexiloTheme.sage); Text("Lexilo practices this word in both directions on separate days.").font(.caption).foregroundStyle(LexiloTheme.muted) }
                 }.padding(22)
             }
         }.navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func spokenTextButton(_ text: String, label: String) -> some View {
+        Button { speechPlayer.play(text) } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .foregroundStyle(LexiloTheme.sage)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
