@@ -44,11 +44,39 @@ final class LexiloPracticeFlowTests: XCTestCase {
             safetyCount += 1
         }
 
-        XCTAssertTrue(app.staticTexts["Practice complete"].waitForExistence(timeout: 5), "The session should reach completion")
+        XCTAssertTrue(app.staticTexts["Round complete"].waitForExistence(timeout: 5), "The session should reach completion")
+        XCTAssertTrue(app.staticTexts["5 words practised today. Add another round or repeat today’s set."].exists)
+        XCTAssertTrue(app.buttons["Next Round"].exists)
+        XCTAssertTrue(app.buttons["Practice Again"].exists)
         XCTAssertTrue(app.buttons["Back to Today"].exists)
         capture("05 Practice complete")
-        app.buttons["Back to Today"].tap()
-        XCTAssertTrue(app.staticTexts["today-greeting"].waitForExistence(timeout: 3))
+        let practiceAgain = app.buttons["Practice Again"]
+        practiceAgain.tap()
+        XCTAssertTrue(reveal.waitForExistence(timeout: 5), "Practice Again should replay the cumulative set of words practised today")
+        XCTAssertTrue(app.staticTexts["1 of 5"].exists, "Practice Again should contain the five distinct words in today's set")
+    }
+
+    func testTypedProductionShowsPreciseCorrection() throws {
+        app.terminate()
+        app.launchArguments.append("--ui-testing-recall")
+        app.launch()
+
+        let start = app.buttons["Start practice"]
+        XCTAssertTrue(start.waitForExistence(timeout: 8))
+        start.tap()
+
+        let field = app.textFields["Type the word"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "A production card should require a typed answer")
+        field.tap()
+        field.typeText("definitely wrong")
+        app.buttons["Check"].tap()
+
+        XCTAssertTrue(app.staticTexts["Not quite"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'You wrote:'")).firstMatch.exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Expected:'")).firstMatch.exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'return tomorrow'")).firstMatch.exists)
+        XCTAssertTrue(app.buttons["Continue"].exists)
+        capture("06 Typed production correction")
     }
 
     private func capture(_ name: String) {

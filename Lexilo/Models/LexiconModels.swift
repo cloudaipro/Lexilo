@@ -7,11 +7,39 @@ struct LexiconEntry: Identifiable, Hashable, Sendable {
     let ipa: String
     let definition: String
     let examples: [String]
+    let usageLabel: String
+    let senseOrder: Int
     let frequencyRank: Int
     let learningBand: Int
     let isPhrase: Bool
 
     var primaryExample: String { examples.first ?? "" }
+
+    init(
+        id: String,
+        word: String,
+        partOfSpeech: String,
+        ipa: String,
+        definition: String,
+        examples: [String],
+        usageLabel: String = "",
+        senseOrder: Int = 0,
+        frequencyRank: Int,
+        learningBand: Int,
+        isPhrase: Bool
+    ) {
+        self.id = id
+        self.word = word
+        self.partOfSpeech = partOfSpeech
+        self.ipa = ipa
+        self.definition = definition
+        self.examples = examples
+        self.usageLabel = usageLabel
+        self.senseOrder = senseOrder
+        self.frequencyRank = frequencyRank
+        self.learningBand = learningBand
+        self.isPhrase = isPhrase
+    }
 }
 
 struct LexiconCandidateReference: Sendable {

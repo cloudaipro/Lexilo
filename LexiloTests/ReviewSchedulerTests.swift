@@ -4,7 +4,8 @@ import XCTest
 final class ReviewSchedulerTests: XCTestCase {
     private static let preferenceKeys = [
         "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
-        "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale"
+        "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
+        "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage", "hasCompletedOnboarding"
     ]
     private var savedPreferences: [String: Any] = [:]
 
@@ -258,20 +259,49 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertEqual(store.upcomingWords.count, 40)
     }
 
-    func testFixedIntervals() {
+    func testAdaptiveSchedulerUsesMemoryStateAndSignals() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         let start = Date(timeIntervalSince1970: 1_700_006_400)
-        for (index, interval) in ReviewScheduler.intervals.enumerated() {
-            let next = ReviewScheduler.nextDate(successCount: index + 1, from: start, calendar: calendar)
-            XCTAssertEqual(calendar.dateComponents([.day], from: calendar.startOfDay(for: start), to: next).day, interval)
-        }
+        var card = StudyCard(vocabularyID: UUID(), direction: .recall, nextReviewDate: start)
+        card.lastReviewedDate = calendar.date(byAdding: .day, value: -3, to: start)
+        card.stability = 4
+
+        let fast = ReviewScheduler.update(card: card, outcome: .correct, responseTime: 2, usedHint: false, at: start, calendar: calendar)
+        let hinted = ReviewScheduler.update(card: card, outcome: .correct, responseTime: 20, usedHint: true, at: start, calendar: calendar)
+        let failed = ReviewScheduler.update(card: card, outcome: .again, responseTime: 20, usedHint: false, at: start, calendar: calendar)
+
+        XCTAssertGreaterThan(fast.stability, hinted.stability)
+        XCTAssertGreaterThan(fast.intervalDays, failed.intervalDays)
+        XCTAssertEqual(failed.intervalDays, 1)
+        XCTAssertEqual(fast.retrievabilityBeforeReview, ReviewScheduler.retrievability(for: card, at: start), accuracy: 0.0001)
     }
 
-    func testIntervalCapsAt180Days() {
-        let start = Date()
-        let next = ReviewScheduler.nextDate(successCount: 200, from: start)
-        XCTAssertEqual(Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: start), to: next).day, 180)
+    @MainActor
+    func testWordDifficultyIsAvailablePerDirection() throws {
+        let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let store = makeStore(persistenceURL: temporaryURL)
+        let word = try XCTUnwrap(store.words.first)
+        let recognition = try XCTUnwrap(store.cards.first { $0.vocabularyID == word.id && $0.direction == .recognition })
+
+        XCTAssertEqual(try XCTUnwrap(store.averageDifficulty(vocabularyID: word.id, direction: .recognition)), 5, accuracy: 0.0001)
+        XCTAssertFalse(store.hasReviewedCard(vocabularyID: word.id, direction: .recognition))
+        XCTAssertEqual(store.difficultyLabel(for: 5), "Moderate")
+
+        store.answer(cardID: recognition.id, correct: false, responseTime: 2, now: .now)
+
+        XCTAssertEqual(try XCTUnwrap(store.averageDifficulty(vocabularyID: word.id, direction: .recognition)), 5.75, accuracy: 0.0001)
+        XCTAssertTrue(store.hasReviewedCard(vocabularyID: word.id, direction: .recognition))
+        XCTAssertNotNil(store.card(vocabularyID: word.id, senseID: recognition.senseID!, direction: .recognition))
+    }
+
+    func testAdaptiveIntervalCapsAtTenYears() {
+        let start = Date.now
+        var card = StudyCard(vocabularyID: UUID(), direction: .recognition, nextReviewDate: start)
+        card.lastReviewedDate = start.addingTimeInterval(-86_400)
+        card.stability = 20_000
+        let update = ReviewScheduler.update(card: card, outcome: .easy, responseTime: 1, usedHint: false, at: start)
+        XCTAssertEqual(update.intervalDays, ReviewScheduler.maximumInterval)
     }
 
     func testGreetingChangesWithLocalTime() {
@@ -285,7 +315,7 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
-    func testFailureResetsToZeroDayAndLearning() {
+    func testFailureSchedulesTomorrowAndRecordsMemorySignals() {
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
         let now = Date.now
@@ -293,12 +323,17 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertEqual(selected.count, 1)
 
         let cardID = try! XCTUnwrap(selected.first?.id)
-        store.answer(cardID: cardID, correct: false, now: now)
+        store.answer(cardID: cardID, correct: false, response: "wrong", responseTime: 4.2, usedHint: true, now: now)
 
         let updated = try! XCTUnwrap(store.cards.first { $0.id == cardID })
         XCTAssertEqual(updated.successCount, 0)
         XCTAssertEqual(updated.learningState, .learning)
-        XCTAssertTrue(Calendar.current.isDate(updated.nextReviewDate, inSameDayAs: now))
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now)!
+        XCTAssertTrue(Calendar.current.isDate(updated.nextReviewDate, inSameDayAs: tomorrow))
+        XCTAssertEqual(updated.lastOutcome, .again)
+        XCTAssertEqual(updated.lastReviewLatency, 4.2)
+        XCTAssertEqual(store.logs.last?.response, "wrong")
+        XCTAssertEqual(store.logs.last?.usedHint, true)
     }
 
     @MainActor
@@ -320,18 +355,62 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
+    func testNextRoundGrowsTodaySetAndPracticeAgainReplaysAllWordsWithoutChangingSchedule() {
+        let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let store = makeStore(persistenceURL: temporaryURL)
+        let now = Date.now
+        let firstRound = store.startRound(wordCount: 5, now: now)
+        XCTAssertEqual(firstRound.count, 5)
+
+        if let retriedCard = firstRound.first {
+            store.answer(cardID: retriedCard.id, correct: false, responseTime: 2, now: now)
+            store.answer(cardID: retriedCard.id, correct: true, responseTime: 2, now: now)
+        }
+        for card in firstRound.dropFirst() {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+        }
+        XCTAssertEqual(store.practicedWordCount(on: now), 5, "A retry must not count as another word")
+
+        let secondRound = store.startRound(wordCount: 5, now: now)
+        XCTAssertEqual(secondRound.count, 5)
+        XCTAssertTrue(Set(firstRound.map(\.vocabularyID)).isDisjoint(with: Set(secondRound.map(\.vocabularyID))))
+        for card in secondRound {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+        }
+        XCTAssertEqual(store.practicedWordCount(on: now), 10)
+
+        let thirdRound = store.startRound(wordCount: 5, now: now)
+        XCTAssertEqual(thirdRound.count, 5)
+        XCTAssertTrue(Set((firstRound + secondRound).map(\.vocabularyID)).isDisjoint(with: Set(thirdRound.map(\.vocabularyID))))
+        for card in thirdRound {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+        }
+        XCTAssertEqual(store.practicedWordCount(on: now), 15)
+
+        let cardsBeforeSelection = store.cards
+        let logsBeforeSelection = store.logs
+        let repeated = store.practiceAgainCards(now: now)
+
+        XCTAssertEqual(repeated.count, 15)
+        XCTAssertEqual(Set(repeated.map(\.vocabularyID)), Set((firstRound + secondRound + thirdRound).map(\.vocabularyID)))
+        XCTAssertEqual(Set(repeated.map(\.vocabularyID)).count, repeated.count)
+        XCTAssertEqual(store.cards, cardsBeforeSelection)
+        XCTAssertEqual(store.logs, logsBeforeSelection)
+    }
+
+    @MainActor
     func testCompletedStudyDayCreatesStreak() {
-        let previousGoal = UserDefaults.standard.object(forKey: "dailyGoal")
-        UserDefaults.standard.set(2, forKey: "dailyGoal")
+        let previousGoal = UserDefaults.standard.object(forKey: "newWordLimit")
+        UserDefaults.standard.set(2, forKey: "newWordLimit")
         defer {
-            if let previousGoal { UserDefaults.standard.set(previousGoal, forKey: "dailyGoal") }
-            else { UserDefaults.standard.removeObject(forKey: "dailyGoal") }
+            if let previousGoal { UserDefaults.standard.set(previousGoal, forKey: "newWordLimit") }
+            else { UserDefaults.standard.removeObject(forKey: "newWordLimit") }
         }
 
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
         let now = Date.now
-        let session = store.startSession(limit: 2, now: now, newWordLimit: 2)
+        let session = store.startRound(wordCount: 2, now: now)
         XCTAssertTrue(store.lexicon.isAvailable)
         XCTAssertEqual(session.count, 2)
         for card in session {
@@ -411,6 +490,109 @@ final class ReviewSchedulerTests: XCTestCase {
         let store = makeStore(persistenceURL: temporaryURL)
         let session = store.sessionCards(limit: 100)
         XCTAssertEqual(Set(session.map(\.vocabularyID)).count, session.count)
+    }
+
+    func testObjectiveAnswerNormalizationAndAcceptedVariants() {
+        XCTAssertTrue(AnswerEvaluator.isCorrect("  Résumé! ", expected: "resume"))
+        XCTAssertTrue(AnswerEvaluator.isCorrect("colour", expected: "color", accepted: ["colour"]))
+        XCTAssertFalse(AnswerEvaluator.isCorrect("colored", expected: "color", accepted: ["colour"]))
+    }
+
+    func testDelimitedImportHandlesQuotedCSVAndColumnMapping() throws {
+        let csv = "Term,Definition,Sentence,Tags\n\"keep, up\",continue,\"Please keep, up.\",phrase;work\nresilient,able to recover,,quality"
+        let table = try DelimitedVocabularyImporter.parse(data: Data(csv.utf8))
+        let mapping = DelimitedVocabularyImporter.suggestedMapping(headers: table.headers)
+        let rows = try DelimitedVocabularyImporter.rows(from: table, mapping: mapping)
+        XCTAssertEqual(rows.count, 2)
+        XCTAssertEqual(rows[0].word, "keep, up")
+        XCTAssertEqual(rows[0].example, "Please keep, up.")
+        XCTAssertEqual(rows[0].tags, ["phrase", "work"])
+    }
+
+    @MainActor
+    func testLexiconExposesSenseStackAndUsageMetadata() throws {
+        let entry = try XCTUnwrap(Self.stableLexicon.entry(matching: "run"))
+        let senses = Self.stableLexicon.senses(relatedToSenseID: entry.id)
+        XCTAssertGreaterThan(senses.count, 1)
+        XCTAssertEqual(senses.first?.senseOrder, 0)
+        XCTAssertTrue(zip(senses, senses.dropFirst()).allSatisfy { pair in pair.0.senseOrder <= pair.1.senseOrder })
+    }
+
+    @MainActor
+    func testPersonalImportCreatesTwoDirectionsAndMergesDuplicateSense() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let store = makeStore(persistenceURL: url)
+        let first = PersonalImportRow(word: "testworthy", meaning: "worthy of being tested", example: "The idea is testworthy.", tags: ["personal"])
+        XCTAssertEqual(store.importPersonalRows([first], duplicateResolution: .mergeSense), 1)
+        let item = try XCTUnwrap(store.words.first { $0.word == "testworthy" })
+        XCTAssertTrue(item.isPersonal)
+        XCTAssertEqual(store.cards.filter { $0.vocabularyID == item.id }.count, 2)
+        let coreSenseID = try XCTUnwrap(item.coreSense?.id)
+        store.updateTranslation(vocabularyID: item.id, senseID: coreSenseID, text: "digno de probar")
+        XCTAssertEqual(store.word(for: item.id)?.coreSense?.translationProvenance, .personal)
+        store.confirmTranslation(vocabularyID: item.id, senseID: coreSenseID)
+        XCTAssertEqual(store.word(for: item.id)?.coreSense?.translationProvenance, .reviewed)
+
+        let second = PersonalImportRow(word: "testworthy", meaning: "useful for a trial", example: "A testworthy claim.", tags: ["research"])
+        XCTAssertEqual(store.importPersonalRows([second], duplicateResolution: .mergeSense), 1)
+        XCTAssertEqual(store.word(for: item.id)?.senses.count, 2)
+        XCTAssertEqual(store.cards.filter { $0.vocabularyID == item.id }.count, 4)
+    }
+
+    @MainActor
+    func testSecondarySenseUnlocksOnlyAfterEveryActiveDirectionIsStable() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let store = makeStore(persistenceURL: url)
+        let entry = try XCTUnwrap(store.lexicon.entry(matching: "run"))
+        let word = store.addToLearning(entry)
+        XCTAssertGreaterThan(word.senses.count, 2)
+        XCTAssertEqual(store.word(for: word.id)?.activeSenses.count, 1)
+        let coreCards = store.cards.filter { $0.vocabularyID == word.id }
+        XCTAssertEqual(coreCards.count, 2)
+
+        let start = Date(timeIntervalSince1970: 1_700_006_400)
+        for day in 0..<30 {
+            let reviewDate = Calendar.current.date(byAdding: .day, value: day * 7, to: start)!
+            for card in coreCards { store.answer(cardID: card.id, correct: true, responseTime: 1, now: reviewDate) }
+            if store.word(for: word.id)?.activeSenses.count == 2 { break }
+        }
+        XCTAssertEqual(store.word(for: word.id)?.activeSenses.count, 2)
+        XCTAssertEqual(store.cards.filter { $0.vocabularyID == word.id }.count, 4)
+
+        if let coreCard = coreCards.first {
+            store.answer(cardID: coreCard.id, correct: true, responseTime: 1, now: start.addingTimeInterval(300 * 86_400))
+        }
+        XCTAssertEqual(store.word(for: word.id)?.activeSenses.count, 2, "A third sense must wait until the new active sense is stable in both directions")
+    }
+
+    @MainActor
+    func testBackupRoundTripPreservesPersonalContentAndReports() throws {
+        let firstURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let first = makeStore(persistenceURL: firstURL)
+        _ = first.importPersonalRows(
+            [PersonalImportRow(word: "roundtrip", meaning: "a journey back", example: "It was a roundtrip.", tags: [])],
+            duplicateResolution: .skip
+        )
+        let item = try XCTUnwrap(first.words.first { $0.word == "roundtrip" })
+        first.reportContent(vocabularyID: item.id, senseID: item.coreSense?.id, reason: "Test report")
+        let data = try first.exportData()
+
+        let secondURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let second = makeStore(persistenceURL: secondURL)
+        try second.restore(from: data)
+        XCTAssertNotNil(second.words.first { $0.word == "roundtrip" })
+        XCTAssertEqual(second.contentReports.last?.reason, "Test report")
+    }
+
+    @MainActor
+    func testPauseRemovesSenseFromSessionsAndQualityCountsReports() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
+        let store = makeStore(persistenceURL: url)
+        let card = try XCTUnwrap(store.cards.first)
+        store.pause(vocabularyID: card.vocabularyID, senseID: card.senseID)
+        XCTAssertFalse(store.sessionCards(limit: 100).contains { $0.vocabularyID == card.vocabularyID })
+        store.reportContent(vocabularyID: card.vocabularyID, senseID: card.senseID, reason: "Test")
+        XCTAssertEqual(store.contentQualitySummary.learnerReports, 1)
     }
 }
 

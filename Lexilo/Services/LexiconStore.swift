@@ -34,7 +34,16 @@ final class LexiconStore {
     var isAvailable: Bool { database != nil }
 
     func entry(id: String) -> LexiconEntry? {
-        query(whereClause: "s.id = ?", bindings: [id], limit: 1).first
+        query(whereClause: "s.id = ?", bindings: [id], limit: 1, primaryOnly: false).first
+    }
+
+    func senses(relatedToSenseID id: String) -> [LexiconEntry] {
+        query(
+            whereClause: "s.lexeme_id = (SELECT lexeme_id FROM sense WHERE id = ?)",
+            bindings: [id],
+            limit: 24,
+            primaryOnly: false
+        )
     }
 
     func entry(matching word: String, partOfSpeech: String? = nil) -> LexiconEntry? {
@@ -120,18 +129,20 @@ final class LexiconStore {
         bindings: [String],
         limit: Int,
         offset: Int = 0,
-        exactWord: String? = nil
+        exactWord: String? = nil,
+        primaryOnly: Bool = true
     ) -> [LexiconEntry] {
         guard let database else { return [] }
         let exactOrdering = exactWord == nil ? "" : "CASE WHEN l.normalized_lemma = ? THEN 0 WHEN l.normalized_lemma LIKE ? THEN 1 ELSE 2 END,"
         let sql = """
         SELECT s.id, l.lemma, l.part_of_speech, COALESCE(l.pronunciation, ''),
                s.definition, l.frequency_rank, l.learning_band, l.is_phrase,
-               COALESCE((SELECT group_concat(text, char(31)) FROM example WHERE sense_id = s.id), '')
+               COALESCE((SELECT group_concat(text, char(31)) FROM example WHERE sense_id = s.id), ''),
+               COALESCE(s.usage_label, ''), s.sense_order
         FROM lexeme l
-        JOIN sense s ON s.lexeme_id = l.id AND s.sense_order = 0
-        WHERE \(whereClause)
-        ORDER BY \(exactOrdering) l.frequency_rank, l.normalized_lemma, l.part_of_speech
+        JOIN sense s ON s.lexeme_id = l.id
+        WHERE \(whereClause)\(primaryOnly ? " AND s.sense_order = 0" : "")
+        ORDER BY \(exactOrdering) l.frequency_rank, l.normalized_lemma, l.part_of_speech, s.sense_order
         LIMIT ? OFFSET ?
         """
         var statement: OpaquePointer?
@@ -163,6 +174,8 @@ final class LexiconStore {
                     ipa: Self.string(statement, 3),
                     definition: Self.string(statement, 4),
                     examples: Array(examples.prefix(5)),
+                    usageLabel: Self.string(statement, 9),
+                    senseOrder: Int(sqlite3_column_int(statement, 10)),
                     frequencyRank: Int(sqlite3_column_int(statement, 5)),
                     learningBand: Int(sqlite3_column_int(statement, 6)),
                     isPhrase: sqlite3_column_int(statement, 7) != 0

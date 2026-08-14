@@ -10,15 +10,20 @@ enum TodayGreeting {
     }
 }
 
+private enum TodayPracticeLaunch: Int, Identifiable {
+    case round
+    case practiceAgain
+    var id: Int { rawValue }
+}
+
 struct TodayView: View {
     @EnvironmentObject private var store: LearningStore
     @EnvironmentObject private var speechPlayer: SpeechPlayer
-    @State private var showingPractice = false
-    @AppStorage("dailyGoal") private var configuredGoal = 10
+    @State private var practiceLaunch: TodayPracticeLaunch?
+    @AppStorage("newWordLimit") private var configuredRoundSize = 5
 
-    private var completedToday: Int { store.completedReviews() }
-    private var dueToday: Int { store.sessionCards(limit: 100).count }
-    private var goal: Int { configuredGoal }
+    private var completedToday: Int { store.practicedWordCount() }
+    private var goal: Int { max(1, configuredRoundSize) }
     private var progress: Double { min(1, Double(completedToday) / Double(max(goal, 1))) }
     private var streak: Int { store.currentStreak(goal: goal) }
 
@@ -39,7 +44,9 @@ struct TodayView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .fullScreenCover(isPresented: $showingPractice) { PracticeSessionView() }
+            .fullScreenCover(item: $practiceLaunch) { launch in
+                PracticeSessionView(startWithPracticeAgain: launch == .practiceAgain)
+            }
         }
         .task(id: store.featuredWord()?.id) {
             if let word = store.featuredWord() { speechPlayer.prepare(word) }
@@ -68,21 +75,21 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(completedToday >= goal ? "Daily goal complete" : "Your daily practice")
+                    Text(completedToday >= goal ? "Daily round complete" : "Your daily round")
                         .font(.lexiloDisplay(25, weight: .semibold)).foregroundStyle(.white)
-                    Text(completedToday >= goal ? "A little practice, remembered longer." : "A focused session chosen for you.")
+                    Text(completedToday >= goal ? "Keep going with another round, or repeat today’s words." : "Start with \(goal) words. Add more when you want.")
                         .font(.subheadline).foregroundStyle(.white.opacity(0.72))
                 }
                 Spacer()
                 ZStack {
                     Circle().stroke(.white.opacity(0.18), lineWidth: 5)
                     Circle().trim(from: 0, to: progress).stroke(.white, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
-                    Text("\(completedToday)/\(goal)").font(.caption.bold()).foregroundStyle(.white)
+                    Text(completedToday >= goal ? "✓" : "\(completedToday)/\(goal)").font(.caption.bold()).foregroundStyle(.white)
                 }.frame(width: 54, height: 54)
             }
-            Button { showingPractice = true } label: {
+            Button { practiceLaunch = .round } label: {
                 HStack {
-                    Text(dueToday == 0 ? "Practice again" : "Start practice")
+                    Text(completedToday == 0 ? "Start practice" : "Next Round")
                     Spacer()
                     Image(systemName: "arrow.right")
                 }
@@ -91,6 +98,15 @@ struct TodayView: View {
                 .background(.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }.buttonStyle(PressableScale())
                 .disabled(!store.lexicon.isAvailable)
+            if completedToday > 0 {
+                Button { practiceLaunch = .practiceAgain } label: {
+                    Label("Practice Again · \(completedToday) words", systemImage: "arrow.clockwise")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.86))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(22)
         .background(LexiloTheme.ink, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -99,7 +115,7 @@ struct TodayView: View {
 
     private var detailRow: some View {
         HStack(spacing: 12) {
-            stat(value: "\(max(dueToday, 0))", label: "Due today", symbol: "clock")
+            stat(value: "\(completedToday)", label: "Words today", symbol: "text.book.closed")
             stat(value: "Day \(streak)", label: "Practice streak", symbol: "flame")
         }
     }
@@ -135,6 +151,10 @@ struct TodayView: View {
                     .accessibilityIdentifier("featured-word-pronunciation")
                 }
                 Text(word.word).font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
+                DifficultyIndicator(
+                    value: store.averageDifficulty(vocabularyID: word.id, includePaused: true),
+                    measured: store.hasReviewedCard(vocabularyID: word.id, includePaused: true)
+                )
                 HStack(alignment: .top, spacing: 10) {
                     Text(word.conciseDefinition).font(.body).foregroundStyle(LexiloTheme.muted)
                     Spacer(minLength: 8)
