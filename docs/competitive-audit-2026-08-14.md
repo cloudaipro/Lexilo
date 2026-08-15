@@ -1,6 +1,7 @@
 # LEXILO Competitive Audit and Product Improvement Plan
 
 > Research date: August 14, 2026
+> Code-state refresh: August 15, 2026
 > Market: United States iPhone App Store
 > Scope: English-learning category leaders, Anki and the English 60K deck ecosystem, LEXILO product audit, SWOT analysis, gap analysis, and UI/product roadmap
 
@@ -10,9 +11,9 @@ LEXILO should not compete as a smaller Duolingo or another generic AI conversati
 
 > A private, focused vocabulary-memory coach that turns words you recognize into words you can actively use.
 
-The foundation is strong: calm editorial UI, two-way recall on different days, offline dictionary and neural pronunciation, automatic scheduling, a bounded daily session, progress by recall direction, and a useful widget.
+The foundation is strong: calm editorial UI, two-way recall on different days, an offline Kaikki Learning Core, neural pronunciation, adaptive scheduling, a bounded daily session, and a useful widget.
 
-The critical weakness is that LEXILO currently asks “Do you know?” and accepts self-report. Its central promise is reliable memory, but it does not yet objectively verify typing, spelling, meaning selection, or speech. Improving that proof of learning matters more than adding a large general curriculum.
+The current release now verifies meaning-to-word production with typed input and precise correction, while recognition still uses a deliberate Know/Don’t know self-assessment. The main remaining product risk is content trust at scale: examples, pronunciations, and sense selection must remain useful as the source refreshes.
 
 ## Research method and limitations
 
@@ -145,21 +146,21 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 - Clear, research-aligned two-way recall model.
 - Paired recognition and production cards cannot appear on the same calendar day.
 - Calm, recognizable editorial identity instead of category-standard cartoon gamification.
-- Local learning history, dictionary, scheduler, and neural text-to-speech.
-- More than 100,000 searchable lexical entries and more than 10,000 learning candidates.
+- Local learning history, Kaikki Learning Core, adaptive scheduler, and neural text-to-speech.
+- 39,179 learning terms, 115,201 validated usage examples, and complete pronunciation coverage for selected source entries.
 - Fast, finite daily sessions with failed-card recycling.
 - Direction-specific progress and a Home Screen widget.
 - Deterministic scheduler tests, persistence recovery, UI-flow tests, and a healthy build.
 
 ### Current weaknesses
 
-- **Recall is self-reported.** “Know” and “Don’t know” do not objectively verify retrieval. See [`PracticeSessionView.swift`](../Lexilo/Views/PracticeSessionView.swift#L138).
-- **Scheduling is not memory-adaptive.** The nth successful response schedules the next review in n days. See [`LearningService.swift`](../Lexilo/Services/LearningService.swift#L5).
-- No onboarding, placement check, learner goal, native language, exam target, or interest profile.
-- No typed recall, spelling, cloze, listening discrimination, or pronunciation assessment.
+- **Recognition remains self-reported.** “Know” and “Don’t know” are intentionally lightweight; production cards now verify typed word recall. See [`PracticeSessionView.swift`](../Lexilo/Views/PracticeSessionView.swift#L138).
+- **Speech is playback, not assessment.** Lexilo provides offline pronunciation but does not yet grade spoken output.
+- No placement check, exam target, or interest profile; onboarding currently focuses on optional first-language support.
+- No cloze, listening discrimination, or pronunciation assessment.
 - Dictionary content is not organized around collocations, confusable words, word families, or learner-friendly senses.
-- Progress reports activity and directional accuracy, but not retention forecast, problem words, workload, or behavioral recommendations. See [`ProgressView.swift`](../Lexilo/Views/ProgressView.swift#L55).
-- No reminders, cloud sync, localization, subscription strategy, or cross-platform continuity.
+- There is no separate Progress or Memory dashboard; scheduling diagnostics remain intentionally behind the interface.
+- No reminders, subscription strategy, or cross-platform continuity. Optional iCloud snapshot sync is available for portability.
 - The widget URL contains a vocabulary ID, but the application currently opens a generic practice session instead of targeting that word. See [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L63) and [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
 
 ### Opportunities
@@ -174,7 +175,7 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 
 - WordUp already competes directly with broader personalization and exercise variety.
 - Learners increasingly expect speaking feedback from English-learning products.
-- Generic or obscure WordNet definitions can reduce perceived content quality.
+- Generic, obsolete, or context-poor source definitions can reduce perceived content quality; the Kaikki quality pipeline now rejects definition-like example fragments.
 - A calm visual experience can feel static unless feedback and progress remain emotionally rewarding.
 - A narrow product may struggle with App Store discovery without exceptionally clear positioning and screenshots.
 
@@ -182,14 +183,14 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 
 | Capability | LEXILO today | Competitive standard | Priority |
 |---|---|---|---|
-| Objective recall | Self-reported binary result | Typed, spoken, multiple-choice, and corrected | Critical |
+| Objective recall | Typed production correction plus self-reported recognition | Typed, spoken, multiple-choice, and corrected | High |
 | Personalization | Difficulty band and new-word limit | Goal, level, interests, scenario, and adaptive path | Critical |
-| Scheduling | Fixed success-count interval | Recall-probability or adaptive review | High |
+| Scheduling | Compact adaptive model with hidden memory variables | Recall-probability or adaptive review | Medium |
 | Vocabulary depth | Definition, IPA, and examples | Collocations, word families, confusables, and saved context | High |
 | Speaking | Playback only | Recording, recognition, and pronunciation feedback | Medium |
 | Habit support | Streak, goal, and widget | Reminders, recovery, and explicit time estimate | High |
-| Progress | Counts and two-direction accuracy | Weak-skill diagnosis and recommended next action | High |
-| Sync | Device-local only | Multi-device and web continuity | Medium |
+| Progress | Daily goal, streak, and completion feedback; no separate dashboard | Weak-skill diagnosis and recommended next action | Medium |
+| Sync | Device-local plus optional iCloud snapshot backup | Multi-device and web continuity | Medium |
 | Privacy/offline | Excellent | Often cloud-dependent | Defensible advantage |
 | Visual identity | Strong and distinctive | Many competitors are generic or game-heavy | Preserve |
 
@@ -199,58 +200,38 @@ Not every feature gap should be closed. LEXILO should deliberately avoid competi
 
 The estimates below assume one primary iOS engineer with part-time design and content support.
 
-### Phase 1: Prove learning — 4 to 6 weeks
+### Phase 1: Protect content trust
 
-1. Add short, optional onboarding:
-   - Learning purpose: work, academic, exam, reading, or conversation.
-   - Five-word placement sample.
-   - Daily time: 3, 5, or 10 minutes.
-   - One interactive practice card.
-2. Add objective practice modes:
-   - Meaning → Word: typed response with tolerant spelling and lemma matching.
-   - Word → Meaning: silent retrieval followed by selection from plausible meanings.
-   - Preserve the binary self-assessment mode as an accessibility and speed option.
-3. Record objective correctness, response latency, hint use, and attempt count.
-4. Replace the fixed interval sequence with an adaptive scheduler or FSRS-style model while keeping algorithm settings invisible.
-5. Add content-quality reporting for wrong senses, poor examples, offensive content, and obsolete usage.
-6. Run Dynamic Type, VoiceOver, contrast, Reduce Motion, and largest-text audits.
+1. Keep the Kaikki quality pipeline reproducible and publish the source hash,
+   database version, row counts, and rejection counts with each release.
+2. Expand regression fixtures around common failure modes: definition-like
+   fragments, missing headword examples, duplicate pronunciations, heteronyms,
+   and inflected forms.
+3. Review learner content reports and feed confirmed fixes back into the next
+   offline database build without changing learner-owned scheduling history.
+4. Run Dynamic Type, VoiceOver, contrast, Reduce Motion, and oldest-device
+   performance audits before each App Store submission.
 
-Apple recommends fast, optional, interactive onboarding and interfaces that adapt across Dynamic Type sizes:
+### Phase 2: Add dictionary breadth separately
 
-- [Apple Human Interface Guidelines: Onboarding](https://developer.apple.com/design/human-interface-guidelines/onboarding)
-- [Apple Human Interface Guidelines: Typography](https://developer.apple.com/design/human-interface-guidelines/typography)
-- [Apple Human Interface Guidelines: Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+1. Build the future Full Dictionary as an optional, versioned download rather
+   than expanding the v0.9 bundle.
+2. Keep the future pack Kaikki-only, source-attributed, and free of OEWN,
+   FTS5, and unlicensed commercial dictionary content.
+3. Support exact headword, prefix, and inflected-form lookup with ordinary
+   indexes; do not add full-text definition search unless a later product need
+   proves it necessary.
+4. Verify compressed size, integrity, schema compatibility, and atomic update
+   behavior before exposing the pack to learners.
 
-### Phase 2: Make memory visible — 6 to 10 weeks
+### Phase 3: Extend practice selectively
 
-1. Create a **Word Intelligence** detail page containing:
-   - Primary meaning.
-   - Common collocations.
-   - Word family.
-   - Confusable word.
-   - Personal sentence.
-   - Strength in each recall direction.
-   - Next review date.
-2. Redesign Progress around:
-   - Retained this month.
-   - Recognition versus production.
-   - Words at risk.
-   - Upcoming review load.
-   - Most improved category.
-3. Add local reminder scheduling after the learner completes a successful session.
-4. Make widget deep links open the actual word or a focused one-word review.
-5. Add optional iCloud synchronization without weakening offline operation.
-
-### Phase 3: Bridge memory to use — 10 to 16 weeks
-
-1. Add “Say it” as an optional third card type.
-2. Prefer on-device speech recognition where available and clearly disclose any fallback behavior.
-3. Add short contextual-production exercises:
-   - Complete a sentence.
-   - Rewrite a phrase using the target word.
-   - Speak a ten-second response using the word.
-4. Add focused packs for business, academic English, IELTS/TOEFL, travel, and personal vocabulary.
-5. Do not build open-ended AI chat until objective vocabulary retention is demonstrably strong.
+1. Evaluate cloze, listening, and on-device speech assessment as optional modes.
+2. Add academic, workplace, exam, or personal packs only when they reuse the
+   same automatic workload and scheduler.
+3. Keep open-ended AI conversation, social competition, and broad grammar
+   curriculum outside the focused vocabulary product until retention evidence
+   supports the expansion.
 
 ## UI design plan
 
@@ -299,20 +280,21 @@ Replace a generic completion message with a learning summary:
 - Primary action: `Finish`
 - Secondary action: `Review the 2 misses`
 
-### Library
+### Words screen
 
-Rename **Words** to **Library** and organize it into:
+Keep the **Words** name and its two simple sections:
 
-- Learning
-- Mastered
-- Saved
-- Dictionary
+- **My Words** for learned material.
+- **Upcoming** for words approaching introduction.
 
-Each row should display the word, concise meaning, weakest recall direction, and next review rather than only a generic state pill.
+Each row should display the word, concise meaning, and learning state. The
+current screen also supports local word/meaning filtering and focused word
+detail. Full Dictionary browsing remains a future feature rather than a third
+Words section.
 
-### Progress
+### Future diagnostics
 
-The Progress screen should answer three questions:
+If a future diagnostics surface is added, it should answer three questions:
 
 1. What have I retained?
 2. Where am I weak?
@@ -327,7 +309,7 @@ Recommended modules:
 - Recently mastered words.
 - A contextual action such as `Practice 5 weak production words`.
 
-Avoid decorative charts and trophy collections. Every metric should lead to an action.
+Avoid decorative charts and trophy collections. Every metric should lead to an action. Until then, keep memory estimates and scheduler internals out of the learner-facing navigation.
 
 ### Settings
 
@@ -496,14 +478,14 @@ This power creates setup and maintenance costs. Learners must choose or construc
 
 | Capability | Anki | LEXILO today | Assessment |
 |---|---|---|---|
-| Scheduling | Personalized FSRS memory model and retention target | Fixed intervals based mainly on successful-review count | Critical LEXILO gap |
-| Recall signal | Four self-ratings; typed answers possible through templates | Binary self-report after reveal | Critical LEXILO gap |
+| Scheduling | Personalized FSRS memory model and retention target | Compact adaptive model with hidden memory variables | Smaller LEXILO gap |
+| Recall signal | Four self-ratings; typed answers possible through templates | Typed production correction plus binary recognition self-report | Material LEXILO gap |
 | Bidirectional study | Configurable through sibling card templates | Built-in recognition and production directions | LEXILO has the better default |
 | Sibling separation | Configurable burying | Enforced on separate days | LEXILO advantage |
 | Authoring/import | General note types, fields, templates, import/export | Closed built-in content flow | Material gap for personal vocabulary |
 | Difficult-item handling | Lapses, leeches, suspend, bury, custom study | Failure returns to the session; limited item controls | Material gap |
 | Analytics | Retention, forecast, time, memory state, answer history | Basic learning/mastery and recent activity | Material gap |
-| Sync and reach | Desktop, mobile, web, optional sync | iOS, device-local | Material gap for multi-device learners |
+| Sync and reach | Desktop, mobile, web, optional sync | iOS, local-first, optional iCloud snapshot sync | Material gap for multi-device learners |
 | Content pathway | Platform is content-agnostic | Curated English-first discovery and workload | LEXILO advantage |
 | Cognitive load | Powerful but administration-heavy | Focused, automatic, finite | LEXILO advantage |
 | Offline pronunciation | Depends on each deck’s media | Bundled offline neural TTS | LEXILO advantage |
@@ -570,59 +552,63 @@ LEXILO should therefore **not copy or bundle this deck’s content** without a f
 
 | Capability | English 60K deck | LEXILO today | Assessment |
 |---|---|---|---|
-| Breadth | 66,332 sense notes / 32,381 unique surface forms | Searchable lexicon over 100K entries; curated learning pool over 10K | 60K has deeper ready-to-study long tail |
+| Breadth | 66,332 sense notes / 32,381 unique surface forms | 39,179 Learning Core terms; broader Full Dictionary deferred | 60K has deeper ready-to-study long tail |
 | Sense modeling | One note per definition; core/extend/rare tags | Usually one selected learning sense; no visible sense progression | Material LEXILO gap |
 | Workload selection | Frequency subdecks plus manual suspend/delete | Automatic suggestions, level bands, finite active workload | LEXILO advantage |
 | Practice direction | Supplied template is word to meaning | Recognition and production, separated by day | Strong LEXILO advantage |
-| Objective recall | Self-rated; supplied template has no typed check | Self-rated after reveal | Shared critical weakness |
+| Objective recall | Self-rated; supplied template has no typed check | Typed production correction; recognition remains self-rated | LEXILO has a stronger production default |
 | Context | Usage labels and up to three displayed examples; random front cue | Up to three examples with simpler metadata | 60K is richer, but front cue can weaken retrieval |
 | Pronunciation | Mostly available remote dictionary audio | Consistent offline synthesized audio | Authenticity favors 60K where present; reliability/privacy favor LEXILO |
 | Translation | Optional AI-generated Simplified Chinese | English-only | Potential accessibility gap, not necessarily a core-product gap |
 | Administration | Requires Anki import and deck/card management | Integrated and automatic | LEXILO advantage |
-| Content rights | Mixed and field-specific | Open English WordNet-based controlled pipeline | LEXILO advantage and lower product risk |
+| Content rights | Mixed and field-specific | Kaikki/Wiktionary with explicit attribution and license notices | LEXILO advantage and lower product risk |
 
 ## Revised product plan after the Anki audit
 
-### P0 — make memory claims trustworthy
+### Delivered in v0.9
 
-1. **Replace fixed intervals with an independently implemented adaptive model.** Store per-card difficulty, stability, retrievability, last outcome, and review latency. Target a default retention level near 90% and keep the tuning controls hidden from ordinary learners.
-2. **Add objective production.** For meaning-to-word cards, ask the learner to type the word before revealing it. Normalize case and punctuation, handle accepted variants, show precise corrections, and record hints and response time.
-3. **Make content sense-aware.** Introduce a lemma parent with child senses, priority (`core`, `extended`, `rare`), usage labels, examples, and separate direction-specific memory state. Teach the core sense first and unlock secondary senses only after stable mastery.
-4. **Add item-level recovery actions.** From feedback and the word detail view, offer “Wrong sense,” “Too easy,” “Pause this word,” and “Report content.” Do not force learners to manage deck hierarchies.
+The audit recommendations that became product work are now implemented:
 
-### P1 — expose useful control without becoming Anki
+1. A compact adaptive scheduler stores difficulty, stability, retrievability,
+   outcome, latency, and hint signals while keeping the scores out of the main UI.
+2. Meaning-to-word cards use typed input, tolerant normalization, accepted
+   variants, and precise submitted/expected correction.
+3. Sense-aware content supports core, extended, and rare senses, independent
+   directions, sequential unlocking, and item-level recovery actions.
+4. CSV/TSV import, JSON backup/restore, optional iCloud snapshots, and
+   first-language support are available.
+5. The Kaikki-only quality pipeline validates examples and pronunciation and
+   refreshes lexical content without resetting learner progress.
 
-5. **Build an actionable Memory screen.** Show today’s load, a seven-day due forecast, estimated true retention, fragile words, and recognition-versus-production strength. Use plain labels such as “Strong,” “Fading,” and “Needs recall,” with technical estimates available in a detail sheet.
-6. **Support constrained personal import.** Accept CSV/TSV fields for word, meaning, example, and optional tags; validate duplicates and preview generated recognition/production cards. Do not expose arbitrary HTML templates, note types, or add-ons.
-7. **Add safe portability.** Provide export, explicit backup restore, and optional iCloud sync while retaining a fully local mode.
-8. **Create a content-quality pipeline.** Measure missing IPA/examples, duplicated senses, confusing definitions, example leakage, and learner reports. Add collocations and register labels where they materially clarify use.
+### Next priorities
 
-### P2 — expand selectively
-
-9. **Offer optional first-language support.** During onboarding, let beginners enable a reviewed translation layer. Keep English definitions primary and avoid presenting machine translation as authoritative.
-10. **Improve core-word audio where licensing permits.** Preserve offline neural TTS everywhere; optionally bundle licensed human recordings for the highest-frequency words rather than depending on remote URLs.
-11. **Offer curated packs without recreating deck management.** Examples include academic English, workplace writing, IELTS, and saved words. Each pack should feed the same automatic workload and scheduler.
+1. Keep regression fixtures and source-quality reports growing with each Kaikki
+   refresh.
+2. Ship a separately versioned Full Dictionary download only when its licensing,
+   integrity, size, and update flow are ready.
+3. Evaluate cloze, listening, speech assessment, and curated learning packs as
+   optional extensions, without adding a Memory dashboard by default.
 
 ### UI changes arising from this comparison
 
 #### Practice card
 
 - Keep the current restrained full-screen focus.
-- Replace “Reveal” on production cards with a large native text field and a single **Check** action.
+- Keep the large native text field and single **Check** action on production cards.
 - After checking, show the expected word, the learner’s exact difference, part of speech, one non-leaking example, and pronunciation.
 - Use an unobtrusive overflow menu for Pause, Wrong sense, and Report; do not crowd the primary card.
 - Continue separating recognition and production siblings by day.
 
 #### Word detail
 
-- Add a compact sense stack headed by **Core meaning**, followed by locked or de-emphasized extended senses.
-- Show a two-axis memory indicator: **Understand** and **Recall**.
+- Keep the compact sense stack headed by the core meaning, followed by locked or de-emphasized extended senses.
+- Keep scheduler difficulty and memory estimates out of the word-detail interface.
 - Place register, collocations, examples, and audio within each sense instead of flattening them under the headword.
 - Allow the learner to activate or pause individual senses without exposing Anki terminology.
 
-#### Memory and progress
+#### Future diagnostics (optional)
 
-- Add a top summary: estimated retention, due today, and upcoming seven-day load.
+- If a future diagnostics surface is added, consider a top summary of due today and upcoming load.
 - Show a “Words at risk” list with one-tap focused review.
 - Explain schedule changes in human language: “Correct and quick — next review in 12 days.”
 - Keep parameter optimization, stability values, and desired-retention settings behind an Advanced panel, if exposed at all.

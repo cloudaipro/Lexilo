@@ -25,28 +25,28 @@ xcodegen generate
 
 ## Included
 
-- SwiftUI app with Today, Words, Progress, and Settings tabs
+- SwiftUI app with focused Today, Words, and Settings tabs
 - Two-direction daily practice flow with reveal and Know/Don’t Know decisions
-- Deterministic 1/2/3-day linear scheduler (capped at 180 days) and paired-card same-day exclusion
+- Compact adaptive scheduler using difficulty, stability, retrievability, response time, and hints (capped at 3,650 days), with paired-card same-day exclusion
 - Atomic offline JSON persistence with last-known-good recovery and immutable review history
-- Bundled, searchable Open English WordNet SQLite lexicon with 135,282 lexemes and 17,725 learning candidates
+- Bundled Kaikki / English Wiktionary Learning Core with 39,179 learning terms, verified usage examples, CMUdict pronunciation fallback, and eSpeak NG coverage
 - Deterministic offline vocabulary rotation by learning band, with learner progress stored separately from dictionary content
 - Kitten Nano v0.2 neural pronunciation through sherpa-onnx, launch prewarming, and a bounded on-device audio cache
 - Small WidgetKit widget target backed by an App Group study snapshot
 - Daily new-word cap, explicit StudyDay streak records, and migration-safe persistence
-- Unit tests for intervals, failure reset, new-word limits, streaks, and paired-card constraints
-- XCUITest coverage for Today → practice → reveal → Don’t Know → recycled queue → completion
+- Unit tests for adaptive intervals, content migration, example quality, pronunciation fallbacks, persistence, new-word limits, streaks, and paired-card constraints
+- XCUITest coverage for the daily practice flow and simplified word-detail hierarchy
 - App icon generated from the supplied `logo.png`
 
-All vocabulary comes from the versioned Open English WordNet database in `Lexilo/Resources/lexilo-lexicon.sqlite`; pronunciation uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
+All lexical content comes from the versioned Kaikki English Wiktionary extract in `Lexilo/Resources/lexilo-lexicon.sqlite`. The bundled Learning Core contains 115,201 validated usage examples; definitions, collocations, and fragments are never substituted for a missing example. CMUdict fills IPA gaps only, eSpeak NG supplies explicitly marked generated IPA where needed, and spoken pronunciation uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. There is no OEWN merge or FTS5 index. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
 
 ## Validation
 
 Validated on **iPhone 17 Pro, iOS 26.2 Simulator**:
 
 - Full simulator build: passed
-- Practice-flow XCUITest: passed
-- OEWN-only seeding, exact-band rotation, unavailable-state, sense repair, persistence recovery, scheduler, cache, greeting, and real Kitten inference tests: 21 passed
+- Practice-flow XCUITest: 4 tests passed
+- ReviewSchedulerTests: 32 tests passed, including Kaikki-only seeding, exact-band rotation, unavailable-state, sense repair, example-quality regression, persistence recovery, adaptive scheduling, cache, greeting, and real Kitten inference
 - Unsigned arm64 iPhone build: passed
 - Visual checks: Today, recognition front, revealed answer, failure recycling, and completion
 

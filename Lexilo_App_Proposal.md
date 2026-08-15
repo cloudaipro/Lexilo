@@ -1,261 +1,136 @@
-PRODUCT PROPOSAL \| iOS LEXILO A focused vocabulary-learning app built
-around simple recall, spaced repetition, and daily consistency.
+# Lexilo v0.9 Product Proposal
 
-Working name: Lexilo Prepared August 2026
+> Status: implemented in the current source tree
+> Updated: August 15, 2026
 
-# 1. Executive Summary
+Lexilo is a focused, local-first iOS vocabulary trainer. It helps learners turn
+recognition into active recall through short daily sessions, automatic review
+scheduling, and carefully filtered English lexical content.
 
-Lexilo is an iOS vocabulary-learning app designed for users who want the
-memory benefits of spaced repetition without the setup and complexity of
-traditional flashcard systems. The product automatically manages what to
-study, when to review it, and how to test recall. Core product idea.
-Every vocabulary item generates two independent learning cards: one
-tests recognition (word → definition) and the other tests active recall
-(definition → word). The paired cards are deliberately prevented from
-appearing on the same day, reducing short-term cueing and creating a
-more meaningful memory test. \## Product Positioning \## Target Users -
-English learners who want a structured daily vocabulary habit. -
-Students preparing for academic, professional, or standardized English
-use. - Advanced learners who understand words when reading but struggle
-to recall them actively. - Users who find Anki powerful but too
-configurable or time-consuming. \## Product Principles
+## Product promise
 
-# 2. Learning System
+Learn a small amount today, retrieve it in both directions, and return when
+your memory needs it. Lexilo deliberately avoids deck administration, public
+leaderboards, decorative memory dashboards, and unnecessary dictionary surface
+area.
 
-## 2.1 Vocabulary Item and Paired Cards
+## v0.9 information architecture
 
-Each vocabulary item is the parent object for two separately scheduled
-cards: - Recognition Card --- shows the word first; reveal displays
-definition and example. - Recall Card --- shows the definition/context
-first; reveal displays the target word. Scheduling constraint: paired
-cards for the same vocabulary item must never be served on the same
-calendar day. \## 2.2 Review Interaction \## 2.3 Recommended V1 Interval
-Model The initial release should use a transparent fixed progression
-rather than exposing Anki-style difficulty controls. This keeps the
-experience understandable and gives the team clean behavioral data
-before adopting a more advanced scheduler. \## 2.4 Daily Session
-Composition 1. Due reviews are served first. 1. Failed cards are
-recycled to the end of the current session. 1. New vocabulary is
-introduced up to the user's daily limit. 1. The paired reverse-direction
-card becomes eligible on a later day, never the same day. \## 2.5
-Mastery Vocabulary-level mastery is reached only when both directions
-independently meet the mastery threshold. A learner who recognizes a
-word but cannot retrieve it from meaning remains in Learning status. \#
-3. Content & Pronunciation Strategy \## 3.1 Vocabulary Content Lexilo
-should ship with a curated, frequency-ranked English vocabulary
-database. Each entry should support: - word / lemma - part of speech -
-concise definition - 1--3 example sentences - IPA where available -
-source/license metadata - frequency or difficulty rank \## 3.2 Source
-Strategy Recommended approach: use open or explicitly licensed lexical
-sources for bundled content, such as Wiktionary-derived datasets, and
-keep source attribution and license notices with the bundled dataset. Do
-not make scraping a third-party dictionary website a production
-dependency. Vocabulary.com, Anki decks, and commercial dictionary
-products can be useful references for product behavior and data shape,
-but content redistribution rights must be reviewed separately before any
-definitions or examples are bundled. \## 3.3 Pronunciation - Primary:
-the bundled Kitten Nano v0.2 model running through sherpa-onnx. Prewarm the
-model after launch and cache the featured and upcoming practice words. Keep
-synthesis fully offline, expose the packaged American and British voices,
-and retain the installed iOS voice only as a runtime failure fallback.
-Audio playback must remain optional and never block study.
+The app has three primary areas:
 
-# 4. User Experience
+- **Today** — daily round, streak, featured word, and practice entry point.
+- **Words** — learned and upcoming vocabulary, with word/meaning filtering and
+  a focused word-detail view.
+- **Settings** — practice preferences, pronunciation, translations, imports,
+  backup/sync, and source licenses.
 
-## 4.1 Information Architecture
+There is no Memory or Progress tab. Scheduling evidence remains in the
+background, and the Words tab does not expose a Dictionary browser. A broader
+Dictionary feature is intentionally deferred to a future release.
 
-## 4.2 Today
+## Learning experience
 
--   Current streak and daily goal.
--   Cards due today and new words available.
--   Single primary action: Start Practice.
--   Session completion state with clear progress feedback. \## 4.3
-    Practice Card \## 4.4 Widget A small Home Screen widget should
-    display one not-yet-mastered word and a short example. The widget
-    acts as passive reinforcement rather than a random "word of the
-    day."
--   2×2 / small widget as the initial size.
--   Word + short context + streak indicator.
--   Tap opens the corresponding study flow.
--   Widget content should prioritize due or weak vocabulary. \## 4.5
-    Streaks and Daily Goal A streak should represent completed learning,
-    not merely opening the app. A study day is counted when the
-    configured daily goal is completed. This makes the streak meaningful
-    and avoids vanity engagement. \# 5. Technical Proposal \## 5.1
-    Recommended Stack
--   SwiftUI --- application UI
--   SwiftData --- vocabulary progress, cards, review logs, and study-day
-    state
--   WidgetKit --- Home Screen widget and timeline
--   sherpa-onnx / ONNX Runtime / AVAudioPlayer --- local Kitten synthesis and cached playback
--   App Groups --- shared read-only study snapshot for the widget
--   Bundled SQLite/resource dataset --- initial vocabulary content
--   CloudKit --- optional later phase for cross-device sync \## 5.2 Core
-    Data Model \## 5.3 Scheduler Responsibilities
--   Select due cards using local calendar-day semantics.
--   Prevent paired cards from appearing on the same day.
--   Reinsert failed cards at the end of the active session.
--   Cap new vocabulary according to user settings.
--   Resolve date collisions by shifting the paired card forward.
--   Keep scheduling deterministic enough to test with unit tests.
+Every active sense produces two independent cards:
 
-# 6. V1 Scope & Delivery Plan
+1. **Recognition:** word to meaning.
+2. **Production:** meaning to word, with typed answer checking.
 
-## V1 --- Product-Complete Core
+The two directions cannot be served on the same calendar day. Failed cards can
+return later in the same session and are scheduled to return sooner. Practice
+Again repeats the words completed today without changing the schedule.
 
--   Bundled Open English WordNet database with frequency-ranked learning candidates
--   Word → Definition and Definition → Word cards
--   Paired-card same-day exclusion rule
--   ✕ / ✓ study interaction
--   Daily new-word limit and due-review queue
--   Definition, example sentence, and pronunciation
--   Daily goal and streak
--   Small WidgetKit widget
--   Word search and Learning / Mastered states
--   Fully offline core study flow \## Deferred
--   FSRS or personalized memory modeling
--   Cloze-context cards
--   CloudKit synchronization
--   User-created decks and imports
--   AI-generated examples or definitions
--   Social leaderboards / competitive streaks
--   Web or Android clients \## Success Metrics \# 7. Product
-    Recommendation Lexilo should launch as a deliberately narrow
-    product: a beautiful, fast, automatic vocabulary trainer rather than
-    a general flashcard platform. Its strongest differentiation is not a
-    larger feature list; it is the combination of two-way recall,
-    separated scheduling, useful context, and an interface that asks the
-    learner to make only one meaningful decision at a time. Recommended
-    product promise: Open. Learn. Remember.
+The scheduler is adaptive but intentionally quiet. It uses correctness,
+response time, hints, difficulty, stability, retrievability, and recent review
+history to choose the next interval. Technical scores are not presented as a
+learner task.
 
-# Tables
+## Content and pronunciation
 
-## Table 1
+Kaikki's structured English Wiktionary extract is Lexilo's sole lexical source.
+Open English WordNet is not bundled or merged. The current Learning Core build
+is `2026-08-12-quality-v3` and contains:
 
-  -------------------------------------------------------------------------------------
-  2-WAY RECALL`<br>`{=html}Word ZERO                        DAILY
-  → Meaning`<br>`{=html}Meaning FRICTION`<br>`{=html}Only   HABIT`<br>`{=html}Widget,
-  → Word                        two                         daily goal,`<br>`{=html}and
-                                decisions:`<br>`{=html}✕    streak tracking
-                                Don't Know / ✓ Know         
-  ----------------------------- --------------------------- ---------------------------
+- 39,179 learning terms
+- 45,477 term/POS lexemes
+- 100,588 retained senses
+- 115,201 validated usage examples
+- 69,889 pronunciation rows
+- 79,195 word forms
 
-  -------------------------------------------------------------------------------------
+The importer keeps an example only when it contains the learning word or a
+valid inflected form, has at least four tokens, and reads as a complete sentence
+with terminal punctuation. Definitions, descriptions, collocations, and bare
+phrases are never relabeled as examples. If no valid example exists, the
+example field remains empty.
 
-## Table 2
+Pronunciation precedence is:
 
-  "Learn vocabulary without managing flashcards."
-  -------------------------------------------------
+1. Kaikki human-authored IPA.
+2. CMUdict General American IPA converted directly from ARPAbet.
+3. Explicitly marked eSpeak NG 1.52.0 generated IPA.
 
-## Table 3
+Spoken audio uses the bundled Kitten Nano v0.2 model through sherpa-onnx, with
+an installed iOS voice retained only as a runtime failure fallback. All core
+learning data and audio work offline.
 
-  -----------------------------------------------------------------------
-  Principle                           Implication
-  ----------------------------------- -----------------------------------
-  Simple by default                   No deck engineering, card
-                                      templates, or scheduler tuning
-                                      required.
+## Data architecture
 
-  Recall over exposure                The learner must retrieve meaning
-                                      and word form in separate sessions.
+The lexical database is a read-only SQLite resource. It contains source-aware
+terms, lexemes, etymology entries, senses, pronunciations, forms, and examples.
+The app uses ordinary SQLite B-tree indexes for exact, prefix, and inflected
+form lookup. It does not use FTS5 or a full-text definition search.
 
-  Automatic scheduling                The system decides when each card
-                                      returns.
+Learner state is stored separately as Codable JSON with a rolling backup. A
+dictionary update refreshes lexical fields and migrates by stable source sense
+ID, normalized word, and part of speech without resetting cards, review history,
+or mastery.
 
-  Daily continuity                    Progress, streaks, and widgets make
-                                      learning visible without adding
-                                      friction.
+## v0.9 release scope
 
-  Local-first                         Core learning and scheduling work
-                                      offline; cloud sync can be added
-                                      later.
-  -----------------------------------------------------------------------
+Included:
 
-## Table 4
+- Today, Words, and Settings surfaces.
+- Recognition and typed production practice.
+- Adaptive offline scheduling with separate directions.
+- Daily goal, streak, Next Round, and Practice Again.
+- Sense-aware word details with examples, pronunciation, collocations, and
+  optional personal translations.
+- CSV/TSV personal vocabulary import.
+- JSON backup/restore and optional iCloud snapshot sync.
+- Offline Kitten pronunciation with system-voice fallback.
+- WidgetKit study snapshot.
 
-  -----------------------------------------------------------------------
-  Action                  Meaning                 Scheduler Behavior
-  ----------------------- ----------------------- -----------------------
-  ✕ Don't Know            Recall failed           Reset learning
-                                                  interval; return card
-                                                  to the end of today's
-                                                  session.
+Deferred:
 
-  ✓ Know                  Recall succeeded        Increase success count
-                                                  and schedule a future
-                                                  review.
-  -----------------------------------------------------------------------
+- Full dictionary browsing and downloadable dictionary packs.
+- OEWN or any other semantic graph.
+- Full-text definition search.
+- Human-recorded dictionary audio.
+- Cloze, speech assessment, social features, and open-ended AI conversation.
 
-## Table 5
+## Source and licensing requirements
 
-  Consecutive Successful Reviews   Next Interval
-  -------------------------------- ---------------
-  1                                1 day
-  2                                2 days
-  3                                3 days
-  4                                4 days
-  5                                5 days
-  6                                6 days
-  7                                7 days
-  8                                8 days
-  9+                               n days, capped at 180
+The app ships attribution and license notices in
+`CONTENT_SOURCES.md` and `Lexilo/Resources/LEXICON_NOTICES.md`. Kaikki and
+Wiktionary text remains subject to CC BY-SA 4.0 and GFDL requirements. CMUdict
+and eSpeak NG are pronunciation layers only and cannot introduce definitions,
+senses, examples, or learning terms.
 
-## Table 6
+Commercial dictionary websites are product references only. Lexilo must not
+scrape or redistribute their definitions, examples, or audio without an
+appropriate license.
 
-  Today   Words   Progress   Settings
-  ------- ------- ---------- ----------
+## Verification
 
-## Table 7
+The current v0.9 source tree was validated on an iPhone 17 Pro, iOS 26.2
+Simulator:
 
-  --------------------------------------------------------------------------------------------------------
-  Front                                                             After Reveal
-  ----------------------------------------------------------------- --------------------------------------
-  elusive`<br>`{=html}`<br>`{=html}🔊`<br>`{=html}`<br>`{=html}Do   difficult to find, catch, or
-  you know this word?`<br>`{=html}`<br>`{=html}\[ Reveal \]         achieve`<br>`{=html}`<br>`{=html}The
-                                                                    answer remained
-                                                                    elusive.`<br>`{=html}`<br>`{=html}✕
-                                                                    Don't Know ✓ Know
+- ReviewSchedulerTests: 32/32 passed.
+- LexiloPracticeFlowTests: 4/4 passed.
+- SQLite integrity check: passed.
+- Selected source entries missing pronunciation: 0.
+- Full simulator build and unsigned arm64 build: passed.
 
-  --------------------------------------------------------------------------------------------------------
-
-## Table 8
-
-  -----------------------------------------------------------------------
-  Entity                              Key Responsibility
-  ----------------------------------- -----------------------------------
-  VocabularyItem                      Word, definition, examples,
-                                      pronunciation metadata, rank.
-
-  StudyCard                           Direction, state, success count,
-                                      interval, next review date.
-
-  ReviewLog                           Immutable record of each answer and
-                                      scheduling result.
-
-  StudyDay                            Daily goal, completed reviews, new
-                                      words, streak qualification.
-
-  UserSettings                        New-word limit, daily goal,
-                                      voice/accent, notifications.
-  -----------------------------------------------------------------------
-
-## Table 9
-
-  -----------------------------------------------------------------------
-  Metric                              What It Measures
-  ----------------------------------- -----------------------------------
-  Day-7 retention                     Whether the daily study loop
-                                      becomes a habit.
-
-  Daily goal completion rate          Whether sessions are appropriately
-                                      sized.
-
-  Review accuracy by direction        Recognition vs. active recall
-                                      difficulty.
-
-  Backlog size                        Whether new-word intake overwhelms
-                                      review capacity.
-
-  Words reaching mastery              Long-term learning output, not just
-                                      app engagement.
-  -----------------------------------------------------------------------
+See `README.md`, `CONTENT_SOURCES.md`, and
+`kaikki-dictionary-data-proposal-revised.md` for implementation and data-build
+details.

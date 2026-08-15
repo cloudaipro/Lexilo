@@ -1,1 +1,2 @@
 wordfreq==3.1.1
+# Build-time G2P also requires the pinned eSpeak NG 1.52.0 executable.

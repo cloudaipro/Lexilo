@@ -119,11 +119,7 @@ struct PracticeSessionView: View {
     @ViewBuilder
     private func recognitionPrompt(word: VocabularyItem, sense: LexicalSense?) -> some View {
         Text(word.word).font(.lexiloDisplay(48, weight: .medium)).foregroundStyle(LexiloTheme.ink)
-        HStack(spacing: 10) {
-            Text(word.partOfSpeech).italic()
-            Text(word.ipa)
-            Button { speechPlayer.play(word) } label: { Image(systemName: "speaker.wave.2.fill") }
-        }.font(.subheadline).foregroundStyle(LexiloTheme.sage)
+        pronunciationLine(for: word)
         if revealed {
             answerDivider
             spokenPracticeText(sense?.definition ?? word.conciseDefinition, label: "Play definition", font: .title3, color: LexiloTheme.ink)
@@ -146,6 +142,7 @@ struct PracticeSessionView: View {
             .font(.headline)
             .foregroundStyle(answerWasCorrect == true ? LexiloTheme.sage : revealedWithoutAttempt ? LexiloTheme.brass : LexiloTheme.danger)
             Text(word.word).font(.lexiloDisplay(42, weight: .medium)).foregroundStyle(LexiloTheme.ink)
+            pronunciationLine(for: word)
             if answerWasCorrect == false && !revealedWithoutAttempt {
                 VStack(spacing: 4) {
                     Text("You wrote: \(answerText)").foregroundStyle(LexiloTheme.muted)
@@ -182,16 +179,21 @@ struct PracticeSessionView: View {
 
     @ViewBuilder
     private func feedbackDetails(word: VocabularyItem, sense: LexicalSense?) -> some View {
-        if !word.ipa.isEmpty {
-            HStack(spacing: 8) {
-                Text(word.ipa).font(.subheadline).foregroundStyle(LexiloTheme.sage)
-                Button { speechPlayer.play(word) } label: { Image(systemName: "speaker.wave.2.fill") }
-                    .buttonStyle(.plain).foregroundStyle(LexiloTheme.sage)
-            }
-        }
         if let example = sense?.examples.first ?? word.examples.first {
             spokenPracticeText("“\(example)”", spokenText: example, label: "Play example", font: .lexiloDisplay(18), color: LexiloTheme.muted, italic: true)
         }
+    }
+
+    private func pronunciationLine(for word: VocabularyItem) -> some View {
+        HStack(spacing: 10) {
+            if !word.partOfSpeech.isEmpty { Text(word.partOfSpeech).italic() }
+            if !word.ipa.isEmpty && word.ipa != "—" { Text(word.ipa) }
+            Button { speechPlayer.play(word) } label: { Image(systemName: "speaker.wave.2.fill") }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Play pronunciation for \(word.word)")
+        }
+        .font(.subheadline)
+        .foregroundStyle(LexiloTheme.sage)
     }
 
     private var answerDivider: some View {

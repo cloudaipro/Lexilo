@@ -1,61 +1,98 @@
-# Revised Product Plan Implementation
+# Lexilo v0.9 Implementation Status
 
-> Implementation date: August 14, 2026
-> Scope: Tasks 1–9 and all UI changes from “Revised product plan after the Anki audit”
-> Excluded by request: P2 tasks 10 (licensed human audio) and 11 (curated packs)
+> Updated: August 15, 2026
+> Scope: the simplified product direction, Kaikki Learning Core, and release validation
+
+This document records what is implemented in the current source tree. It replaces
+the earlier plan that described a separate Memory screen, OEWN-backed content,
+and a fixed interval scheduler.
 
 ## Delivered capabilities
 
-| Plan item | Implementation |
+| Area | Current implementation |
 |---|---|
-| 1. Adaptive memory model | Each card persists difficulty, stability, retrievability, outcome, latency, and pause state. Scheduling targets 90% retention by default and responds to correctness, latency, hints, and “Too easy.” Advanced settings allow an 80–97% target. |
-| 2. Objective production | Meaning-to-word cards require a typed response. Scoring normalizes case, punctuation, and diacritics, supports accepted variants, records the response/latency/hint use, and shows the submitted and expected forms. |
-| 3. Sense-aware content | A vocabulary item now acts as the lemma parent for core, extended, and rare senses. Senses store source ID, usage label, examples, collocations, translation provenance, activation, and pause state. Each sense has separate recognition and recall cards. Secondary senses unlock sequentially after every active direction is stable. |
-| 4. Recovery actions | Practice and word detail provide Pause, Wrong sense, Too easy, and Report content actions. Actions persist and affect scheduling or sense activation. |
-| 5. Memory screen | The former Progress tab is now Memory, with estimated retention, today’s load, seven-day forecast, fading words, one-tap focused review, direction strength, history, and an advanced explanation sheet. |
-| 6. Constrained import | A three-step CSV/TSV flow chooses a file, maps Word/Meaning/Example/Tags, previews five rows, identifies existing words, and either skips duplicates or merges them as new senses. Every imported sense generates two directions. |
-| 7. Portability | Settings can export and explicitly restore a complete JSON snapshot. Optional iCloud Drive synchronization uses modified timestamps while local storage remains available. Existing local snapshots continue to keep a rolling backup. |
-| 8. Content quality | A local dashboard counts missing IPA/examples, duplicate senses, definition-length flags, answer leakage, and learner reports. Usage labels come from Open English WordNet; helpful collocations are derived from examples. |
-| 9. First-language support | Onboarding and Settings can enable a first-language layer. English stays primary. Personal translations are visibly unreviewed until the learner confirms them, and the app does not silently generate or present machine translation as authoritative. |
+| Product surface | Today, Words, and Settings only. There is no Memory or Progress tab. |
+| Practice | Recognition and typed meaning-to-word production, with reveal, Know/Don't know, Check, hints, precise correction, and post-answer context. |
+| Scheduling | Compact adaptive model using difficulty, stability, retrievability, correctness, response time, hints, and recent history. Technical scores stay out of the normal UI. |
+| Card separation | Recognition and production siblings cannot be served on the same calendar day. Failed cards can recycle within a session. |
+| Sense model | Source-aware senses with core/extended/rare priority, usage labels, examples, collocations, translations, active state, pause state, and separate direction cards. |
+| Recovery | Pause, Wrong sense, Too easy, and Report content actions are available from practice and word detail. |
+| Personal content | CSV/TSV import supports Word, Meaning, Example, and Tags, with duplicate detection, preview, and merge-or-skip behavior. |
+| Portability | JSON export/restore, rolling local backup, tolerant migration, and optional iCloud snapshot sync. |
+| Pronunciation | Kaikki IPA, CMUdict conversion, eSpeak NG generated IPA, and offline Kitten Nano speech with system-voice failure fallback. |
+| Dictionary scope | The bundled database is a Learning Core. Full Dictionary browsing and downloadable dictionary packs are future work. |
 
-## UI delivery
+## Lexical data quality
 
-### Practice
+Kaikki / English Wiktionary is the sole lexical source. OEWN is not bundled or
+merged. The production database is `2026-08-12-quality-v3` and contains:
 
-- Recall cards use a native text field and one Check action.
-- Feedback includes exact submitted and expected forms, pronunciation, one post-answer example, and the next-review explanation.
-- The overflow menu contains recovery actions without crowding the main card.
-- Recognition and recall siblings retain the separate-day rule.
+- 39,179 learning terms
+- 45,477 term/POS lexemes
+- 100,588 retained senses
+- 115,201 validated examples
+- 69,889 pronunciation rows
+- 79,195 word forms
 
-### Word detail
+Example quality is enforced during import. A record must contain the learning
+word or a valid inflected form, contain at least four tokens, and end with
+terminal punctuation after normalization. Phrase-like glosses, descriptions,
+collocations, and bare fragments are rejected. Missing examples remain missing;
+the importer never copies a definition into the example field.
 
-- Understand and Recall are shown as separate memory axes.
-- Core, extended, and rare senses appear as a stack with register, collocations, examples, pronunciation actions, translation provenance, and per-sense controls.
-- Inactive senses are de-emphasized and explain their locked or paused state.
+Lexical content updates use stable source sense IDs and normalized word/POS
+fallback matching. A new lexicon version refreshes stored definitions, IPA, and
+examples while preserving learner-owned cards, review history, and mastery.
 
-### Memory
+## SQLite design
 
-- The top summary shows estimated retention, due today, and the upcoming load.
-- The forecast and “Words at risk” are actionable.
-- Scheduler internals remain behind an Advanced surface.
+The app opens the bundled database read-only. The schema preserves source-entry
+and etymology boundaries:
 
-### Import
+```text
+term → lexeme → source_entry → sense → example
+                         ├→ pronunciation
+                         └→ word_form
+```
 
-- File, mapping, and preview are explicit steps.
-- Duplicate words are labeled before import.
-- The interface explains that two practice directions are generated.
+Lookup uses ordinary B-tree indexes for exact headword, prefix, and inflected
+form resolution. No FTS5 virtual table or full-text definition search is
+required for the v0.9 learning experience.
 
-## Data compatibility and safety
+## UI decisions
 
-- New fields use tolerant decoding defaults, so earlier JSON snapshots remain loadable.
-- Existing cards are migrated to the core sense without losing IDs or review history.
-- Restore validates decoded content before replacing active state; normal saving preserves the prior valid snapshot as a backup.
-- iCloud is opt-in. Enabling it on a fresh local history prefers an existing cloud snapshot; otherwise the newest modified snapshot wins.
-- Enabling iCloud for a signed distribution build requires the corresponding iCloud container capability in the Apple Developer profile. The project entitlement is included.
+- **Today** presents one daily round, a featured word, streak context, and the
+  primary practice action.
+- **Words** contains My Words and Upcoming, with local word/meaning filtering
+  and focused word detail.
+- **Settings** contains practice, pronunciation, translation, import, backup,
+  sync, and attribution controls.
+- Memory difficulty, stability, retrievability, and card-level diagnostics stay
+  behind the interface. They influence scheduling but are not learner-facing
+  content.
+- The Words tab does not expose Dictionary browsing in v0.9.
 
 ## Verification
 
-- Simulator build succeeds with code signing disabled.
-- 28 unit tests pass, including adaptive scheduling, signal capture, sequential sense unlocking, legacy snapshot recovery, sense loading, CSV quoting/mapping, import/merge, export/restore, translation review, pause behavior, and content reporting.
-- The original full recognition practice UI test passes.
-- A dedicated typed-production UI test passes and verifies the correction, submitted/expected forms, next-review message, and Continue action.
+Validated on an iPhone 17 Pro, iOS 26.2 Simulator:
+
+- `ReviewSchedulerTests`: 32/32 passed.
+- `LexiloPracticeFlowTests`: 4/4 passed.
+- Full simulator build: passed.
+- Unsigned arm64 iPhone build: passed.
+- SQLite integrity check: passed.
+- Selected source entries missing pronunciation: 0.
+- Regression coverage confirms complete usage sentences for `loyal`, `licensed`,
+  and `lean`, and rejects the old definition-like `recreation` fragment.
+
+## Deferred work
+
+- Full Dictionary feature and optional downloadable pack.
+- Human-recorded pronunciation where licensing is appropriate.
+- Additional practice modes such as cloze or speech assessment.
+- Curated academic, workplace, exam, and personal packs.
+- Broader analytics only if they lead to a clear learner action.
+
+These additions must preserve the v0.9 principles: simple navigation, local-first
+learning, source transparency, no OEWN dependency, and no unnecessary memory
+metrics in the learner interface.

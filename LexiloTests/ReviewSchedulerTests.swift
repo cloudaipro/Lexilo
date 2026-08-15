@@ -91,7 +91,7 @@ final class ReviewSchedulerTests: XCTestCase {
         let staleID = UUID()
         let staleNounSense = VocabularyItem(
             id: staleID,
-            lexiconID: "oewn:pragmatic%1:10:00::",
+            lexiconID: "legacy:pragmatic:noun",
             word: "pragmatic",
             partOfSpeech: "noun",
             ipa: "/præɡˈmætɪk/",
@@ -105,17 +105,17 @@ final class ReviewSchedulerTests: XCTestCase {
             cards: [],
             logs: [],
             studyDays: [],
-            lexiconVersion: "2025",
+            lexiconVersion: "legacy",
             retiredLexiconIDs: []
         )
         try JSONEncoder().encode(fixture).write(to: persistenceURL, options: .atomic)
 
         let store = makeStore(persistenceURL: persistenceURL)
         let repaired = try XCTUnwrap(store.words.first(where: { $0.id == staleID }))
-        XCTAssertEqual(repaired.lexiconID, "oewn:pragmatic%5:00:00:practical:00")
+        XCTAssertTrue(repaired.lexiconID?.hasPrefix("en-pragmatic-") == true)
         XCTAssertEqual(repaired.partOfSpeech, "adjective")
         XCTAssertFalse(repaired.examples.isEmpty)
-        XCTAssertEqual(repaired.example, "a matter-of-fact (or pragmatic) approach to the problem")
+        XCTAssertTrue(repaired.example.localizedCaseInsensitiveContains("pragmatic"))
         XCTAssertFalse(store.featuredWord()?.examples.isEmpty ?? true)
     }
 
@@ -156,8 +156,8 @@ final class ReviewSchedulerTests: XCTestCase {
     func testBundledLexiconIsSearchableAndHasRotationCandidates() {
         let lexicon = Self.stableLexicon
         XCTAssertTrue(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.version, "2025")
-        XCTAssertGreaterThan(lexicon.information.lexemeCount, 100_000)
+        XCTAssertEqual(lexicon.information.version, "2026-08-12-quality-v3")
+        XCTAssertGreaterThan(lexicon.information.lexemeCount, 35_000)
         XCTAssertGreaterThan(lexicon.information.learningCandidateCount, 10_000)
 
         let results = lexicon.search("resilient")
@@ -167,6 +167,37 @@ final class ReviewSchedulerTests: XCTestCase {
         let candidates = lexicon.learningCandidates(inBand: VocabularyBand.intermediate.rawValue, includePhrases: false, offset: 0, limit: 100)
         XCTAssertEqual(candidates.count, 100)
         XCTAssertTrue(candidates.allSatisfy { $0.learningBand == VocabularyBand.intermediate.rawValue && !$0.isPhrase && !$0.examples.isEmpty })
+    }
+
+    @MainActor
+    func testLearningContentUsesWordBearingExamplesAndPronunciationFallbacks() throws {
+        let persistenceURL = FileManager.default.temporaryDirectory
+            .appending(path: UUID().uuidString)
+            .appending(path: "store.json")
+        let store = makeStore(persistenceURL: persistenceURL)
+        addTeardownBlock { try? FileManager.default.removeItem(at: persistenceURL.deletingLastPathComponent()) }
+
+        let recreationEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "recreation"))
+        let recreation = store.addToLearning(recreationEntry)
+        XCTAssertFalse(recreation.examples.contains("time for rest and refreshment by the pool"))
+        XCTAssertFalse(recreation.examples.isEmpty)
+        XCTAssertTrue(recreation.examples.allSatisfy { $0.localizedCaseInsensitiveContains("recreation") })
+        XCTAssertFalse(recreation.senses[0].examples.contains("time for rest and refreshment by the pool"))
+        XCTAssertEqual(recreation.ipa, "/ˌɹɛkɹiˈeɪʃən/")
+
+        let junkEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "junk"))
+        let junk = store.addToLearning(junkEntry)
+        XCTAssertEqual(junk.ipa, "/d͡ʒʌŋk/")
+        XCTAssertFalse(junk.examples.isEmpty)
+    }
+
+    @MainActor
+    func testCommonLearningExamplesAreCompleteUsageSentences() throws {
+        for word in ["loyal", "licensed", "lean"] {
+            let entry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: word))
+            XCTAssertFalse(entry.examples.isEmpty, "Expected a usage example for \(word)")
+            XCTAssertTrue(entry.examples.allSatisfy { $0.range(of: #"[.!?…][\"’'”»)]*$"#, options: .regularExpression) != nil }, "Gloss-like fragment leaked for \(word): \(entry.examples)")
+        }
     }
 
     @MainActor
@@ -463,7 +494,7 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
-    func testNewStoreUsesOnlyOpenEnglishWordNetEntries() {
+    func testNewStoreUsesOnlyKaikkiEntries() {
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
         XCTAssertEqual(store.words.count, 40)
@@ -472,14 +503,14 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
-    func testUnavailableWordNetDoesNotCreateFallbackVocabulary() {
+    func testUnavailableKaikkiDatabaseDoesNotCreateFallbackVocabulary() {
         let missingDatabase = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "missing.sqlite")
         let lexicon = LexiconStore(databaseURL: missingDatabase)
         let persistenceURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = LearningStore(persistenceURL: persistenceURL, lexicon: lexicon)
 
         XCTAssertFalse(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.dataset, "Open English WordNet")
+        XCTAssertEqual(lexicon.information.dataset, "Kaikki / English Wiktionary")
         XCTAssertTrue(store.words.isEmpty)
         XCTAssertTrue(store.cards.isEmpty)
     }

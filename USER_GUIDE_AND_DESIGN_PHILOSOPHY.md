@@ -1,6 +1,6 @@
 # Lexilo User Guide & Design Philosophy
 
-_Updated for the codebase on August 14, 2026._
+_Updated for the codebase on August 15, 2026._
 
 Lexilo is a focused vocabulary-memory coach. It helps you learn precise word senses, practise both understanding and recall, and return to each card when your memory needs it—not merely on a fixed calendar.
 
@@ -22,23 +22,22 @@ English remains the primary learning language. Enabling language support does no
 
 You can change the language-support setting later in **Settings**.
 
-## 2. The four main areas
+## 2. The three main areas
 
-Lexilo is organised into four tabs:
+Lexilo is organised into three tabs:
 
 | Tab | Purpose |
 |---|---|
 | **Today** | See today's workload and begin a focused practice session. |
-| **Words** | Browse saved, upcoming, and dictionary words; inspect and manage individual senses. |
-| **Memory** | Understand retention, future workload, fragile words, and practice history. |
-| **Settings** | Adjust practice, speech, language support, imports, backups, sync, and quality controls. |
+| **Words** | Browse saved and upcoming words; inspect and manage individual senses. |
+| **Settings** | Adjust practice, speech, vocabulary, language support, imports, backups, and sync. |
 
 ## 3. Today
 
 The Today screen is the normal starting point. It shows:
 
-- the number of distinct words practised today;
-- your current study streak;
+- progress through today's round;
+- your current study streak when one is active;
 - a featured word; and
 - the primary action to start practice.
 
@@ -47,8 +46,6 @@ Practice is organised into rounds. The first round contains the configured numbe
 After a round, **Next Round** adds another group of the same size to today's cumulative word set. With the default setting, the total therefore grows from 5 to 10 to 15 distinct words, and can continue while eligible words are available. A missed retry or the other card direction does not increase this count: each vocabulary item counts once per day.
 
 **Practice Again** is available after the first practised word, both on Today and on the completion screen. It repeats the whole cumulative set for today: after three five-word rounds it repeats 15 words. Practice Again is schedule-neutral—its answers do not create review logs, change adaptive intervals, add words to today's count, or affect the streak.
-
-The featured word card also shows its current difficulty summary. New content is marked **Baseline** until a review measures it.
 
 ### How the featured word is chosen
 
@@ -60,7 +57,7 @@ The featured word is a daily spotlight, not necessarily the exact next card in t
 4. uses the lowest successful-review count across that word's cards as the next tie-breaker; and
 5. uses frequency rank as the final tie-breaker, favouring more common words.
 
-Because new cards are due when they are created, an **Upcoming** word can be featured. The selection does not directly use the adaptive difficulty or retrievability values; those are shown as context, while the practice scheduler independently chooses the session cards.
+Because new cards are due when they are created, an **Upcoming** word can be featured. The featured word is a calm daily spotlight; the practice scheduler independently chooses the session cards.
 
 ## 4. Two different practice directions
 
@@ -103,17 +100,9 @@ Using **Reveal answer** counts as an unanswered miss. It records the miss withou
 
 ## 6. Adaptive memory scheduling
 
-Each card maintains its own memory state:
+Lexilo adapts each card's next interval from your actual answers. Correct, fast, unaided retrieval generally permits a longer interval. Slow or hinted retrieval is treated more cautiously, and a failure returns sooner.
 
-- **Difficulty** estimates how resistant the card is to learning.
-- **Stability** estimates how long the memory can remain durable.
-- **Retrievability** estimates the chance that you can recall it now.
-
-Lexilo uses those values to choose the next interval. Correct, fast, unaided retrieval generally permits a longer interval. Slow or hinted retrieval is treated more cautiously. A failure sharply shortens the interval.
-
-The default target retention is 90%. It is intentionally hidden during normal use so most people can simply practise. In **Settings → Quality and memory → Advanced scheduling**, it can be adjusted from 80% to 97%.
-
-Higher target retention means more frequent reviews and a larger workload. Lower retention reduces workload but accepts more forgetting between reviews.
+These scheduler calculations stay in the background. You do not need to interpret scores or tune a memory model; the app turns the evidence into the next useful review date.
 
 ## 7. Two-way scheduling stays independent
 
@@ -124,7 +113,7 @@ Knowing one direction does not automatically prove the other. Lexilo therefore k
 
 When possible, newly introduced sibling cards are placed on separate days. This reduces answer leakage and creates a more honest test of each direction.
 
-In the Words and Memory screens, these abilities appear as separate **Understand** and **Recall** strength axes.
+The two directions remain independent inside the scheduler, even though their internal scores are not shown in the interface.
 
 ## 8. Sense-aware learning
 
@@ -158,46 +147,20 @@ Paused senses can be resumed from the word-detail screen. These actions preserve
 
 ## 10. Words
 
-The Words tab has three sections:
+The Words tab currently has two sections:
 
 - **My Words** for material already in your learning collection;
-- **Upcoming** for words approaching introduction; and
-- **Dictionary** for browsing the built-in lexicon.
+- **Upcoming** for words approaching introduction.
 
-Open a word to see its state, part of speech, pronunciation, and two-way memory strength. Its senses are displayed as a stack, with inactive senses visually quieter than the current learning target.
+Direct dictionary browsing is reserved for a future release. The bundled lexicon still supplies Lexilo's learning content and remains available for source and license details in Settings.
 
-Every learning-word row also shows a **Difficulty** value from 1 to 10. New cards display **Baseline** until a review measures them. Open a word to see the average difficulty for Understand and Recall; each sense then shows its two card-specific values. Higher values mean the scheduler has found that card harder to retain.
+Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target.
 
-Each sense shows the available definition, usage label, collocations, examples, audio controls, priority, learning state, and card difficulty. Its menu lets you pause or resume it, report a mismatch, mark it too easy, or report content.
+Each meaning shows the available definition, usage label, common pairings, examples, audio controls, priority, and learning state. Its menu lets you pause or resume it, report a mismatch, mark it too easy, or report content.
 
-## 11. Memory
+Scheduler difficulty and memory estimates are intentionally not displayed. They influence review timing but do not help with the learner's immediate task: understanding and using the word.
 
-The Memory tab replaces a simple success counter with evidence about the state of your learning. It includes:
-
-- **Estimated retention** across reviewed cards;
-- **Due today**;
-- the upcoming review load;
-- a seven-day forecast;
-- **Words at risk** with one-tap focused review;
-- **Understand** and **Recall** strength;
-- recent practice history; and
-- optional advanced memory details.
-
-The strength labels are designed for quick interpretation:
-
-| Estimated strength | Label |
-|---|---|
-| 90% or higher | **Strong** |
-| 75–89% | **Fading** |
-| Below 75% | **Needs recall** |
-
-These are estimates, not grades. Their purpose is to suggest an action: leave a strong memory alone, keep an eye on a fading one, or practise a fragile one.
-
-## 12. Focused review
-
-From **Words at risk**, you can start a review containing fragile cards rather than waiting for them to appear incidentally. The same recognition and recall rules still apply; focused review does not bypass the scheduler's evidence or turn a miss into a success.
-
-## 13. Importing personal vocabulary
+## 11. Importing personal vocabulary
 
 Lexilo can import UTF-8 CSV or TSV files. The importer uses a three-step flow:
 
@@ -219,9 +182,9 @@ Existing words are identified during preview. You can merge an imported meaning 
 
 Imported vocabulary remains distinguishable as personal content and can coexist with dictionary senses.
 
-## 14. Backup, restore, and optional iCloud sync
+## 12. Backup, restore, and optional iCloud sync
 
-In **Settings → Import and portability**, you can export a complete learning-data JSON backup and restore one later. The backup includes vocabulary, senses, scheduling state, review history, study-day records, reports, and lexicon migration metadata. Device preferences such as voice and words-per-round settings remain outside this snapshot.
+In **Settings → Your data**, you can export a complete learning-data JSON backup and restore one later. The backup includes vocabulary, senses, scheduling state, review history, study-day records, reports, and lexicon migration metadata. Device preferences such as voice and words-per-round settings remain outside this snapshot.
 
 Restore validates the incoming snapshot before replacing current data, and Lexilo maintains a rolling local backup for recovery.
 
@@ -229,7 +192,7 @@ Optional iCloud Drive sync can keep the snapshot available across your devices. 
 
 No account is required for local use. iCloud availability depends on the device's iCloud configuration and on the app build having the required entitlement.
 
-## 15. First-language support and translation provenance
+## 13. First-language support and translation provenance
 
 Translations are optional aids, not replacements for the English definition.
 
@@ -237,24 +200,11 @@ A translation you add is initially labelled as a **personal, unreviewed** transl
 
 The app does not silently generate or overwrite translations.
 
-## 16. Content quality dashboard
+## 14. Sources and licenses
 
-The quality dashboard in Settings helps identify material that may weaken a card. It reports counts for issues such as:
+The bundled Learning Core is derived from Kaikki's structured English Wiktionary extract (`2026-08-12-quality-v3`), CMUdict fills IPA gaps only, and wordfreq values help order learning candidates. Example records are kept only when they contain the learning word or a valid inflected form and read as complete usage sentences; a definition, description, or collocation is never presented as an example. **Settings → Vocabulary → Dictionary sources and licenses** shows upstream sources and license information. Pronunciation model sources are documented there as well.
 
-- missing pronunciation;
-- missing examples;
-- duplicate content;
-- unusually long definitions;
-- answer leakage; and
-- user-submitted reports.
-
-This makes quality work visible and actionable without interrupting every study session.
-
-## 17. Sources and licenses
-
-The bundled dictionary is derived from Open English WordNet 2025, and wordfreq values help order learning candidates. **Settings → Offline dictionary → Dictionary licenses and sources** shows the installed dataset version, entry counts, upstream sources, and license information. Pronunciation model sources are documented there as well.
-
-## 18. Pronunciation and audio
+## 15. Pronunciation and audio
 
 Tap the speaker control on a word or revealed answer to hear it. Lexilo uses local speech components and bundled voices where available, with system speech as a fallback when necessary.
 
@@ -264,15 +214,15 @@ Pronunciation is reinforcement, not proof of recall. On a recall card, audio and
 
 Practice definitions preserve the complete available text. When a definition is long, the card grows and wraps it rather than replacing the ending with an ellipsis.
 
-## 19. Daily rhythm and streaks
+## 16. Daily rhythm and streaks
 
 A study day follows the device's local calendar. Normal-round answers are recorded as you complete them. Practising the configured number of distinct words—the first round, five by default—completes that study day. Additional rounds grow today's total but are not required for the streak. Practice Again does not affect completion. Consecutive completed days build the streak; missing the first-round commitment for a day ends it.
 
-The streak is a gentle continuity signal, not the main measure of learning. Retention and independent two-way memory remain more important.
+The streak is a gentle continuity signal, not a grade or the main measure of learning.
 
-## 20. Widget
+## 17. Widget
 
-The widget offers a passive glance at Lexilo from the Home Screen. It is intentionally lightweight: use the app for decisions, answers, and detailed memory information.
+The widget offers a passive glance at Lexilo from the Home Screen. It is intentionally lightweight: use the app for practice and word management.
 
 ## Quick reference
 
@@ -285,16 +235,12 @@ The widget offers a passive glance at Lexilo from the Home Screen. It is intenti
 | Recall a word from meaning | Recall card → type the word → **Check** |
 | Admit you do not know a recall answer | Recall card → **Reveal answer** |
 | Get a constrained clue | Recall card → **Hint** |
-| Review fragile memories | **Memory → Words at risk** |
 | Inspect or manage a sense | **Words → select a word → sense menu** |
-| View word and card difficulty | **Words → select a word → MEMORY → DIFFICULTY** |
 | Pause or resume a sense | Word detail → sense menu |
-| Add personal vocabulary | **Settings → Import and portability → Import CSV/TSV** |
-| Export or restore everything | **Settings → Import and portability** |
-| Enable cross-device snapshots | **Settings → Import and portability → iCloud Drive** |
-| Change the retention target | **Settings → Quality and memory → Advanced scheduling** |
-| Check content problems | **Settings → Quality and memory → Content quality** |
-| Inspect dictionary and voice sources | **Settings → Offline dictionary → Dictionary licenses and sources** |
+| Add personal vocabulary | **Settings → Your data → Import CSV or TSV** |
+| Export or restore everything | **Settings → Your data** |
+| Enable cross-device snapshots | **Settings → Your data → Sync backup with iCloud** |
+| Inspect dictionary and voice sources | **Settings → Vocabulary → Dictionary sources and licenses** |
 | Change voice or speech rate | **Settings → Pronunciation** |
 | Add or verify a translation | **Words → word detail → sense translation** |
 
@@ -302,7 +248,7 @@ The widget offers a passive glance at Lexilo from the Home Screen. It is intenti
 
 ### No cards are available
 
-Lexilo may have no other eligible due or upcoming words, or the relevant senses may be paused. Check **Words** for paused content and **Memory** for the upcoming forecast. You can still use **Practice Again** whenever today's cumulative set is not empty.
+Lexilo may have no other eligible due or upcoming words, or the relevant meanings may be paused. Check **Words** for paused content. You can still use **Practice Again** whenever today's cumulative set is not empty.
 
 ### A missed card appeared again immediately
 
@@ -318,7 +264,7 @@ Tap **Reveal answer** below **Check**. Lexilo will show the expected word, recor
 
 ### A definition looks cut off
 
-Practice cards wrap long definitions to preserve the complete available text. If the source content itself appears incomplete, open the sense in **Words** and inspect **Settings → Quality and memory → Content quality**.
+Practice cards wrap long definitions to preserve the complete available text. If the source content itself appears incomplete, open the meaning in **Words** and use **Report content** from its menu.
 
 ### Pronunciation does not play
 
@@ -367,7 +313,7 @@ Core senses lead. Extended and rare senses arrive progressively. This keeps prom
 
 A fixed sequence of intervals treats every memory and every answer as equal. Lexilo instead updates difficulty, stability, and retrievability from observed performance.
 
-The target-retention setting expresses the real tradeoff: stronger expected recall costs more reviews. The normal interface hides the machinery; advanced settings expose it for learners who want control.
+Stronger expected recall costs more reviews, so the scheduler uses a balanced default and handles that tradeoff consistently. The learner should not need to tune the model.
 
 ## 5. Evidence without unnecessary grading complexity
 
@@ -387,16 +333,11 @@ Examples, usage labels, and collocations make a meaning memorable and usable. Th
 
 Definitions should be concise enough to test one idea. When the source definition is longer, the interface wraps it rather than hiding its ending with an ellipsis. Examples should sound natural and should not reveal the answer on the front of a production card.
 
-## 8. Honest progress should lead to an action
+## 8. Scheduling evidence should stay behind the action
 
-Lexilo avoids presenting raw review totals as mastery. Retention estimates, forecast load, fragile words, and two-way strength are closer to the learner's real questions:
+Lexilo uses answer quality, timing, hints, and review history to decide when a card should return. Those signals are valuable to the scheduler, but raw retention, difficulty, and forecast values ask the learner to manage the algorithm instead of learning the word.
 
-- What is durable?
-- What is fading?
-- What needs attention now?
-- What workload is coming?
-
-“Strong,” “Fading,” and “Needs recall” are not rewards or punishments. They are compact decisions.
+The interface therefore presents the result of the calculation—a clear practice queue and a simple next-review explanation—rather than a dashboard of internal estimates.
 
 ## 9. One primary decision at a time
 
@@ -416,7 +357,7 @@ Secondary controls live in hints, disclosure sections, and menus. The main actio
 
 ## 10. A finite round with an optional longer day is a feature
 
-Lexilo is designed for repeatable practice rather than an endless feed. Each round has a clear, configurable size; due cards come first; and the upcoming forecast makes future cost visible. The first round creates a small daily commitment, while **Next Round** gives the learner explicit control over whether today's set grows.
+Lexilo is designed for repeatable practice rather than an endless feed. Each round has a clear, configurable size, and due cards come first. The first round creates a small daily commitment, while **Next Round** gives the learner explicit control over whether today's set grows.
 
 The system should make stopping after any completed round feel valid. Continuing is a deliberate learner choice, and **Practice Again** reinforces the chosen daily set without silently changing its memory schedule.
 
@@ -428,9 +369,9 @@ History remains intact so that scheduling, diagnostics, and recovery continue to
 
 ## 12. Progressive disclosure protects focus
 
-The default experience should require almost no scheduling knowledge. Detailed memory values, rare senses, provenance, quality diagnostics, and retention tuning appear when they become relevant.
+The default experience should require no scheduling knowledge. Memory scores, forecast diagnostics, quality counters, and retention tuning stay out of the learner interface. Rare meanings and provenance appear only where they help someone understand or manage content.
 
-This is not the removal of power. It is the sequencing of power.
+This is not the removal of adaptive learning. It is the removal of algorithm management from the learning task.
 
 ## 13. Local-first, portable by choice
 
@@ -440,9 +381,9 @@ Portability is explicit: full backups are exportable, restores are validated, an
 
 ## 14. Content provenance deserves a visible place
 
-Built-in Open English WordNet content, personal imports, and user translations do not have equal authority. Lexilo preserves their source and review status instead of flattening them into one undifferentiated answer.
+Built-in Kaikki/Wiktionary content, personal imports, and user translations do not have equal authority. Lexilo preserves their source and review status instead of flattening them into one undifferentiated answer.
 
-Personal translations begin unreviewed. Imported meanings remain personal. Reports feed a quality dashboard. Trust comes from showing what the app knows about its content—and what it does not.
+Personal translations begin unreviewed. Imported meanings remain personal. Reports feed internal quality review. Trust comes from showing what the app knows about its content—and what it does not.
 
 ## 15. Calm visual language supports hard thinking
 

@@ -1,6 +1,6 @@
 # Offline pronunciation decision
 
-Checked: 2026-08-11
+Checked: 2026-08-15
 
 ## Implemented decision
 
@@ -27,7 +27,7 @@ The integration is functionally verified by a real model-inference test. Before 
 
 1. iPhone deployment and App Store-compatible dependencies.
 2. Offline cold start, first-audio latency, real-time factor, peak resident memory, and thermal behavior on the oldest supported iPhone.
-3. Word-level intelligibility across heteronyms, inflections, abbreviations, and uncommon WordNet lemmas.
+3. Word-level intelligibility across heteronyms, inflections, abbreviations, and uncommon Kaikki learning terms.
 4. A/B listener preference against installed iOS enhanced voices.
 5. Model and voice licensing, attribution, safety terms, and update strategy.
 

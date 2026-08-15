@@ -36,7 +36,6 @@
 		D03E730B4DF3E44E7149B90D /* onnxruntime.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F7C517408C856C80F39FD02 /* onnxruntime.xcframework */; };
 		D4C3A91535E1D323E743B906 /* LEXICON_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 95E63356F7CB2611DCEC9FCA /* LEXICON_NOTICES.md */; };
 		DE540716678B24E92750DB70 /* WordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCD3B697AE958F3CA8F4064 /* WordsView.swift */; };
-		E02B251DF30D6ACC93D514D0 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */; };
 		F64C24F08B5636FE75A88A3A /* SpeechPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */; };
 		F949ACDDE22778C6FE9974AE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E2BD554E2AE3B3E1649CA /* TodayView.swift */; };
 /* End PBXBuildFile section */
@@ -110,7 +109,6 @@
 		A4BB9A57365277412DB426B1 /* LexiloWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LexiloWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A698A605E0760AAB573FA73E /* KittenPronunciationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KittenPronunciationEngine.swift; sourceTree = "<group>"; };
 		B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechPlayer.swift; sourceTree = "<group>"; };
-		B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressView.swift; sourceTree = "<group>"; };
 		BD86545EC27E3429D2CC988A /* Lexilo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lexilo.entitlements; sourceTree = "<group>"; };
 		BD8711E1565D482C7F2A9B07 /* LICENSE-onnxruntime.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-onnxruntime.txt"; sourceTree = "<group>"; };
 		C60E2BD554E2AE3B3E1649CA /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
@@ -211,7 +209,6 @@
 			isa = PBXGroup;
 			children = (
 				2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */,
-				B6FC121F3DDFB1E1B47C355D /* ProgressView.swift */,
 				0C37A92A8971A5E4657ABDD7 /* RootView.swift */,
 				90D523E7D01084B9799E8E66 /* SettingsView.swift */,
 				C60E2BD554E2AE3B3E1649CA /* TodayView.swift */,
@@ -465,7 +462,6 @@
 				A190FA5714ABD356335A966E /* LexiloApp.swift in Sources */,
 				6B115A12EE3DFEAF9B0D9B52 /* LexiloTheme.swift in Sources */,
 				B38CE6510D89E95640C2F5B3 /* PracticeSessionView.swift in Sources */,
-				E02B251DF30D6ACC93D514D0 /* ProgressView.swift in Sources */,
 				212FC1298EE649F26C15D397 /* RootView.swift in Sources */,
 				4C11043F7CF256A43B954264 /* SettingsView.swift in Sources */,
 				60E4BF5D5A391042F21293A7 /* SharedVocabulary.swift in Sources */,
@@ -559,6 +555,7 @@
 					"$(PROJECT_DIR)/Vendor/SherpaOnnx/include",
 				);
 				INFOPLIST_FILE = Lexilo/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -793,6 +790,7 @@
 					"$(PROJECT_DIR)/Vendor/SherpaOnnx/include",
 				);
 				INFOPLIST_FILE = Lexilo/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

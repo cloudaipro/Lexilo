@@ -13,7 +13,6 @@ struct SettingsView: View {
     @AppStorage("includePhrases") private var includePhrases = false
     @AppStorage("translationEnabled") private var translationEnabled = false
     @AppStorage("translationLanguage") private var translationLanguage = "Spanish"
-    @AppStorage("desiredRetention") private var desiredRetention = 0.9
     @State private var iCloudSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
     @State private var rotationMessage: String?
     @State private var showingImport = false
@@ -22,20 +21,23 @@ struct SettingsView: View {
     @State private var backupDocument = LexiloBackupDocument()
     @State private var portabilityMessage: String?
 
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 PaperBackground()
                 Form {
-                    Section("Practice rounds") {
+                    Section("Daily practice") {
                         Stepper("Words per round: \(newWordLimit)", value: $newWordLimit, in: 5...20, step: 5)
-                        Text("The first round completes your daily commitment. Each Next Round adds this many words to today’s set; Practice Again repeats the full set.")
+                        Text("Start with one short round. You can always continue or repeat today’s words.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     Section("Pronunciation") {
-                        Label("Fully offline pronunciation", systemImage: "waveform")
-                        Text("Every word is synthesized by the bundled Kitten Nano v0.2 neural model through sherpa-onnx. Synthesis and audio caching stay on this device.")
+                        Text("Pronunciation works offline and stays on this device.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Toggle("Play pronunciation", isOn: $soundEnabled)
@@ -53,13 +55,13 @@ struct SettingsView: View {
                             Text("British English").tag("en-GB")
                         }
                     }
-                    Section("Offline dictionary") {
-                        Picker("Learning level", selection: $vocabularyBand) {
+                    Section("Vocabulary") {
+                        Picker("Vocabulary level", selection: $vocabularyBand) {
                             ForEach(VocabularyBand.allCases) { band in
                                 Text(band.title).tag(band.rawValue)
                             }
                         }
-                        Text("Suggestions are selected only from the chosen difficulty level.")
+                        Text("Upcoming words match the level you choose.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Toggle("Include phrases", isOn: $includePhrases)
@@ -67,15 +69,12 @@ struct SettingsView: View {
                             let count = store.replaceUnstartedSuggestions()
                             rotationMessage = count > 0 ? "Prepared \(count) new suggestions" : "Your current learning queue is already in progress"
                         } label: {
-                            Label("Replace unstarted suggestions", systemImage: "arrow.triangle.2.circlepath")
+                            Label("Refresh upcoming words", systemImage: "arrow.triangle.2.circlepath")
                         }
                         if let rotationMessage {
                             Text(rotationMessage).font(.caption).foregroundStyle(.secondary)
                         }
-                        Text("\(store.lexiconInformation.dataset) \(store.lexiconInformation.version) · \(store.lexiconInformation.lexemeCount.formatted()) searchable entries · \(store.lexiconInformation.learningCandidateCount.formatted()) learning candidates")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        NavigationLink("Dictionary licenses and sources") {
+                        NavigationLink("Dictionary sources and licenses") {
                             LexiconLicensesView()
                         }
                     }
@@ -85,11 +84,11 @@ struct SettingsView: View {
                             Picker("First language", selection: $translationLanguage) {
                                 ForEach(["Spanish", "Simplified Chinese", "Japanese", "Korean", "French", "German", "Other"], id: \.self) { Text($0) }
                             }
-                            Text("English definitions remain primary. Personal translations stay visibly unreviewed until you confirm them; Lexilo does not silently generate translations.")
+                                Text("English definitions stay primary. Personal translations remain clearly labeled.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                    Section("Import and portability") {
+                    Section("Your data") {
                         Button { showingImport = true } label: { Label("Import CSV or TSV", systemImage: "tablecells") }
                         Button {
                             do {
@@ -113,29 +112,11 @@ struct SettingsView: View {
                             }
                         ))
                         if let portabilityMessage { Text(portabilityMessage).font(.caption).foregroundStyle(.secondary) }
-                        Text("Export and restore use a complete JSON snapshot. iCloud is optional; local mode always remains available.")
+                        Text("Your learning stays on this device unless you choose iCloud sync or export a backup.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    Section("Quality and memory") {
-                        NavigationLink("Content quality dashboard") { ContentQualityView() }
-                        NavigationLink("Advanced memory settings") {
-                            Form {
-                                Section("Desired retention") {
-                                    Slider(value: $desiredRetention, in: 0.80...0.97, step: 0.01)
-                                    LabeledContent("Target", value: "\(Int(desiredRetention * 100))%")
-                                    Text("Higher targets schedule more reviews. 90% is a balanced default; the adaptive model still adjusts every card independently.")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                            }.navigationTitle("Memory settings")
-                        }
-                    }
-                    Section("How Lexilo works") {
-                        Label("Reviews are scheduled automatically", systemImage: "calendar.badge.clock")
-                        Label("Paired cards never appear the same day", systemImage: "arrow.left.arrow.right")
-                        Label("Local by default; iCloud is optional", systemImage: "iphone.and.arrow.forward")
-                    }
                     Section {
-                        HStack { Text("Lexilo"); Spacer(); Text("Version 1.0").foregroundStyle(.secondary) }
+                        HStack { Text("Lexilo"); Spacer(); Text("Version \(appVersion)").foregroundStyle(.secondary) }
                     } footer: { Text("Open. Learn. Remember.") }
                 }.scrollContentBackground(.hidden)
             }.navigationTitle("Settings")
@@ -169,32 +150,6 @@ private struct LexiloBackupDocument: FileDocument {
     init(data: Data = Data()) { self.data = data }
     init(configuration: ReadConfiguration) throws { data = configuration.file.regularFileContents ?? Data() }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper { FileWrapper(regularFileWithContents: data) }
-}
-
-private struct ContentQualityView: View {
-    @EnvironmentObject private var store: LearningStore
-    private var quality: ContentQualitySummary { store.contentQualitySummary }
-
-    var body: some View {
-        List {
-            Section("Automated checks") {
-                qualityRow("Missing IPA", quality.missingIPA)
-                qualityRow("Missing examples", quality.missingExamples)
-                qualityRow("Duplicate senses", quality.duplicatedSenses)
-                qualityRow("Definition length flags", quality.confusingDefinitions)
-                qualityRow("Answer leakage flags", quality.exampleLeakage)
-            }
-            Section("Learner feedback") { qualityRow("Open reports", quality.learnerReports) }
-            Section {
-                Text("Checks run locally over the active vocabulary. Flags are review candidates, not automatic claims that content is wrong.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        }.navigationTitle("Content quality")
-    }
-
-    private func qualityRow(_ title: String, _ count: Int) -> some View {
-        LabeledContent(title, value: count.formatted())
-    }
 }
 
 private struct ImportVocabularyView: View {
@@ -328,9 +283,15 @@ private struct ImportVocabularyView: View {
 private struct LexiconLicensesView: View {
     var body: some View {
         List {
-            Section("Open English WordNet 2025") {
-                Text("Definitions, examples, parts of speech, semantic relationships, and pronunciation metadata. Licensed under CC BY 4.0 and the Princeton WordNet License.")
-                Link("Open English WordNet", destination: URL(string: "https://en-word.net/")!)
+            Section("Kaikki / English Wiktionary") {
+                Text("Definitions, examples, parts of speech, forms, and IPA are derived from the structured English Wiktionary extract. Licensed under CC BY-SA 4.0 and GFDL.")
+                Link("Kaikki English dictionary", destination: URL(string: "https://kaikki.org/dictionary/English/")!)
+                Link("Wiktionary licenses", destination: URL(string: "https://en.wiktionary.org/wiki/Wiktionary:Copyrights")!)
+            }
+            Section("CMU Pronouncing Dictionary") {
+                Text("CMUdict fills pronunciation gaps only. Remaining words and phrases use explicitly generated eSpeak NG IPA. Neither source contributes words, definitions, senses, or examples.")
+                Link("CMUdict", destination: URL(string: "https://github.com/cmusphinx/cmudict")!)
+                Link("eSpeak NG", destination: URL(string: "https://github.com/espeak-ng/espeak-ng")!)
             }
             Section("wordfreq 3.1.1") {
                 Text("Frequency values are used to order learning candidates. Code is Apache 2.0; redistributed data is CC BY-SA 4.0 with upstream corpus acknowledgements.")

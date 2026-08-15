@@ -73,5 +73,5 @@ struct LexiconInformation: Sendable {
     let lexemeCount: Int
     let learningCandidateCount: Int
 
-    static let unavailable = LexiconInformation(dataset: "Open English WordNet", version: "unavailable", lexemeCount: 0, learningCandidateCount: 0)
+    static let unavailable = LexiconInformation(dataset: "Kaikki / English Wiktionary", version: "unavailable", lexemeCount: 0, learningCandidateCount: 0)
 }

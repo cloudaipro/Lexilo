@@ -1,40 +1,47 @@
 # Lexilo offline lexicon notices
 
-## Open English WordNet 2025
+## Kaikki / English Wiktionary
 
-The offline dictionary is derived from Open English WordNet 2025. Open English
-WordNet is licensed under Creative Commons Attribution 4.0 International and
-incorporates Princeton WordNet. Lexilo reformats the source as SQLite, selects
-a primary sense for browsing and study, and adds frequency-based learning bands.
+Lexilo's offline Learning Core is derived from the English Wiktionary extract
+published by Kaikki.org and produced with Wiktextract. Lexilo reformats and
+filters the extract into SQLite for offline learning.
 
-Open English WordNet: https://en-word.net/
+The bundled build is `2026-08-12-quality-v3`. It contains 39,179 learning
+terms and 115,201 validated usage examples. Example records must contain the
+learning word or a valid inflected form and read as complete sentences;
+definitions, descriptions, collocations, and bare phrases are not relabeled as
+examples.
 
-Copyright © 2019–present The Open English WordNet Team.
+Kaikki: https://kaikki.org/dictionary/English/
+English Wiktionary: https://en.wiktionary.org/
+Wiktextract: https://github.com/tatuylonen/wiktextract
 
-This work is licensed under CC BY 4.0:
-https://creativecommons.org/licenses/by/4.0/
+Wiktionary text is available under Creative Commons Attribution-ShareAlike
+4.0 International and the GNU Free Documentation License. Attribution and
+license details: https://en.wiktionary.org/wiki/Wiktionary:Copyrights
 
-This work is based on or incorporates elements of the Princeton University
-WordNet database. WordNet Release 3.0 copyright 2006 by Princeton University.
-Permission to use, copy, modify and distribute the software and database and
-its documentation for any purpose and without fee or royalty is granted,
-provided that the copyright notice, license statements, and disclaimer appear
-on copies and modifications. Princeton provides the database as-is, without
-warranty, and the name Princeton may not be used in advertising or publicity.
+## CMU Pronouncing Dictionary
 
-Full upstream notices:
-https://github.com/globalwordnet/english-wordnet/blob/main/LICENSE.md
+Pronunciations missing from selected Kaikki entries may be converted from the
+CMU Pronouncing Dictionary. CMUdict does not supply Lexilo's vocabulary,
+definitions, senses, or examples.
+
+Source and license: https://github.com/cmusphinx/cmudict
+
+Copyright (C) 1993-2015 Carnegie Mellon University. Use of CMUdict is permitted
+for any purpose provided its copyright notice and permission notice are
+retained. The dictionary is supplied without warranty.
 
 ## wordfreq 3.1.1
 
-Frequency values used to rank the offline learning candidates were produced by
-wordfreq 3.1.1. The wordfreq code is Apache-2.0 and its redistributed data is
-CC BY-SA 4.0. It combines multiple credited corpora, including Google Books
-Ngrams, Leeds Internet Corpus, Wikipedia, ParaCrawl, OPUS OpenSubtitles, and
-SUBTLEX frequency lists.
+Frequency values used to rank learning candidates were produced by wordfreq
+3.1.1. Its code is Apache-2.0 and redistributed data is CC BY-SA 4.0 with
+upstream corpus acknowledgements.
 
-Source, complete credits, and license:
-https://github.com/rspeer/wordfreq
+Source, complete credits, and license: https://github.com/rspeer/wordfreq
 
-Lexilo stores only the resulting frequency value and rank for entries present
-in Open English WordNet.
+## eSpeak NG 1.52.0
+
+Where neither Kaikki nor CMUdict has a pronunciation, Lexilo stores an
+explicitly marked generated IPA value produced by eSpeak NG 1.52.0. Human IPA
+always has higher priority. Source and license: https://github.com/espeak-ng/espeak-ng

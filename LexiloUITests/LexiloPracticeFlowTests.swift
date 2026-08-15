@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class LexiloPracticeFlowTests: XCTestCase {
     private var app: XCUIApplication!
 
@@ -101,6 +102,27 @@ final class LexiloPracticeFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Answer revealed"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'return tomorrow'")).firstMatch.exists)
         XCTAssertTrue(app.buttons["Continue"].exists)
+    }
+
+    func testWordDetailKeepsLearningContentFirst() throws {
+        let wordsTab = app.tabBars.buttons["Words"]
+        XCTAssertTrue(wordsTab.waitForExistence(timeout: 8))
+        wordsTab.tap()
+        XCTAssertFalse(app.segmentedControls.buttons["Dictionary"].exists)
+
+        let upcoming = app.segmentedControls.buttons["Upcoming"]
+        XCTAssertTrue(upcoming.waitForExistence(timeout: 5))
+        upcoming.tap()
+
+        let firstWord = app.cells.firstMatch
+        XCTAssertTrue(firstWord.waitForExistence(timeout: 5))
+        firstWord.tap()
+
+        XCTAssertTrue(app.staticTexts["MEANINGS"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["MEMORY"].exists)
+        XCTAssertFalse(app.staticTexts["DIFFICULTY"].exists)
+        XCTAssertFalse(app.staticTexts["CARD DIFFICULTY"].exists)
+        capture("08 Simplified word detail")
     }
 
     private func capture(_ name: String) {

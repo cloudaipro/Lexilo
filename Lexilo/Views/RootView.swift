@@ -9,8 +9,7 @@ struct RootView: View {
         TabView(selection: $selection) {
             TodayView().tag(0).tabItem { Label("Today", systemImage: "sun.max") }
             WordsView().tag(1).tabItem { Label("Words", systemImage: "text.book.closed") }
-            ProgressView().tag(2).tabItem { Label("Memory", systemImage: "brain.head.profile") }
-            SettingsView().tag(3).tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
+            SettingsView().tag(2).tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .tint(LexiloTheme.sage)
         .onOpenURL { url in

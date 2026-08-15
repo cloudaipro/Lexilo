@@ -35,9 +35,7 @@ struct TodayView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         header
                         dailyFocus
-                        detailRow
                         featuredWord
-                        learningNote
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 28)
@@ -63,9 +61,13 @@ struct TodayView: View {
                     .font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
             }
             Spacer()
-            ZStack {
-                Circle().fill(LexiloTheme.sageLight).frame(width: 48, height: 48)
-                Image(systemName: "leaf.fill").foregroundStyle(LexiloTheme.sage)
+            if streak > 0 {
+                Text("\(streak)-day streak")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(LexiloTheme.sage)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(LexiloTheme.sageLight.opacity(0.72), in: Capsule())
             }
         }
         .padding(.top, 12)
@@ -113,30 +115,12 @@ struct TodayView: View {
         .shadow(color: LexiloTheme.ink.opacity(0.14), radius: 18, y: 10)
     }
 
-    private var detailRow: some View {
-        HStack(spacing: 12) {
-            stat(value: "\(completedToday)", label: "Words today", symbol: "text.book.closed")
-            stat(value: "Day \(streak)", label: "Practice streak", symbol: "flame")
-        }
-    }
-
-    private func stat(value: String, label: String, symbol: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: symbol).font(.headline).foregroundStyle(LexiloTheme.brass)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(value).font(.title3.bold()).foregroundStyle(LexiloTheme.ink)
-                Text(label).font(.caption).foregroundStyle(LexiloTheme.muted)
-            }
-            Spacer()
-        }.padding(16).background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
     @ViewBuilder
     private var featuredWord: some View {
         if let word = store.featuredWord() {
             VStack(alignment: .leading, spacing: 13) {
                 HStack {
-                    Text("A WORD TO KEEP CLOSE").font(.caption2.bold()).tracking(1.4).foregroundStyle(LexiloTheme.brass)
+                    Text("TODAY’S WORD").font(.caption2.bold()).tracking(1.4).foregroundStyle(LexiloTheme.brass)
                     Spacer()
                     Button {
                         speechPlayer.play(word)
@@ -151,10 +135,11 @@ struct TodayView: View {
                     .accessibilityIdentifier("featured-word-pronunciation")
                 }
                 Text(word.word).font(.lexiloDisplay(34, weight: .medium)).foregroundStyle(LexiloTheme.ink)
-                DifficultyIndicator(
-                    value: store.averageDifficulty(vocabularyID: word.id, includePaused: true),
-                    measured: store.hasReviewedCard(vocabularyID: word.id, includePaused: true)
-                )
+                if !word.partOfSpeech.isEmpty || !word.ipa.isEmpty {
+                    Text([word.partOfSpeech, word.ipa].filter { !$0.isEmpty }.joined(separator: "  ·  "))
+                        .font(.subheadline)
+                        .foregroundStyle(LexiloTheme.sage)
+                }
                 HStack(alignment: .top, spacing: 10) {
                     Text(word.conciseDefinition).font(.body).foregroundStyle(LexiloTheme.muted)
                     Spacer(minLength: 8)
@@ -169,13 +154,13 @@ struct TodayView: View {
                     }
                 }
             }
-            .padding(20).background(LexiloTheme.paperDeep.opacity(0.55), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay { RoundedRectangle(cornerRadius: 22).stroke(LexiloTheme.brass.opacity(0.18)) }
+            .padding(20)
+            .background(LexiloTheme.paperDeep.opacity(0.48), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         } else if !store.lexicon.isAvailable {
             ContentUnavailableView(
                 "Dictionary unavailable",
                 systemImage: "books.vertical",
-                description: Text("The bundled Open English WordNet database could not be opened.")
+                description: Text("The bundled Kaikki learning database could not be opened.")
             )
         }
     }
@@ -191,14 +176,4 @@ struct TodayView: View {
         .accessibilityLabel(label)
     }
 
-    private var learningNote: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(LexiloTheme.sage)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Two-way recall").font(.subheadline.bold()).foregroundStyle(LexiloTheme.ink)
-                Text("You’ll see each word and its meaning on different days—so remembering is real, not a shortcut.")
-                    .font(.caption).foregroundStyle(LexiloTheme.muted).fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 }

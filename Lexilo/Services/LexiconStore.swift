@@ -15,7 +15,7 @@ final class LexiconStore {
            sqlite3_open_v2(databaseURL.path, &opened, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK {
             database = opened
             information = LexiconInformation(
-                dataset: Self.metadata("dataset", in: opened) ?? "Open English WordNet",
+                dataset: Self.metadata("dataset", in: opened) ?? "Kaikki / English Wiktionary",
                 version: Self.metadata("dataset_version", in: opened) ?? "unknown",
                 lexemeCount: Int(Self.metadata("lexeme_count", in: opened) ?? "") ?? 0,
                 learningCandidateCount: Int(Self.metadata("learning_candidate_count", in: opened) ?? "") ?? 0
@@ -34,12 +34,12 @@ final class LexiconStore {
     var isAvailable: Bool { database != nil }
 
     func entry(id: String) -> LexiconEntry? {
-        query(whereClause: "s.id = ?", bindings: [id], limit: 1, primaryOnly: false).first
+        query(whereClause: "s.source_sense_id = ?", bindings: [id], limit: 1, primaryOnly: false).first
     }
 
     func senses(relatedToSenseID id: String) -> [LexiconEntry] {
         query(
-            whereClause: "s.lexeme_id = (SELECT lexeme_id FROM sense WHERE id = ?)",
+            whereClause: "se.lexeme_id = (SELECT se2.lexeme_id FROM sense s2 JOIN source_entry se2 ON se2.id = s2.source_entry_id WHERE s2.source_sense_id = ?)",
             bindings: [id],
             limit: 24,
             primaryOnly: false
@@ -49,9 +49,9 @@ final class LexiconStore {
     func entry(matching word: String, partOfSpeech: String? = nil) -> LexiconEntry? {
         let normalized = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if let partOfSpeech, !partOfSpeech.isEmpty {
-            return query(whereClause: "l.normalized_lemma = ? AND l.part_of_speech = ?", bindings: [normalized, partOfSpeech.lowercased()], limit: 1).first
+            return exactEntry(normalized: normalized, partOfSpeech: partOfSpeech.lowercased())
         }
-        return query(whereClause: "l.normalized_lemma = ?", bindings: [normalized], limit: 1).first
+        return exactEntry(normalized: normalized)
     }
 
     /// Returns the preferred teachable sense for a lemma. Learning candidates
@@ -60,7 +60,7 @@ final class LexiconStore {
         let normalized = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else { return nil }
         return query(
-            whereClause: "l.normalized_lemma = ? AND l.is_learning_candidate = 1",
+            whereClause: "t.normalized_word = ? AND t.is_learning_candidate = 1",
             bindings: [normalized],
             limit: 1
         ).first
@@ -69,14 +69,10 @@ final class LexiconStore {
     func search(_ text: String, limit: Int = 100) -> [LexiconEntry] {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else {
-            return query(whereClause: "l.is_learning_candidate = 1", bindings: [], limit: limit)
+            return query(whereClause: "t.is_learning_candidate = 1", bindings: [], limit: limit)
         }
-        return query(
-            whereClause: "l.normalized_lemma LIKE ? ESCAPE '\\'",
-            bindings: ["%\(escapeLike(normalized))%"],
-            limit: limit,
-            exactWord: normalized
-        )
+        let upperBound = normalized + "\u{10FFFF}"
+        return query(whereClause: "t.normalized_word >= ? AND t.normalized_word < ?", bindings: [normalized, upperBound], limit: limit, exactWord: normalized)
     }
 
     func learningCandidates(
@@ -85,9 +81,9 @@ final class LexiconStore {
         offset: Int,
         limit: Int = 500
     ) -> [LexiconEntry] {
-        let phraseClause = includePhrases ? "" : " AND l.is_phrase = 0"
+        let phraseClause = includePhrases ? "" : " AND t.is_phrase = 0"
         return query(
-            whereClause: "l.is_learning_candidate = 1 AND l.learning_band = ?\(phraseClause)",
+            whereClause: "t.is_learning_candidate = 1 AND t.learning_band = ?\(phraseClause)",
             bindings: [String(max(1, min(5, band)))],
             limit: limit,
             offset: max(0, offset)
@@ -99,12 +95,21 @@ final class LexiconStore {
     /// even when a band contains several thousand entries.
     func learningCandidateReferences(inBand band: Int, includePhrases: Bool) -> [LexiconCandidateReference] {
         guard let database else { return [] }
-        let phraseClause = includePhrases ? "" : " AND l.is_phrase = 0"
+        let phraseClause = includePhrases ? "" : " AND t.is_phrase = 0"
         let sql = """
-        SELECT s.id, l.normalized_lemma
-        FROM lexeme l
-        JOIN sense s ON s.lexeme_id = l.id AND s.sense_order = 0
-        WHERE l.is_learning_candidate = 1 AND l.learning_band = ?\(phraseClause)
+        SELECT s.source_sense_id, t.normalized_word
+        FROM term t
+        JOIN lexeme l ON l.term_id = t.id
+        JOIN source_entry se ON se.lexeme_id = l.id
+        JOIN sense s ON s.source_entry_id = se.id
+        WHERE t.is_learning_candidate = 1 AND t.learning_band = ?\(phraseClause)
+          AND s.id = (
+              SELECT s2.id FROM sense s2
+              JOIN source_entry se2 ON se2.id = s2.source_entry_id
+              WHERE se2.lexeme_id = l.id
+              ORDER BY s2.learner_score DESC, s2.id
+              LIMIT 1
+          )
         """
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK, let statement else { return [] }
@@ -121,7 +126,7 @@ final class LexiconStore {
     func entries(ids: [String]) -> [LexiconEntry] {
         guard !ids.isEmpty else { return [] }
         let placeholders = Array(repeating: "?", count: ids.count).joined(separator: ",")
-        return query(whereClause: "s.id IN (\(placeholders))", bindings: ids, limit: ids.count)
+        return query(whereClause: "s.source_sense_id IN (\(placeholders))", bindings: ids, limit: ids.count)
     }
 
     private func query(
@@ -133,16 +138,28 @@ final class LexiconStore {
         primaryOnly: Bool = true
     ) -> [LexiconEntry] {
         guard let database else { return [] }
-        let exactOrdering = exactWord == nil ? "" : "CASE WHEN l.normalized_lemma = ? THEN 0 WHEN l.normalized_lemma LIKE ? THEN 1 ELSE 2 END,"
+        let exactOrdering = exactWord == nil ? "" : "CASE WHEN t.normalized_word = ? THEN 0 ELSE 1 END,"
+        let preferredSense = """
+        s.id = (
+            SELECT s2.id FROM sense s2
+            JOIN source_entry se2 ON se2.id = s2.source_entry_id
+            WHERE se2.lexeme_id = l.id
+            ORDER BY s2.learner_score DESC, s2.id
+            LIMIT 1
+        )
+        """
         let sql = """
-        SELECT s.id, l.lemma, l.part_of_speech, COALESCE(l.pronunciation, ''),
-               s.definition, l.frequency_rank, l.learning_band, l.is_phrase,
-               COALESCE((SELECT group_concat(text, char(31)) FROM example WHERE sense_id = s.id), ''),
+        SELECT s.source_sense_id, t.word, l.part_of_speech,
+               COALESCE((SELECT p.ipa FROM pronunciation p WHERE p.source_entry_id = se.id ORDER BY p.priority, p.id LIMIT 1), ''),
+               s.definition, t.frequency_rank, t.learning_band, t.is_phrase,
+               COALESCE((SELECT group_concat(text, char(31)) FROM (SELECT text FROM example WHERE sense_id = s.id ORDER BY quality_score DESC, id LIMIT 5)), ''),
                COALESCE(s.usage_label, ''), s.sense_order
-        FROM lexeme l
-        JOIN sense s ON s.lexeme_id = l.id
-        WHERE \(whereClause)\(primaryOnly ? " AND s.sense_order = 0" : "")
-        ORDER BY \(exactOrdering) l.frequency_rank, l.normalized_lemma, l.part_of_speech, s.sense_order
+        FROM term t
+        JOIN lexeme l ON l.term_id = t.id
+        JOIN source_entry se ON se.lexeme_id = l.id
+        JOIN sense s ON s.source_entry_id = se.id
+        WHERE \(whereClause)\(primaryOnly ? " AND \(preferredSense)" : "")
+        ORDER BY \(exactOrdering) t.frequency_rank, t.normalized_word, l.part_of_speech, s.learner_score DESC, s.id
         LIMIT ? OFFSET ?
         """
         var statement: OpaquePointer?
@@ -156,8 +173,6 @@ final class LexiconStore {
         }
         if let exactWord {
             sqlite3_bind_text(statement, index, exactWord, -1, Self.transientDestructor)
-            index += 1
-            sqlite3_bind_text(statement, index, "\(escapeLike(exactWord))%", -1, Self.transientDestructor)
             index += 1
         }
         sqlite3_bind_int(statement, index, Int32(limit))
@@ -175,7 +190,7 @@ final class LexiconStore {
                     definition: Self.string(statement, 4),
                     examples: Array(examples.prefix(5)),
                     usageLabel: Self.string(statement, 9),
-                    senseOrder: Int(sqlite3_column_int(statement, 10)),
+                    senseOrder: primaryOnly ? Int(sqlite3_column_int(statement, 10)) : result.count,
                     frequencyRank: Int(sqlite3_column_int(statement, 5)),
                     learningBand: Int(sqlite3_column_int(statement, 6)),
                     isPhrase: sqlite3_column_int(statement, 7) != 0
@@ -185,10 +200,27 @@ final class LexiconStore {
         return result
     }
 
-    private func escapeLike(_ value: String) -> String {
-        value.replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "%", with: "\\%")
-            .replacingOccurrences(of: "_", with: "\\_")
+    private func exactEntry(normalized: String, partOfSpeech: String? = nil) -> LexiconEntry? {
+        var clause = "t.normalized_word = ?"
+        var bindings = [normalized]
+        if let partOfSpeech {
+            clause += " AND l.part_of_speech = ?"
+            bindings.append(partOfSpeech)
+        }
+        if let direct = query(whereClause: clause, bindings: bindings, limit: 1).first {
+            return direct
+        }
+        var formClause = "wf.normalized_form = ?"
+        var formBindings = [normalized]
+        if let partOfSpeech {
+            formClause += " AND l.part_of_speech = ?"
+            formBindings.append(partOfSpeech)
+        }
+        return query(
+            whereClause: "EXISTS (SELECT 1 FROM word_form wf WHERE wf.lexeme_id = l.id AND \(formClause))",
+            bindings: formBindings,
+            limit: 1
+        ).first
     }
 
     private static func metadata(_ key: String, in database: OpaquePointer?) -> String? {

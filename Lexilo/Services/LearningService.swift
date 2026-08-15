@@ -191,7 +191,7 @@ final class LearningStore: ObservableObject {
 
         if migrateLexiconIdentifiers() { changed = true }
         if refreshStoredLexiconContentIfNeeded() { changed = true }
-        if repairStoredEntriesMissingExamples() { changed = true }
+        if repairStoredLexiconContent() { changed = true }
         if migrateSenseAwareState() { changed = true }
         if replenishVocabularyIfNeeded() > 0 { changed = true }
         if changed { save() }
@@ -212,10 +212,6 @@ final class LearningStore: ObservableObject {
 
     var upcomingWords: [VocabularyItem] {
         words.filter { $0.introducedAt == nil }.sorted { $0.frequencyRank < $1.frequencyRank }
-    }
-
-    func searchDictionary(_ query: String, limit: Int = 100) -> [LexiconEntry] {
-        lexicon.search(query, limit: limit)
     }
 
     @discardableResult
@@ -922,24 +918,26 @@ final class LearningStore: ObservableObject {
         let entries = lexicon.senses(relatedToSenseID: entry.id)
         let senseEntries = entries.isEmpty ? [entry] : entries
         let senses = senseEntries.enumerated().map { index, sense in
-            LexicalSense(
+            let examples = Self.teachingExamples(for: sense.word, in: sense.examples)
+            return LexicalSense(
                 sourceID: sense.id,
                 definition: sense.definition,
-                examples: sense.examples,
+                examples: examples,
                 usageLabel: sense.usageLabel,
-                collocations: Self.deriveCollocations(word: sense.word, examples: sense.examples),
+                collocations: Self.deriveCollocations(word: sense.word, examples: examples),
                 priority: index == 0 ? .core : (index < 3 ? .extended : .rare),
                 isActive: index == 0
             )
         }
+        let coreExamples = senses.first?.examples ?? Self.teachingExamples(for: entry.word, in: entry.examples)
         return VocabularyItem(
             lexiconID: entry.id,
             word: entry.word,
             partOfSpeech: entry.partOfSpeech,
-            ipa: entry.ipa.isEmpty ? "—" : "/\(entry.ipa.trimmingCharacters(in: CharacterSet(charactersIn: "/")))/",
+            ipa: Self.formattedIPA(for: entry.word, source: entry.ipa),
             conciseDefinition: entry.definition,
-            example: entry.primaryExample,
-            additionalExamples: Array(entry.examples.dropFirst()),
+            example: coreExamples.first ?? "",
+            additionalExamples: Array(coreExamples.dropFirst()),
             frequencyRank: entry.frequencyRank,
             senses: senses
         )
@@ -1098,46 +1096,78 @@ final class LearningStore: ObservableObject {
     private func refreshStoredLexiconContentIfNeeded() -> Bool {
         guard lexicon.isAvailable, persistedLexiconVersion != lexicon.information.version else { return false }
         for index in words.indices {
-            guard let lexiconID = words[index].lexiconID, let entry = lexicon.entry(id: lexiconID) else { continue }
+            let entry = words[index].lexiconID.flatMap { lexicon.entry(id: $0) }
+                ?? lexicon.entry(matching: words[index].word, partOfSpeech: words[index].partOfSpeech)
+            guard let entry else { continue }
             apply(entry, toWordAt: index)
         }
         persistedLexiconVersion = lexicon.information.version
         return true
     }
 
-    /// Earlier app versions could persist a dictionary sense that had no
-    /// teaching example (for example the rare noun sense of "pragmatic").
-    /// Preserve cards/history and replace only its lexical content with the
-    /// preferred OEWN learning sense for the same lemma.
+    /// Refresh stored lexical content after quality fixes without touching
+    /// cards, review history, translations, or other learner-owned state.
     @discardableResult
-    private func repairStoredEntriesMissingExamples() -> Bool {
+    private func repairStoredLexiconContent() -> Bool {
         guard lexicon.isAvailable else { return false }
         var changed = false
-        for index in words.indices where words[index].examples.isEmpty {
-            guard let replacement = lexicon.learningEntry(matching: words[index].word),
-                  !replacement.examples.isEmpty
+        for index in words.indices {
+            let entry: LexiconEntry?
+            if words[index].examples.isEmpty {
+                entry = lexicon.learningEntry(matching: words[index].word)
+                    ?? words[index].lexiconID.flatMap { lexicon.entry(id: $0) }
+            } else {
+                entry = words[index].lexiconID.flatMap { lexicon.entry(id: $0) }
+            }
+            guard let entry
             else { continue }
-            apply(replacement, toWordAt: index)
-            changed = true
+            let before = words[index]
+            apply(entry, toWordAt: index)
+            changed = changed || before != words[index]
         }
         return changed
     }
 
     private func apply(_ entry: LexiconEntry, toWordAt index: Int) {
+        let primaryExamples = Self.teachingExamples(for: entry.word, in: entry.examples)
         words[index].lexiconID = entry.id
         words[index].partOfSpeech = entry.partOfSpeech
-        words[index].ipa = entry.ipa.isEmpty ? "—" : "/\(entry.ipa.trimmingCharacters(in: CharacterSet(charactersIn: "/")))/"
+        words[index].ipa = Self.formattedIPA(for: entry.word, source: entry.ipa)
         words[index].conciseDefinition = entry.definition
-        words[index].example = entry.primaryExample
-        words[index].additionalExamples = Array(entry.examples.dropFirst())
+        words[index].example = primaryExamples.first ?? ""
+        words[index].additionalExamples = Array(primaryExamples.dropFirst())
         let refreshed = lexicon.senses(relatedToSenseID: entry.id)
         for refreshedSense in refreshed {
             guard let senseIndex = words[index].senses.firstIndex(where: { $0.sourceID == refreshedSense.id }) else { continue }
+            let examples = Self.teachingExamples(for: refreshedSense.word, in: refreshedSense.examples)
             words[index].senses[senseIndex].definition = refreshedSense.definition
-            words[index].senses[senseIndex].examples = refreshedSense.examples
+            words[index].senses[senseIndex].examples = examples
             words[index].senses[senseIndex].usageLabel = refreshedSense.usageLabel
-            words[index].senses[senseIndex].collocations = Self.deriveCollocations(word: refreshedSense.word, examples: refreshedSense.examples)
+            words[index].senses[senseIndex].collocations = Self.deriveCollocations(word: refreshedSense.word, examples: examples)
         }
+    }
+
+    private static func formattedIPA(for word: String, source: String) -> String {
+        let value = source.trimmingCharacters(in: CharacterSet(charactersIn: "/").union(.whitespacesAndNewlines))
+        guard !value.isEmpty else { return "—" }
+        return "/\(value)/"
+    }
+
+    private static func teachingExamples(for word: String, in examples: [String]) -> [String] {
+        let cleaned = examples.reduce(into: [String]()) { result, example in
+            let value = example.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty && !result.contains(value) { result.append(value) }
+        }
+        let target = AnswerEvaluator.normalize(word).split(separator: " ").map(String.init)
+        guard !target.isEmpty else { return cleaned }
+        let matching = cleaned.filter { example in
+            let tokens = AnswerEvaluator.normalize(example).split(separator: " ").map(String.init)
+            guard tokens.count >= target.count else { return false }
+            return (0...(tokens.count - target.count)).contains { index in
+                return Array(tokens[index..<(index + target.count)]) == target
+            }
+        }
+        return matching.isEmpty ? cleaned : matching
     }
 
     @discardableResult
