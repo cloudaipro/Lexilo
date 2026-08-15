@@ -78,15 +78,15 @@ This direction measures whether you understand the word when you encounter it.
 
 ### Recall: meaning → word
 
-1. Read the definition and part of speech.
+1. Read the complete definition and part of speech. Long definitions wrap across lines instead of being intentionally shortened with an ellipsis.
 2. Type the target word from memory.
 3. If needed, request a hint showing the first letter and word length.
-4. Tap **Check**.
-5. Review the submitted and expected answers, pronunciation, and one example sentence.
+4. Tap **Check** when you have an answer. If you do not know it yet, tap **Reveal answer** below **Check**.
+5. Review the expected answer, pronunciation, and one example sentence. A revealed answer is shown as **Answer revealed**, without an empty “You wrote” response.
 
 Lexilo normalises case, surrounding punctuation, whitespace, and diacritics when checking an answer. Configured accepted variants are also valid. It does not use broad fuzzy matching, so a genuinely different spelling is not treated as correct.
 
-Recall cards require production rather than self-grading. This keeps “I recognised it” separate from “I could produce it.”
+Recall cards require production rather than self-grading. This keeps “I recognised it” separate from “I could produce it.” The two actions are intentionally equal in size: **Check** supports an attempted answer, while **Reveal answer** gives you an honest path when retrieval is not yet available.
 
 ## 5. What happens after an answer
 
@@ -98,6 +98,8 @@ Lexilo records more than a binary result. Scheduling can take into account:
 - whether the item was marked too easy.
 
 After an answer, the card shows a short explanation of when it will return and why. A missed card is scheduled for the next day and can also reappear later in the current active session, giving you an immediate second attempt without pretending the miss never happened.
+
+Using **Reveal answer** counts as an unanswered miss. It records the miss without storing a blank response, shows the answer, and follows the same next-day scheduling and in-session reinforcement path as an incorrect typed answer.
 
 ## 6. Adaptive memory scheduling
 
@@ -260,6 +262,8 @@ In **Settings → Pronunciation**, you can choose a voice and adjust speaking ra
 
 Pronunciation is reinforcement, not proof of recall. On a recall card, audio and the example appear after checking the answer so they cannot reveal the target prematurely.
 
+Practice definitions preserve the complete available text. When a definition is long, the card grows and wraps it rather than replacing the ending with an ellipsis.
+
 ## 19. Daily rhythm and streaks
 
 A study day follows the device's local calendar. Normal-round answers are recorded as you complete them. Practising the configured number of distinct words—the first round, five by default—completes that study day. Additional rounds grow today's total but are not required for the streak. Practice Again does not affect completion. Consecutive completed days build the streak; missing the first-round commitment for a day ends it.
@@ -279,6 +283,7 @@ The widget offers a passive glance at Lexilo from the Home Screen. It is intenti
 | Repeat every word practised today | Round completion or **Today → Practice Again** |
 | Understand a shown word | Recognition card → **Reveal → Know / Don't know** |
 | Recall a word from meaning | Recall card → type the word → **Check** |
+| Admit you do not know a recall answer | Recall card → **Reveal answer** |
 | Get a constrained clue | Recall card → **Hint** |
 | Review fragile memories | **Memory → Words at risk** |
 | Inspect or manage a sense | **Words → select a word → sense menu** |
@@ -306,6 +311,14 @@ That is expected. A miss may return later in the active session for reinforcemen
 ### A typed answer was marked wrong
 
 Lexilo ignores case, surrounding punctuation, extra whitespace, and diacritics. It accepts explicitly configured variants, but it does not guess broadly from a near match. Compare the submitted and expected spellings shown after checking.
+
+### I do not know the answer
+
+Tap **Reveal answer** below **Check**. Lexilo will show the expected word, record an unanswered miss, and schedule the card to return tomorrow. You can continue without entering a placeholder response.
+
+### A definition looks cut off
+
+Practice cards wrap long definitions to preserve the complete available text. If the source content itself appears incomplete, open the sense in **Words** and inspect **Settings → Quality and memory → Content quality**.
 
 ### Pronunciation does not play
 
@@ -372,7 +385,7 @@ Hints are intentionally constrained and recorded. Help is available, but it chan
 
 Examples, usage labels, and collocations make a meaning memorable and usable. They belong in the explanation and word-detail layers, where they enrich understanding after a clean retrieval attempt.
 
-Definitions should be concise enough to test one idea. Examples should sound natural and should not reveal the answer on the front of a production card.
+Definitions should be concise enough to test one idea. When the source definition is longer, the interface wraps it rather than hiding its ending with an ellipsis. Examples should sound natural and should not reveal the answer on the front of a production card.
 
 ## 8. Honest progress should lead to an action
 
@@ -396,6 +409,8 @@ The study surface stays narrow:
 **Recall**
 
 > Meaning → Think → Type → Check → Correct → Schedule
+
+> Meaning → Think → Reveal answer → Review → Needs recall → Schedule
 
 Secondary controls live in hints, disclosure sections, and menus. The main action remains visually dominant, while expert controls remain reachable.
 

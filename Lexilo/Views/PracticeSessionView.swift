@@ -15,11 +15,14 @@ struct PracticeSessionView: View {
     @State private var answerText = ""
     @State private var usedHint = false
     @State private var answerWasCorrect: Bool?
+    @State private var revealedWithoutAttempt = false
     @State private var presentedAt = Date.now
     @State private var scheduledInterval: Int?
     @State private var reporting = false
     @State private var isExtraPractice = false
     @FocusState private var answerFocused: Bool
+
+    private let recallActionHeight: CGFloat = 72
 
     private var current: StudyCard? { index < queue.count ? queue[index] : nil }
     private var word: VocabularyItem? { current.flatMap { store.word(for: $0.vocabularyID) } }
@@ -137,12 +140,13 @@ struct PracticeSessionView: View {
         if revealed {
             answerDivider
             HStack(spacing: 8) {
-                Image(systemName: answerWasCorrect == true ? "checkmark.circle.fill" : "xmark.circle.fill")
-                Text(answerWasCorrect == true ? "Correct" : "Not quite")
+                Image(systemName: answerWasCorrect == true ? "checkmark.circle.fill" : revealedWithoutAttempt ? "eye.fill" : "xmark.circle.fill")
+                Text(answerWasCorrect == true ? "Correct" : revealedWithoutAttempt ? "Answer revealed" : "Not quite")
             }
-            .font(.headline).foregroundStyle(answerWasCorrect == true ? LexiloTheme.sage : LexiloTheme.danger)
+            .font(.headline)
+            .foregroundStyle(answerWasCorrect == true ? LexiloTheme.sage : revealedWithoutAttempt ? LexiloTheme.brass : LexiloTheme.danger)
             Text(word.word).font(.lexiloDisplay(42, weight: .medium)).foregroundStyle(LexiloTheme.ink)
-            if answerWasCorrect == false {
+            if answerWasCorrect == false && !revealedWithoutAttempt {
                 VStack(spacing: 4) {
                     Text("You wrote: \(answerText)").foregroundStyle(LexiloTheme.muted)
                     Text("Expected: \(word.word)").fontWeight(.semibold).foregroundStyle(LexiloTheme.ink)
@@ -201,11 +205,38 @@ struct PracticeSessionView: View {
                 Button { advance() } label: { primaryButtonLabel("Continue", symbol: "arrow.right") }
                     .buttonStyle(PressableScale()).padding(20)
             } else {
-                Button { if let word { checkProduction(word: word, card: card) } } label: { primaryButtonLabel("Check", symbol: "checkmark") }
+                VStack(spacing: 12) {
+                    Button { if let word { checkProduction(word: word, card: card) } } label: { primaryButtonLabel("Check", symbol: "checkmark", height: recallActionHeight) }
+                        .buttonStyle(PressableScale())
+                        .disabled(answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity(answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+
+                    Button {
+                        if let word { revealProductionAnswer(word: word, card: card) }
+                    } label: {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle().fill(LexiloTheme.sageLight).frame(width: 56, height: 56)
+                                Image(systemName: "eye").font(.system(size: 25, weight: .semibold)).foregroundStyle(LexiloTheme.ink)
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Reveal answer").font(.title3.weight(.semibold)).foregroundStyle(LexiloTheme.ink)
+                                Text("I don’t know this one yet").font(.caption.weight(.semibold)).foregroundStyle(LexiloTheme.sage)
+                            }
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right").font(.headline.weight(.semibold)).foregroundStyle(LexiloTheme.ink)
+                        }
+                        .padding(.horizontal, 22)
+                        .frame(maxWidth: .infinity, minHeight: recallActionHeight, alignment: .leading)
+                        .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 19, style: .continuous))
+                        .overlay { RoundedRectangle(cornerRadius: 19, style: .continuous).stroke(LexiloTheme.ink.opacity(0.14), lineWidth: 1.5) }
+                    }
                     .buttonStyle(PressableScale())
-                    .disabled(answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .opacity(answerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
-                    .padding(20)
+                    .accessibilityLabel("Reveal answer")
+                    .accessibilityHint("I don't know this one yet")
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
         } else if revealed {
             HStack(spacing: 12) {
@@ -218,15 +249,20 @@ struct PracticeSessionView: View {
         }
     }
 
-    private func primaryButtonLabel(_ title: String, symbol: String) -> some View {
-        Label(title, systemImage: symbol).font(.headline).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 58)
+    private func primaryButtonLabel(_ title: String, symbol: String, height: CGFloat = 58) -> some View {
+        Label(title, systemImage: symbol).font(.headline).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: height)
             .background(LexiloTheme.ink, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
     }
 
     private func spokenPracticeText(_ displayedText: String, spokenText: String? = nil, label: String, font: Font, color: Color, italic: Bool = false) -> some View {
         HStack(alignment: .center, spacing: 8) {
             Group { if italic { Text(displayedText).italic() } else { Text(displayedText) } }
-                .font(font).multilineTextAlignment(.center).foregroundStyle(color)
+                .font(font)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(color)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
             Button { speechPlayer.play(spokenText ?? displayedText) } label: {
                 Image(systemName: "speaker.wave.2.fill").font(.subheadline).foregroundStyle(LexiloTheme.sage).frame(width: 32, height: 32)
             }.buttonStyle(.plain).accessibilityLabel(label)
@@ -251,6 +287,21 @@ struct PracticeSessionView: View {
         answerWasCorrect = correct
         completed += 1
         if correct { correctCount += 1 } else { queue.append(card) }
+        revealed = true
+    }
+
+    private func revealProductionAnswer(word: VocabularyItem, card: StudyCard) {
+        guard !revealed else { return }
+        answerFocused = false
+        let latency = Date.now.timeIntervalSince(presentedAt)
+        if !isExtraPractice {
+            scheduledInterval = store.answer(cardID: card.id, correct: false, response: nil, responseTime: latency, usedHint: usedHint)
+        }
+        answerWasCorrect = false
+        revealedWithoutAttempt = true
+        answerText = ""
+        completed += 1
+        queue.append(card)
         revealed = true
     }
 
@@ -295,6 +346,7 @@ struct PracticeSessionView: View {
         answerText = ""
         usedHint = false
         answerWasCorrect = nil
+        revealedWithoutAttempt = false
         scheduledInterval = nil
         presentedAt = .now
         if current?.direction == .recall {

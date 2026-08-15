@@ -79,6 +79,30 @@ final class LexiloPracticeFlowTests: XCTestCase {
         capture("06 Typed production correction")
     }
 
+    func testRecallCanRevealAnswer() throws {
+        app.terminate()
+        app.launchArguments.append("--ui-testing-recall")
+        app.launch()
+
+        let start = app.buttons["Start practice"]
+        XCTAssertTrue(start.waitForExistence(timeout: 8))
+        start.tap()
+
+        let keyboardDone = app.keyboards.buttons["done"]
+        if keyboardDone.waitForExistence(timeout: 2) {
+            keyboardDone.tap()
+        }
+
+        let reveal = app.buttons["Reveal answer"]
+        XCTAssertTrue(reveal.waitForExistence(timeout: 5), "A recall card should offer a reveal path below Check")
+        capture("07 Recall reveal action")
+        reveal.tap()
+
+        XCTAssertTrue(app.staticTexts["Answer revealed"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'return tomorrow'")).firstMatch.exists)
+        XCTAssertTrue(app.buttons["Continue"].exists)
+    }
+
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
