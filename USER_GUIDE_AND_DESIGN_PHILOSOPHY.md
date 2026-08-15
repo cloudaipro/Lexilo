@@ -134,16 +134,9 @@ Core senses are active first. Extended and rare senses stay de-emphasised until 
 
 This progression prevents an uncommon meaning from competing with the meaning you are still trying to establish.
 
-## 9. Practice controls and recovery actions
+## 9. Practice focus
 
-The practice-card menu includes controls for cases where scheduling alone is not enough:
-
-- **Pause this sense** removes its cards from normal practice without deleting it.
-- **Wrong sense** reports the mismatch, pauses that sense, and makes the next available sense eligible when possible.
-- **Too easy** records an easy outcome so the scheduler can move it forward more aggressively.
-- **Report content** records a content-quality issue for later review.
-
-Paused senses can be resumed from the word-detail screen. These actions preserve history; they do not erase the word or its past reviews.
+Practice cards intentionally expose only the actions needed for the current learning step: reveal the answer, report whether it was known, check a typed answer, request a hint, and continue. Advanced scheduling and content-management controls stay out of the default learner interface so the practice loop remains focused on learning English rather than internal scheduling or dictionary terminology.
 
 ## 10. Words
 
@@ -156,7 +149,7 @@ Direct dictionary browsing is reserved for a future release. The bundled lexicon
 
 Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target.
 
-Each meaning shows the available definition, usage label, common pairings, examples, audio controls, priority, and learning state. Its menu lets you pause or resume it, report a mismatch, mark it too easy, or report content.
+Each meaning shows the available definition, usage label, common pairings, examples, audio controls, priority, and learning state.
 
 Scheduler difficulty and memory estimates are intentionally not displayed. They influence review timing but do not help with the learner's immediate task: understanding and using the word.
 
@@ -235,8 +228,7 @@ The widget offers a passive glance at Lexilo from the Home Screen. It is intenti
 | Recall a word from meaning | Recall card → type the word → **Check** |
 | Admit you do not know a recall answer | Recall card → **Reveal answer** |
 | Get a constrained clue | Recall card → **Hint** |
-| Inspect or manage a sense | **Words → select a word → sense menu** |
-| Pause or resume a sense | Word detail → sense menu |
+| Inspect a meaning | **Words → select a word** |
 | Add personal vocabulary | **Settings → Your data → Import CSV or TSV** |
 | Export or restore everything | **Settings → Your data** |
 | Enable cross-device snapshots | **Settings → Your data → Sync backup with iCloud** |
@@ -264,7 +256,7 @@ Tap **Reveal answer** below **Check**. Lexilo will show the expected word, recor
 
 ### A definition looks cut off
 
-Practice cards wrap long definitions to preserve the complete available text. If the source content itself appears incomplete, open the meaning in **Words** and use **Report content** from its menu.
+Practice cards wrap long definitions to preserve the complete available text. If the source content itself appears incomplete, note the word and issue for later content review.
 
 ### Pronunciation does not play
 
@@ -272,7 +264,7 @@ Check the device volume, then try another voice in **Settings → Pronunciation*
 
 ### An expected meaning is not being practised
 
-It may be an inactive extended or rare sense, or it may have been paused. Open the word in **Words** to inspect and resume the sense. Secondary senses also unlock naturally after the active sense becomes durable in both directions.
+It may be an inactive extended or rare sense. Secondary senses also unlock naturally after the active sense becomes durable in both directions.
 
 ### An import row is rejected
 
@@ -363,7 +355,7 @@ The system should make stopping after any completed round feel valid. Continuing
 
 ## 11. Learner agency should preserve history
 
-Real content is imperfect and personal priorities change. Pause, resume, Wrong sense, Too easy, and Report content give the learner direct control without destructive resets.
+Real content is imperfect and personal priorities change. Direct answer feedback, repeat practice, and preserved history give the learner control without requiring a dense set of recovery controls or destructive resets.
 
 History remains intact so that scheduling, diagnostics, and recovery continue to have evidence.
 

@@ -16,7 +16,7 @@ and a fixed interval scheduler.
 | Scheduling | Compact adaptive model using difficulty, stability, retrievability, correctness, response time, hints, and recent history. Technical scores stay out of the normal UI. |
 | Card separation | Recognition and production siblings cannot be served on the same calendar day. Failed cards can recycle within a session. |
 | Sense model | Source-aware senses with core/extended/rare priority, usage labels, examples, collocations, translations, active state, pause state, and separate direction cards. |
-| Recovery | Pause, Wrong sense, Too easy, and Report content actions are available from practice and word detail. |
+| Recovery | Core answer controls remain available in practice; advanced pause, sense-correction, difficulty, and content-report actions are not exposed in the default UI. |
 | Personal content | CSV/TSV import supports Word, Meaning, Example, and Tags, with duplicate detection, preview, and merge-or-skip behavior. |
 | Portability | JSON export/restore, rolling local backup, tolerant migration, and optional iCloud snapshot sync. |
 | Pronunciation | Kaikki IPA, CMUdict conversion, eSpeak NG generated IPA, and offline Kitten Nano speech with system-voice failure fallback. |

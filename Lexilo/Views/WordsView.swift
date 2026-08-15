@@ -160,16 +160,6 @@ struct WordDetailView: View {
                     if !sense.usageLabel.isEmpty { Text(sense.usageLabel).font(.caption).italic().foregroundStyle(LexiloTheme.sage) }
                 }
                 Spacer()
-                Menu {
-                    if sense.isActive && !sense.isPaused {
-                        Button { store.pause(vocabularyID: currentWord.id, senseID: sense.id) } label: { Label("Pause sense", systemImage: "pause") }
-                    } else {
-                        Button { store.resume(vocabularyID: currentWord.id, senseID: sense.id) } label: { Label("Learn this sense", systemImage: "play") }
-                    }
-                    Button { store.markWrongSense(vocabularyID: currentWord.id, senseID: sense.id) } label: { Label("Wrong sense", systemImage: "arrow.triangle.branch") }
-                    Button { store.markTooEasy(vocabularyID: currentWord.id, senseID: sense.id) } label: { Label("Too easy", systemImage: "forward.end") }
-                    Button { store.reportContent(vocabularyID: currentWord.id, senseID: sense.id, reason: "Reported from word detail") } label: { Label("Report content", systemImage: "exclamationmark.bubble") }
-                } label: { Image(systemName: "ellipsis.circle").foregroundStyle(LexiloTheme.sage) }
             }
             Text(sense.definition).font(.title3).foregroundStyle(LexiloTheme.ink)
             if !sense.collocations.isEmpty {

@@ -18,7 +18,6 @@ struct PracticeSessionView: View {
     @State private var revealedWithoutAttempt = false
     @State private var presentedAt = Date.now
     @State private var scheduledInterval: Int?
-    @State private var reporting = false
     @State private var isExtraPractice = false
     @FocusState private var answerFocused: Bool
 
@@ -40,13 +39,6 @@ struct PracticeSessionView: View {
             else { completion }
         }
         .task { loadSession() }
-        .confirmationDialog("What should we review?", isPresented: $reporting, titleVisibility: .visible) {
-            if let card = current {
-                Button("Definition is confusing") { report(card, reason: "Confusing definition") }
-                Button("Example is not helpful") { report(card, reason: "Unhelpful example") }
-                Button("Pronunciation or spelling issue") { report(card, reason: "Pronunciation or spelling") }
-            }
-        }
     }
 
     private func loadSession() {
@@ -74,18 +66,6 @@ struct PracticeSessionView: View {
                 Spacer()
                 Text("\(min(index + 1, queue.count)) of \(queue.count)").font(.subheadline.weight(.semibold)).foregroundStyle(LexiloTheme.muted)
                 Spacer()
-                Menu {
-                    Button { pause(card) } label: { Label("Pause this sense", systemImage: "pause.circle") }
-                    Button { wrongSense(card) } label: { Label("Wrong sense", systemImage: "arrow.triangle.branch") }
-                    if !isExtraPractice {
-                        Button { markTooEasy(card) } label: { Label("Too easy", systemImage: "forward.end") }
-                    }
-                    Divider()
-                    Button { reporting = true } label: { Label("Report content", systemImage: "exclamationmark.bubble") }
-                } label: {
-                    Image(systemName: "ellipsis").font(.headline).frame(width: 42, height: 42).background(.white.opacity(0.65), in: Circle())
-                }
-                .foregroundStyle(LexiloTheme.ink)
             }
             .foregroundStyle(LexiloTheme.ink).padding(.horizontal, 20).padding(.top, 8)
 
@@ -314,27 +294,6 @@ struct PracticeSessionView: View {
         completed += 1
         if correct { correctCount += 1 } else { queue.append(card) }
         advance()
-    }
-
-    private func markTooEasy(_ card: StudyCard) {
-        _ = store.answer(cardID: card.id, correct: true, responseTime: Date.now.timeIntervalSince(presentedAt), tooEasy: true)
-        completed += 1
-        correctCount += 1
-        advance()
-    }
-
-    private func pause(_ card: StudyCard) {
-        store.pause(vocabularyID: card.vocabularyID, senseID: card.senseID)
-        advance()
-    }
-
-    private func wrongSense(_ card: StudyCard) {
-        store.markWrongSense(vocabularyID: card.vocabularyID, senseID: card.senseID)
-        advance()
-    }
-
-    private func report(_ card: StudyCard, reason: String) {
-        store.reportContent(vocabularyID: card.vocabularyID, senseID: card.senseID, reason: reason)
     }
 
     private func advance() {

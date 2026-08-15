@@ -596,7 +596,7 @@ The audit recommendations that became product work are now implemented:
 - Keep the current restrained full-screen focus.
 - Keep the large native text field and single **Check** action on production cards.
 - After checking, show the expected word, the learner’s exact difference, part of speech, one non-leaking example, and pronunciation.
-- Use an unobtrusive overflow menu for Pause, Wrong sense, and Report; do not crowd the primary card.
+- Keep advanced recovery and content-report actions out of the current practice card; keep the primary card focused on the learning response.
 - Continue separating recognition and production siblings by day.
 
 #### Word detail
