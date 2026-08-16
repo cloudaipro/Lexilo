@@ -1,6 +1,6 @@
 # Lexilo 使用指南與設計理念
 
-_依據 2026 年 8 月 15 日的程式碼更新。_
+_依據 2026 年 8 月 16 日的程式碼更新。_
 
 > 說明：目前 App 介面使用英文，因此本指南保留按鈕、分頁與選單的英文名稱，並以繁體中文解說，方便你在 App 中找到正確項目。
 
@@ -32,7 +32,7 @@ Lexilo 由三個分頁組成：
 |---|---|
 | **Today** | 查看今天的學習量並開始專注練習。 |
 | **Words** | 瀏覽已收藏及即將學習的單字；查看並管理個別詞義。 |
-| **Settings** | 調整練習、語音、詞彙、語言輔助、匯入、備份及同步。 |
+| **Settings** | 調整練習、語音、詞彙、語言輔助、小工具內容、匯入、備份及同步。 |
 
 ## 3. Today
 
@@ -217,7 +217,13 @@ App 不會在背景中自動產生或覆寫翻譯。
 
 ## 17. 小工具
 
-小工具可讓你從主畫面快速查看 Lexilo。它刻意維持輕量；練習與管理單字時，請回到 App 內進行。
+Lexilo 支援主畫面的 Small 與 Medium 小工具。兩者都使用第 3 節所說的目前精選單字；小工具是快速查看的學習提示，不是另一套獨立的練習佇列。
+
+- **Small** 顯示 LEXILO 標誌、以自適應大小呈現的完整學習單字，以及 **Tap to practise**。它不顯示例句或定義，讓單字保持視覺焦點。
+- **Medium** 顯示 LEXILO 標誌、學習單字，以及位於單字下方的一段輔助文字。預設輔助內容是完整定義。
+- 若要選擇 Medium 小工具的內容，請前往 **Settings → Widget → Medium widget shows**，再選擇 **Definition** 或 **Example**。預設值是 Definition。
+- Medium 的定義與例句會換行顯示，不會刻意截短或加上刪節號。如果選定的例句在偏好的大小下放不下，Lexilo 會先嘗試較小的呈現方式，必要時改用另一個完整例句；不會把句子從中間截斷。
+- 點選任一小工具會開啟 Lexilo 的練習流程。學習資料或小工具內容設定變更時，顯示的快照會更新；此外也會依照小工具正常的時間軸更新。
 
 ## 快速參考
 
@@ -233,6 +239,7 @@ App 不會在背景中自動產生或覆寫翻譯。
 | 查看詞義 | **Words → 選擇單字** |
 | 加入個人詞彙 | **Settings → Your data → Import CSV or TSV** |
 | 匯出或還原所有學習資料 | **Settings → Your data** |
+| 選擇 Medium 小工具內容 | **Settings → Widget → Medium widget shows** |
 | 啟用跨裝置快照 | **Settings → Your data → Sync backup with iCloud** |
 | 查看字典與語音來源 | **Settings → Vocabulary → Dictionary sources and licenses** |
 | 變更語音或語速 | **Settings → Pronunciation** |

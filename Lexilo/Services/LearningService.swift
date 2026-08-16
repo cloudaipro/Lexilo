@@ -174,7 +174,7 @@ final class LearningStore: ObservableObject {
                 "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
                 "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
                 "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage",
-                "hasCompletedOnboarding"
+                "hasCompletedOnboarding", MediumWidgetContent.preferenceKey
             ] {
                 UserDefaults.standard.removeObject(forKey: key)
             }
@@ -888,10 +888,18 @@ final class LearningStore: ObservableObject {
 
     func widgetSnapshot(now: Date = .now, calendar: Calendar = .current) -> WidgetStudySnapshot? {
         guard let word = featuredWord(now: now, calendar: calendar) else { return nil }
+        let examples = word.examples.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        let primaryExample = examples.first ?? word.example
+        let mediumContent = MediumWidgetContent(
+            rawValue: UserDefaults.standard.string(forKey: MediumWidgetContent.preferenceKey) ?? ""
+        ) ?? .definition
         return WidgetStudySnapshot(
             vocabularyID: word.id,
             word: word.word,
-            example: word.example,
+            example: primaryExample,
+            definition: word.conciseDefinition,
+            additionalExamples: Array(examples.dropFirst()),
+            mediumContent: mediumContent,
             streak: currentStreak(now: now, calendar: calendar)
         )
     }
@@ -1269,5 +1277,9 @@ final class LearningStore: ObservableObject {
             SharedStudySnapshotStore.save(snapshot)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "LexiloWord")
+    }
+
+    func refreshWidgetSnapshot() {
+        publishWidgetSnapshot()
     }
 }

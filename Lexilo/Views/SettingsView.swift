@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("includePhrases") private var includePhrases = false
     @AppStorage("translationEnabled") private var translationEnabled = false
     @AppStorage("translationLanguage") private var translationLanguage = "Spanish"
+    @AppStorage(MediumWidgetContent.preferenceKey) private var mediumWidgetContent = MediumWidgetContent.definition.rawValue
     @State private var iCloudSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncEnabled")
     @State private var rotationMessage: String?
     @State private var showingImport = false
@@ -33,6 +34,16 @@ struct SettingsView: View {
                     Section("Daily practice") {
                         Stepper("Words per round: \(newWordLimit)", value: $newWordLimit, in: 5...20, step: 5)
                         Text("Start with one short round. You can always continue or repeat today’s words.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Section("Widget") {
+                        Picker("Medium widget shows", selection: $mediumWidgetContent) {
+                            ForEach(MediumWidgetContent.allCases) { content in
+                                Text(content.title).tag(content.rawValue)
+                            }
+                        }
+                        Text("The selected definition or example appears below the learning word and stays complete.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -123,6 +134,9 @@ struct SettingsView: View {
         }
         .onChange(of: soundEnabled) { _, enabled in
             if !enabled { speechPlayer.stop() }
+        }
+        .onChange(of: mediumWidgetContent) { _, _ in
+            store.refreshWidgetSnapshot()
         }
         .sheet(isPresented: $showingImport) { ImportVocabularyView() }
         .fileExporter(isPresented: $showingExporter, document: backupDocument, contentType: .json, defaultFilename: "Lexilo Backup") { result in

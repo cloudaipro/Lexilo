@@ -1,7 +1,7 @@
 # LEXILO Competitive Audit and Product Improvement Plan
 
 > Research date: August 14, 2026
-> Code-state refresh: August 15, 2026
+> Code-state refresh: August 16, 2026
 > Market: United States iPhone App Store
 > Scope: English-learning category leaders, Anki and the English 60K deck ecosystem, LEXILO product audit, SWOT analysis, gap analysis, and UI/product roadmap
 
@@ -161,7 +161,11 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 - Dictionary content is not organized around collocations, confusable words, word families, or learner-friendly senses.
 - There is no separate Progress or Memory dashboard; scheduling diagnostics remain intentionally behind the interface.
 - No reminders, subscription strategy, or cross-platform continuity. Optional iCloud snapshot sync is available for portability.
-- The widget URL contains a vocabulary ID, but the application currently opens a generic practice session instead of targeting that word. See [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L63) and [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
+- The widget supports Small and Medium layouts and carries the displayed
+  vocabulary ID in its URL, but the application currently opens a generic
+  practice session instead of targeting that exact word. See
+  [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L45) and
+  [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
 
 ### Opportunities
 
@@ -321,9 +325,16 @@ Avoid decorative charts and trophy collections. Every metric should lead to an a
 
 ### Widget
 
-- Preserve the current small editorial widget.
-- Make tapping it open the displayed word.
-- Add medium-size support with one word, one example, and a `Practice` action.
+- Preserve the current small editorial widget. **Implemented:** it is
+  word-first and keeps the learning word visible without an example or
+  definition.
+- Make tapping it open the displayed word. **Partially implemented:** the
+  widget URL carries the vocabulary ID, but the app still opens a generic
+  practice session.
+- Add medium-size support with one word, one complete secondary content block,
+  and a practice tap. **Implemented:** the medium widget places the word above
+  a complete selected definition or example, with Definition as the default;
+  the choice is available in Settings.
 - Consider an interactive “Hear” action where supported.
 - Ensure the widget works with tinted and high-contrast appearances.
 

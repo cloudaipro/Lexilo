@@ -32,7 +32,7 @@ xcodegen generate
 - Bundled Kaikki / English Wiktionary Learning Core with 39,179 learning terms, verified usage examples, CMUdict pronunciation fallback, and eSpeak NG coverage
 - Deterministic offline vocabulary rotation by learning band, with learner progress stored separately from dictionary content
 - Kitten Nano v0.2 neural pronunciation through sherpa-onnx, launch prewarming, and a bounded on-device audio cache
-- Small WidgetKit widget target backed by an App Group study snapshot
+- Small and medium WidgetKit widgets backed by an App Group study snapshot; the medium widget shows the full definition or example selected in Settings (Definition by default)
 - Daily new-word cap, explicit StudyDay streak records, and migration-safe persistence
 - Unit tests for adaptive intervals, content migration, example quality, pronunciation fallbacks, persistence, new-word limits, streaks, and paired-card constraints
 - XCUITest coverage for the daily practice flow and simplified word-detail hierarchy
@@ -46,7 +46,7 @@ Validated on **iPhone 17 Pro, iOS 26.2 Simulator**:
 
 - Full simulator build: passed
 - Practice-flow XCUITest: 4 tests passed
-- ReviewSchedulerTests: 32 tests passed, including Kaikki-only seeding, exact-band rotation, unavailable-state, sense repair, example-quality regression, persistence recovery, adaptive scheduling, cache, greeting, and real Kitten inference
+- ReviewSchedulerTests: 34 tests passed, including Kaikki-only seeding, exact-band rotation, unavailable-state, sense repair, widget snapshot compatibility, example-quality regression, persistence recovery, adaptive scheduling, cache, greeting, and real Kitten inference
 - Unsigned arm64 iPhone build: passed
 - Visual checks: Today, recognition front, revealed answer, failure recycling, and completion
 

@@ -1,7 +1,7 @@
 # Lexilo v0.9 Product Proposal
 
 > Status: implemented in the current source tree
-> Updated: August 15, 2026
+> Updated: August 16, 2026
 
 Lexilo is a focused, local-first iOS vocabulary trainer. It helps learners turn
 recognition into active recall through short daily sessions, automatic review
@@ -98,7 +98,9 @@ Included:
 - CSV/TSV personal vocabulary import.
 - JSON backup/restore and optional iCloud snapshot sync.
 - Offline Kitten pronunciation with system-voice fallback.
-- WidgetKit study snapshot.
+- Small and medium WidgetKit study widgets backed by an App Group snapshot. The
+  small widget is word-first; the medium widget places the complete selected
+  definition or example below the word, with Definition as the default setting.
 
 Deferred:
 
@@ -125,7 +127,7 @@ appropriate license.
 The current v0.9 source tree was validated on an iPhone 17 Pro, iOS 26.2
 Simulator:
 
-- ReviewSchedulerTests: 32/32 passed.
+- ReviewSchedulerTests: 34/34 passed.
 - LexiloPracticeFlowTests: 4/4 passed.
 - SQLite integrity check: passed.
 - Selected source entries missing pronunciation: 0.

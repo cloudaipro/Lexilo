@@ -5,7 +5,8 @@ final class ReviewSchedulerTests: XCTestCase {
     private static let preferenceKeys = [
         "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
         "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
-        "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage", "hasCompletedOnboarding"
+        "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage", "hasCompletedOnboarding",
+        MediumWidgetContent.preferenceKey
     ]
     private var savedPreferences: [String: Any] = [:]
 
@@ -42,6 +43,55 @@ final class ReviewSchedulerTests: XCTestCase {
         for (key, value) in savedPreferences { UserDefaults.standard.set(value, forKey: key) }
         savedPreferences = [:]
         super.tearDown()
+    }
+
+    func testWidgetSnapshotKeepsCompleteExampleAlternativesAndReadsLegacyData() throws {
+        let vocabularyID = UUID()
+        let snapshot = WidgetStudySnapshot(
+            vocabularyID: vocabularyID,
+            word: "resilient",
+            example: "The longer complete example remains available.",
+            definition: "Able to recover quickly from difficulty.",
+            additionalExamples: ["A short complete example.", "A short complete example."],
+            mediumContent: .example,
+            streak: 2
+        )
+
+        let encoded = try JSONEncoder().encode(snapshot)
+        let decoded = try JSONDecoder().decode(WidgetStudySnapshot.self, from: encoded)
+        XCTAssertEqual(decoded.definition, "Able to recover quickly from difficulty.")
+        XCTAssertEqual(decoded.mediumContent, .example)
+        XCTAssertEqual(decoded.exampleCandidates, [
+            "The longer complete example remains available.",
+            "A short complete example."
+        ])
+        XCTAssertEqual(decoded.shortestExample, "A short complete example.")
+
+        let legacyData = """
+        {"vocabularyID":"\(vocabularyID.uuidString)","word":"resilient","example":"A legacy complete example.","streak":2}
+        """.data(using: .utf8)!
+        let legacySnapshot = try JSONDecoder().decode(WidgetStudySnapshot.self, from: legacyData)
+        XCTAssertEqual(legacySnapshot.definition, "")
+        XCTAssertEqual(legacySnapshot.mediumContent, .definition)
+        XCTAssertEqual(legacySnapshot.additionalExamples, [])
+        XCTAssertEqual(legacySnapshot.exampleCandidates, ["A legacy complete example."])
+    }
+
+    @MainActor
+    func testWidgetSnapshotCarriesDefinitionAndSelectedMediumContent() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let store = makeStore(persistenceURL: persistenceURL)
+        let definitionSnapshot = try XCTUnwrap(store.widgetSnapshot())
+        XCTAssertFalse(definitionSnapshot.definition.isEmpty)
+        XCTAssertEqual(definitionSnapshot.mediumContent, .definition)
+
+        UserDefaults.standard.set(MediumWidgetContent.example.rawValue, forKey: MediumWidgetContent.preferenceKey)
+        let exampleSnapshot = try XCTUnwrap(store.widgetSnapshot())
+        XCTAssertEqual(exampleSnapshot.mediumContent, .example)
+        XCTAssertEqual(exampleSnapshot.example, definitionSnapshot.example)
     }
 
     func testBundledKittenPackWarmsAndGeneratesWaveform() throws {

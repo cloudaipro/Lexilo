@@ -1,6 +1,6 @@
 # Lexilo v0.9 Implementation Status
 
-> Updated: August 15, 2026
+> Updated: August 16, 2026
 > Scope: the simplified product direction, Kaikki Learning Core, and release validation
 
 This document records what is implemented in the current source tree. It replaces
@@ -20,6 +20,7 @@ and a fixed interval scheduler.
 | Personal content | CSV/TSV import supports Word, Meaning, Example, and Tags, with duplicate detection, preview, and merge-or-skip behavior. |
 | Portability | JSON export/restore, rolling local backup, tolerant migration, and optional iCloud snapshot sync. |
 | Pronunciation | Kaikki IPA, CMUdict conversion, eSpeak NG generated IPA, and offline Kitten Nano speech with system-voice failure fallback. |
+| Widget | Small and medium WidgetKit layouts backed by an App Group snapshot. Small is word-first; Medium shows the complete Definition or Example selected in Settings, with Definition as the default. |
 | Dictionary scope | The bundled database is a Learning Core. Full Dictionary browsing and downloadable dictionary packs are future work. |
 
 ## Lexical data quality
@@ -66,7 +67,10 @@ required for the v0.9 learning experience.
 - **Words** contains My Words and Upcoming, with local word/meaning filtering
   and focused word detail.
 - **Settings** contains practice, pronunciation, translation, import, backup,
-  sync, and attribution controls.
+  sync, attribution, and widget-content controls.
+- **Widget** uses the current featured word. Small keeps the word as the focus;
+  Medium places the selected complete definition or example below it without
+  intentional truncation.
 - Memory difficulty, stability, retrievability, and card-level diagnostics stay
   behind the interface. They influence scheduling but are not learner-facing
   content.
@@ -76,7 +80,7 @@ required for the v0.9 learning experience.
 
 Validated on an iPhone 17 Pro, iOS 26.2 Simulator:
 
-- `ReviewSchedulerTests`: 32/32 passed.
+- `ReviewSchedulerTests`: 34/34 passed.
 - `LexiloPracticeFlowTests`: 4/4 passed.
 - Full simulator build: passed.
 - Unsigned arm64 iPhone build: passed.
@@ -84,6 +88,8 @@ Validated on an iPhone 17 Pro, iOS 26.2 Simulator:
 - Selected source entries missing pronunciation: 0.
 - Regression coverage confirms complete usage sentences for `loyal`, `licensed`,
   and `lean`, and rejects the old definition-like `recreation` fragment.
+- Widget snapshot tests cover complete definition/example payloads, the
+  Definition default, Example selection, and decoding older snapshots.
 
 ## Deferred work
 

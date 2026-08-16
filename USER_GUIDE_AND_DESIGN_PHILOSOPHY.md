@@ -1,6 +1,6 @@
 # Lexilo User Guide & Design Philosophy
 
-_Updated for the codebase on August 15, 2026._
+_Updated for the codebase on August 16, 2026._
 
 Lexilo is a focused vocabulary-memory coach. It helps you learn precise word senses, practise both understanding and recall, and return to each card when your memory needs it—not merely on a fixed calendar.
 
@@ -30,7 +30,7 @@ Lexilo is organised into three tabs:
 |---|---|
 | **Today** | See today's workload and begin a focused practice session. |
 | **Words** | Browse saved and upcoming words; inspect and manage individual senses. |
-| **Settings** | Adjust practice, speech, vocabulary, language support, imports, backups, and sync. |
+| **Settings** | Adjust practice, speech, vocabulary, language support, widget content, imports, backups, and sync. |
 
 ## 3. Today
 
@@ -215,7 +215,13 @@ The streak is a gentle continuity signal, not a grade or the main measure of lea
 
 ## 17. Widget
 
-The widget offers a passive glance at Lexilo from the Home Screen. It is intentionally lightweight: use the app for practice and word management.
+Lexilo supports Small and Medium Home Screen widgets. Both use the current featured word described in Section 3; the widget is a glanceable study prompt, not a separate practice queue.
+
+- **Small** shows the LEXILO label, the complete learning word at an adaptive size, and **Tap to practise**. It does not show an example or definition, keeping the word as the focus.
+- **Medium** shows the LEXILO label, the learning word, and one secondary text block below it. The default secondary content is the complete definition.
+- To choose the Medium widget content, open **Settings → Widget → Medium widget shows** and select **Definition** or **Example**. The setting is Definition by default.
+- Medium definitions and examples wrap without intentional truncation or ellipses. If the selected example does not fit at the preferred size, Lexilo tries a smaller presentation and then another complete available example; it never cuts a sentence mid-text.
+- Tap either widget to open Lexilo's practice flow. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule.
 
 ## Quick reference
 
@@ -233,6 +239,7 @@ The widget offers a passive glance at Lexilo from the Home Screen. It is intenti
 | Export or restore everything | **Settings → Your data** |
 | Enable cross-device snapshots | **Settings → Your data → Sync backup with iCloud** |
 | Inspect dictionary and voice sources | **Settings → Vocabulary → Dictionary sources and licenses** |
+| Choose the Medium widget content | **Settings → Widget → Medium widget shows** |
 | Change voice or speech rate | **Settings → Pronunciation** |
 | Add or verify a translation | **Words → word detail → sense translation** |
 
