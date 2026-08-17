@@ -108,7 +108,13 @@ final class LexiloPracticeFlowTests: XCTestCase {
         let wordsTab = app.tabBars.buttons["Words"]
         XCTAssertTrue(wordsTab.waitForExistence(timeout: 8))
         wordsTab.tap()
-        XCTAssertFalse(app.segmentedControls.buttons["Dictionary"].exists)
+
+#if DEBUG
+        let dictionary = app.segmentedControls.buttons["Dictionary"]
+        XCTAssertTrue(dictionary.waitForExistence(timeout: 5), "Debug Words UI should expose Dictionary")
+        dictionary.tap()
+        XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: 5), "Debug Dictionary should show bundled offline entries")
+#endif
 
         let upcoming = app.segmentedControls.buttons["Upcoming"]
         XCTAssertTrue(upcoming.waitForExistence(timeout: 5))

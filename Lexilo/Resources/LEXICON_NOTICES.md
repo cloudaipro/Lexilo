@@ -4,10 +4,12 @@
 
 Lexilo's offline Learning Core is derived from the English Wiktionary extract
 published by Kaikki.org and produced with Wiktextract. Lexilo reformats and
-filters the extract into SQLite for offline learning.
+filters the extract into SQLite for offline learning. Kaikki remains the
+canonical user-facing sense inventory.
 
-The bundled build is `2026-08-12-quality-v3`. It contains 39,179 learning
-terms and 115,201 validated usage examples. Example records must contain the
+The bundled build is `2026-08-12-quality-v3` with rank model
+`learner-sense-ranker-v1`. It contains 39,179 learning terms and 115,202
+validated usage examples. Example records must contain the
 learning word or a valid inflected form and read as complete sentences;
 definitions, descriptions, collocations, and bare phrases are not relabeled as
 examples.
@@ -15,6 +17,28 @@ examples.
 Kaikki: https://kaikki.org/dictionary/English/
 English Wiktionary: https://en.wiktionary.org/
 Wiktextract: https://github.com/tatuylonen/wiktextract
+
+## Learner-oriented ranking evidence
+
+Lexilo stores a separate deterministic `learner_rank` for each sense. The
+upstream `sense_order` is preserved for provenance. When supplied to the build,
+Simple English Wiktionary and Open English WordNet contribute alignment
+evidence and ranking features only; their definitions and sense rows are not
+merged into the user-facing dictionary inventory.
+
+Simple English Wiktionary source and license:
+https://kaikki.org/simplewiktionary/rawdata.html
+
+Open English WordNet source and license:
+https://github.com/globalwordnet/english-wordnet
+
+The current bundle records Simple English Wiktionary
+`simplewiktionary-2026-08-15` (SHA-256
+`679c49137170095022f6c40ce5800a8ba0d604bac565164cd1d5f5b6ac4f3bb9`) and
+OEWN `OEWN-2025` (SHA-256
+`9a2d2d446397aa8cac9b0c9a4e5d9b32376312594e2670eaace3c13cf260d29e`).
+
+No hand-authored per-word ranking or content-replacement data is bundled.
 
 Wiktionary text is available under Creative Commons Attribution-ShareAlike
 4.0 International and the GNU Free Documentation License. Attribution and

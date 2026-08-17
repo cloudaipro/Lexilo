@@ -595,8 +595,31 @@ final class ReviewSchedulerTests: XCTestCase {
         let entry = try XCTUnwrap(Self.stableLexicon.entry(matching: "run"))
         let senses = Self.stableLexicon.senses(relatedToSenseID: entry.id)
         XCTAssertGreaterThan(senses.count, 1)
-        XCTAssertEqual(senses.first?.senseOrder, 0)
-        XCTAssertTrue(zip(senses, senses.dropFirst()).allSatisfy { pair in pair.0.senseOrder <= pair.1.senseOrder })
+        XCTAssertEqual(senses.first?.learnerRank, 1)
+        XCTAssertTrue(zip(senses, senses.dropFirst()).allSatisfy { pair in pair.0.learnerRank < pair.1.learnerRank })
+    }
+
+    @MainActor
+    func testHarborUsesAutomaticallyRankedNounSense() throws {
+        let entry = try XCTUnwrap(Self.stableLexicon.entry(matching: "harbor", partOfSpeech: "noun"))
+        XCTAssertEqual(entry.learnerRank, 1)
+        XCTAssertEqual(entry.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
+        XCTAssertTrue(entry.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
+
+        let senses = Self.stableLexicon.senses(relatedToSenseID: entry.id)
+        XCTAssertGreaterThanOrEqual(senses.count, 2)
+        XCTAssertEqual(senses.first?.learnerRank, 1)
+        XCTAssertTrue(senses.first?.definition.localizedCaseInsensitiveContains("ships") == true)
+        XCTAssertTrue(senses.dropFirst().contains { $0.definition == "Any place of shelter." })
+    }
+
+    @MainActor
+    func testDictionarySearchReturnsAutomaticallyRankedHarborEntry() throws {
+        let results = Self.stableLexicon.search("harbor", limit: 20)
+        let noun = try XCTUnwrap(results.first { $0.partOfSpeech == "noun" })
+        XCTAssertEqual(noun.learnerRank, 1)
+        XCTAssertEqual(noun.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
+        XCTAssertTrue(noun.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
     }
 
     @MainActor

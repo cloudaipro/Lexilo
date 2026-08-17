@@ -9,6 +9,7 @@ struct LexiconEntry: Identifiable, Hashable, Sendable {
     let examples: [String]
     let usageLabel: String
     let senseOrder: Int
+    let learnerRank: Int
     let frequencyRank: Int
     let learningBand: Int
     let isPhrase: Bool
@@ -24,6 +25,7 @@ struct LexiconEntry: Identifiable, Hashable, Sendable {
         examples: [String],
         usageLabel: String = "",
         senseOrder: Int = 0,
+        learnerRank: Int = 1,
         frequencyRank: Int,
         learningBand: Int,
         isPhrase: Bool
@@ -36,6 +38,7 @@ struct LexiconEntry: Identifiable, Hashable, Sendable {
         self.examples = examples
         self.usageLabel = usageLabel
         self.senseOrder = senseOrder
+        self.learnerRank = learnerRank
         self.frequencyRank = frequencyRank
         self.learningBand = learningBand
         self.isPhrase = isPhrase

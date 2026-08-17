@@ -214,6 +214,14 @@ final class LearningStore: ObservableObject {
         words.filter { $0.introducedAt == nil }.sorted { $0.frequencyRank < $1.frequencyRank }
     }
 
+#if DEBUG
+    /// Searches the bundled offline lexicon for the development-only
+    /// Dictionary browser. Looking up a word never adds it to study.
+    func searchDictionary(_ query: String, limit: Int = 100) -> [LexiconEntry] {
+        lexicon.search(query, limit: limit)
+    }
+#endif
+
     @discardableResult
     func addToLearning(_ entry: LexiconEntry) -> VocabularyItem {
         if let existing = words.first(where: { $0.lexiconID == entry.id }) { return existing }
@@ -924,7 +932,16 @@ final class LearningStore: ObservableObject {
 
     private func makeVocabularyItem(from entry: LexiconEntry) -> VocabularyItem {
         let entries = lexicon.senses(relatedToSenseID: entry.id)
-        let senseEntries = entries.isEmpty ? [entry] : entries
+        let senseEntries: [LexiconEntry]
+        if entries.isEmpty {
+            senseEntries = [entry]
+        } else if let selectedIndex = entries.firstIndex(where: { $0.id == entry.id }) {
+            senseEntries = [entries[selectedIndex]] + entries.enumerated().compactMap { index, value in
+                index == selectedIndex ? nil : value
+            }
+        } else {
+            senseEntries = entries
+        }
         let senses = senseEntries.enumerated().map { index, sense in
             let examples = Self.teachingExamples(for: sense.word, in: sense.examples)
             return LexicalSense(

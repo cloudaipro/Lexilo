@@ -140,12 +140,12 @@ Practice cards intentionally expose only the actions needed for the current lear
 
 ## 10. Words
 
-The Words tab currently has two sections:
+The Words tab in release builds has two sections:
 
 - **My Words** for material already in your learning collection;
 - **Upcoming** for words approaching introduction.
 
-Direct dictionary browsing is reserved for a future release. The bundled lexicon still supplies Lexilo's learning content and remains available for source and license details in Settings.
+Debug builds may additionally expose a development-only **Dictionary** section for searching the bundled offline lexicon. It does not add anything to your study list automatically.
 
 Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target.
 

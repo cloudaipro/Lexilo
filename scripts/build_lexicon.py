@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Build Lexilo's compact offline Learning Core from pinned open data.
 
-Kaikki's structured English Wiktionary extract is the sole lexical source.
-CMUdict is used only to fill pronunciation gaps for selected learning terms;
-it never contributes words, definitions, senses, or examples.
+Kaikki's structured English Wiktionary extract remains the canonical sense
+inventory. Optional Simple English Wiktionary and Open English WordNet inputs
+are used only as build-time ranking evidence; they never add user-facing sense
+rows. CMUdict is used only to fill pronunciation gaps.
 """
 
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
+import gzip
 import hashlib
 import json
 import re
@@ -17,9 +20,13 @@ import sqlite3
 import subprocess
 import tempfile
 import urllib.request
+import zipfile
 from pathlib import Path
+from typing import Any, Iterator
 
 from wordfreq import zipf_frequency
+
+from learner_sense_ranker import ExternalSense, RANK_MODEL_VERSION, rank_senses
 
 
 KAIKKI_VERSION = "2026-08-12-quality-v3"
@@ -29,6 +36,7 @@ CMUDICT_COMMIT = "74790861f652b15e4ac49015a90074ad62a27690"
 CMUDICT_URL = f"https://raw.githubusercontent.com/cmusphinx/cmudict/{CMUDICT_COMMIT}/cmudict.dict"
 CMUDICT_SHA256 = "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22"
 ESPEAK_NG_VERSION = "1.52.0"
+MAX_SENSES = 5
 WORD_PATTERN = re.compile(r"[A-Za-z][A-Za-z' -]{1,59}")
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 ALLOWED_POS = {
@@ -86,8 +94,31 @@ CREATE TABLE sense(
     source_sense_id TEXT NOT NULL UNIQUE,
     definition TEXT NOT NULL,
     sense_order INTEGER NOT NULL,
+    learner_rank INTEGER NOT NULL,
     usage_label TEXT,
-    learner_score REAL NOT NULL
+    learner_score REAL NOT NULL,
+    learner_confidence REAL NOT NULL,
+    rank_reason TEXT NOT NULL,
+    rank_model_version TEXT NOT NULL
+);
+CREATE TABLE sense_alignment(
+    id INTEGER PRIMARY KEY,
+    sense_id INTEGER NOT NULL REFERENCES sense(id),
+    source_id INTEGER NOT NULL REFERENCES source(id),
+    external_sense_id TEXT NOT NULL,
+    external_rank INTEGER NOT NULL,
+    similarity_score REAL NOT NULL,
+    confidence REAL NOT NULL,
+    method TEXT NOT NULL,
+    UNIQUE(sense_id, source_id, external_sense_id)
+);
+CREATE TABLE sense_rank_feature(
+    sense_id INTEGER PRIMARY KEY REFERENCES sense(id),
+    simple_wiktionary_signal REAL NOT NULL,
+    oewn_signal REAL NOT NULL,
+    external_support REAL NOT NULL,
+    usage_penalty REAL NOT NULL,
+    fallback_signal REAL NOT NULL
 );
 CREATE TABLE pronunciation(
     id INTEGER PRIMARY KEY,
@@ -223,19 +254,149 @@ def usable_senses(word: str, entry: dict) -> list[dict]:
         if not definition or not source_id:
             continue
         examples = usable_examples(word, sense)
-        score = 100.0 - min(source_order, 50) + (25.0 if examples else 0.0)
-        if len(definition) <= 180:
-            score += 5.0
         result.append({
             "source_id": source_id,
             "definition": definition,
             "usage_label": ", ".join(sorted(tags)),
+            "tags": sorted(tags),
             "source_order": source_order,
-            "score": score,
             "examples": examples,
         })
-    result.sort(key=lambda value: (-value["score"], value["source_order"], value["source_id"]))
-    return result[:5]
+    return result
+
+
+def iter_json_lines(path: Path) -> Iterator[dict[str, Any]]:
+    opener = gzip.open if path.suffix.casefold() == ".gz" else open
+    with opener(path, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            value = json.loads(line)
+            if isinstance(value, dict):
+                yield value
+
+
+def load_simple_wiktionary(path: Path | None) -> dict[tuple[str, str], list[ExternalSense]]:
+    if path is None:
+        return {}
+    result: dict[tuple[str, str], list[ExternalSense]] = defaultdict(list)
+    entry_counts: dict[tuple[str, str], int] = defaultdict(int)
+    for entry in iter_json_lines(path):
+        if entry.get("lang_code") != "en":
+            continue
+        part_of_speech = ALLOWED_POS.get(str(entry.get("pos", "")))
+        word = clean_text(entry.get("word"), 60)
+        if not part_of_speech or not word:
+            continue
+        key = (normalize(word), part_of_speech)
+        entry_order = entry_counts[key]
+        entry_counts[key] += 1
+        for source_order, sense in enumerate(entry.get("senses", [])):
+            if not isinstance(sense, dict):
+                continue
+            definition = next(
+                (clean_text(value, 500) for value in sense.get("glosses", []) if clean_text(value, 500)),
+                "",
+            )
+            source_sense_id = clean_text(sense.get("id"), 300) or f"simple:{normalize(word)}:{part_of_speech}:entry{entry_order}:sense{source_order}"
+            if not definition or not source_sense_id:
+                continue
+            result[key].append(
+                ExternalSense(
+                    source_name="simple_wiktionary",
+                    external_sense_id=source_sense_id,
+                    definition=definition,
+                    source_order=len(result[key]),
+                )
+            )
+    for values in result.values():
+        unique: dict[str, ExternalSense] = {}
+        for value in values:
+            unique.setdefault(value.external_sense_id, value)
+        values[:] = sorted(unique.values(), key=lambda value: (value.source_order, value.external_sense_id))
+    return dict(result)
+
+
+def _json_objects_from_path(path: Path, pattern: str) -> Iterator[tuple[str, dict[str, Any]]]:
+    if path.is_dir():
+        paths = sorted(path.glob(pattern))
+        for candidate in paths:
+            payload = json.loads(candidate.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                yield candidate.name, payload
+        return
+    if path.suffix.casefold() != ".zip":
+        raise RuntimeError(f"OEWN input must be a directory or .zip file: {path}")
+    with zipfile.ZipFile(path) as archive:
+        for name in sorted(value for value in archive.namelist() if re.fullmatch(pattern.replace("*", ".*"), Path(value).name)):
+            payload = json.loads(archive.read(name).decode("utf-8"))
+            if isinstance(payload, dict):
+                yield Path(name).name, payload
+
+
+def load_oewn(path: Path | None) -> dict[tuple[str, str], list[ExternalSense]]:
+    if path is None:
+        return {}
+    pos_map = {"n": "noun", "v": "verb", "a": "adjective", "s": "adjective", "r": "adverb"}
+    synsets: dict[str, str] = {}
+    for name, payload in _json_objects_from_path(path, "*.json"):
+        if name.startswith("entries-") or name == "frames.json":
+            continue
+        for synset_id, record in payload.items():
+            if not isinstance(record, dict):
+                continue
+            definitions = record.get("definition", [])
+            if isinstance(definitions, list):
+                definition = next((clean_text(value, 800) for value in definitions if clean_text(value, 800)), "")
+            else:
+                definition = clean_text(definitions, 800)
+            if definition:
+                synsets[synset_id] = definition
+
+    result: dict[tuple[str, str], list[ExternalSense]] = defaultdict(list)
+    for name, payload in _json_objects_from_path(path, "entries-*.json"):
+        del name
+        for word, entry in payload.items():
+            if not isinstance(entry, dict):
+                continue
+            normalized_word = normalize(str(word))
+            for external_pos, part_of_speech in pos_map.items():
+                part = entry.get(external_pos)
+                if not isinstance(part, dict):
+                    continue
+                for source_order, sense in enumerate(part.get("sense", [])):
+                    if not isinstance(sense, dict):
+                        continue
+                    external_sense_id = clean_text(sense.get("id"), 300)
+                    synset_id = clean_text(sense.get("synset"), 100)
+                    definition = synsets.get(synset_id, "")
+                    if not external_sense_id or not definition:
+                        continue
+                    result[(normalized_word, part_of_speech)].append(
+                        ExternalSense(
+                            source_name="oewn",
+                            external_sense_id=external_sense_id,
+                            definition=definition,
+                            source_order=source_order,
+                        )
+                    )
+    for values in result.values():
+        unique: dict[str, ExternalSense] = {}
+        for value in values:
+            unique.setdefault(value.external_sense_id, value)
+        values[:] = sorted(unique.values(), key=lambda value: (value.source_order, value.external_sense_id))
+    return dict(result)
+
+
+def source_digest(path: Path) -> str:
+    if path.is_file():
+        return sha256(path)
+    digest = hashlib.sha256()
+    for candidate in sorted(value for value in path.rglob("*") if value.is_file()):
+        digest.update(str(candidate.relative_to(path)).encode("utf-8"))
+        digest.update(sha256(candidate).encode("ascii"))
+    return digest.hexdigest()
 
 
 def preferred_pronunciations(entry: dict) -> list[tuple[str, str, int]]:
@@ -338,16 +499,85 @@ def generate_pronunciations(binary: Path, data_root: Path, words: set[str]) -> d
     return {word: ipa for word, ipa in zip(ordered, outputs) if ipa}
 
 
-def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: Path, espeak_data: Path) -> None:
+def finalize_learner_ranks(connection: sqlite3.Connection) -> None:
+    """Assign contiguous learner ranks across every lexeme/POS.
+
+    A Kaikki lexeme can have multiple etymology/source entries.  Ranking each
+    source entry independently would produce duplicate rank 1 values, so the
+    final pass establishes one global order for the app-facing lexeme.
+    """
+
+    rows = connection.execute(
+        """
+        SELECT s.id, se.lexeme_id, s.learner_score,
+               s.sense_order, s.source_sense_id
+        FROM sense s
+        JOIN source_entry se ON se.id = s.source_entry_id
+        ORDER BY se.lexeme_id, s.id
+        """
+    ).fetchall()
+    by_lexeme: dict[int, list[tuple[Any, ...]]] = defaultdict(list)
+    for row in rows:
+        by_lexeme[int(row[1])].append(row)
+
+    for lexeme_id, senses in by_lexeme.items():
+        senses.sort(key=lambda row: (-float(row[2]), int(row[3]), str(row[4]), int(row[0])))
+        for rank, row in enumerate(senses, 1):
+            connection.execute("UPDATE sense SET learner_rank = ? WHERE id = ?", (rank, row[0]))
+
+
+def build(
+    source: Path,
+    output: Path,
+    cmudict_path: Path | None,
+    espeak_binary: Path,
+    espeak_data: Path,
+    simple_wiktionary_path: Path | None,
+    oewn_path: Path | None,
+    simple_version: str | None,
+    oewn_version: str | None,
+) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.unlink(missing_ok=True)
+    external_indexes: dict[str, dict[tuple[str, str], list[ExternalSense]]] = {}
+    if simple_wiktionary_path:
+        external_indexes["simple_wiktionary"] = load_simple_wiktionary(simple_wiktionary_path)
+    if oewn_path:
+        external_indexes["oewn"] = load_oewn(oewn_path)
+
     connection = sqlite3.connect(output)
     connection.executescript(SCHEMA)
-    connection.execute(
-        "INSERT INTO source(name, version, url, license) VALUES (?, ?, ?, ?)",
-        ("Kaikki / English Wiktionary", KAIKKI_VERSION, "https://kaikki.org/dictionary/English/", "CC BY-SA 4.0 and GFDL"),
+    source_ids: dict[str, int] = {}
+
+    def add_source(name: str, version: str, url: str, license_text: str) -> int:
+        connection.execute(
+            "INSERT INTO source(name, version, url, license) VALUES (?, ?, ?, ?)",
+            (name, version, url, license_text),
+        )
+        source_id = int(connection.execute("SELECT last_insert_rowid()").fetchone()[0])
+        source_ids[name] = source_id
+        return source_id
+
+    kaikki_source_id = add_source(
+        "Kaikki / English Wiktionary",
+        KAIKKI_VERSION,
+        "https://kaikki.org/dictionary/English/",
+        "CC BY-SA 4.0 and GFDL",
     )
-    kaikki_source_id = connection.execute("SELECT last_insert_rowid()").fetchone()[0]
+    if simple_wiktionary_path:
+        source_ids["simple_wiktionary"] = add_source(
+            "Kaikki / Simple English Wiktionary",
+            f"{simple_version or 'unversioned'} sha256:{source_digest(simple_wiktionary_path)}",
+            "https://kaikki.org/simplewiktionary/rawdata.html",
+            "CC BY-SA 4.0 and GFDL",
+        )
+    if oewn_path:
+        source_ids["oewn"] = add_source(
+            "Open English WordNet",
+            f"{oewn_version or 'unversioned'} sha256:{source_digest(oewn_path)}",
+            "https://github.com/globalwordnet/english-wordnet",
+            "CC BY 4.0",
+        )
 
     terms: dict[str, int] = {}
     lexemes: dict[tuple[int, str], int] = {}
@@ -365,9 +595,17 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
             frequency = zipf_frequency(normalized, "en")
             if frequency < 3.0:
                 continue
+            pos = ALLOWED_POS[entry["pos"]]
             senses = usable_senses(word, entry)
-            if not senses or not any(sense["examples"] for sense in senses):
+            ranked_senses = rank_senses(
+                word,
+                pos,
+                senses,
+                external_indexes,
+            )
+            if not ranked_senses or not any(sense["examples"] for sense in ranked_senses):
                 continue
+            ranked_senses = ranked_senses[:MAX_SENSES]
 
             term_id = terms.get(normalized)
             if term_id is None:
@@ -377,7 +615,6 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
                 )
                 term_id = connection.execute("SELECT last_insert_rowid()").fetchone()[0]
                 terms[normalized] = term_id
-            pos = ALLOWED_POS[entry["pos"]]
             lexeme_key = (term_id, pos)
             lexeme_id = lexemes.get(lexeme_key)
             if lexeme_id is None:
@@ -385,17 +622,35 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
                 lexeme_id = connection.execute("SELECT last_insert_rowid()").fetchone()[0]
                 lexemes[lexeme_key] = lexeme_id
 
-            source_key_material = "|".join([normalized, pos, str(entry.get("etymology_number", ""))] + sorted(s["source_id"] for s in senses))
+            source_key_material = "|".join([normalized, pos, str(entry.get("etymology_number", ""))] + sorted(s["source_id"] for s in ranked_senses))
             source_key = "kaikki:" + hashlib.sha256(source_key_material.encode()).hexdigest()[:24]
             connection.execute(
                 "INSERT INTO source_entry(lexeme_id, source_id, source_key, etymology_number, etymology_text) VALUES (?, ?, ?, ?, ?)",
                 (lexeme_id, kaikki_source_id, source_key, str(entry.get("etymology_number", "")), clean_text(entry.get("etymology_text"), 4000)),
             )
             source_entry_id = connection.execute("SELECT last_insert_rowid()").fetchone()[0]
-            for order, sense in enumerate(senses):
+            for sense in ranked_senses:
                 connection.execute(
-                    "INSERT OR IGNORE INTO sense(source_entry_id, source_sense_id, definition, sense_order, usage_label, learner_score) VALUES (?, ?, ?, ?, ?, ?)",
-                    (source_entry_id, sense["source_id"], sense["definition"], order, sense["usage_label"], sense["score"]),
+                    """
+                    INSERT OR IGNORE INTO sense(
+                        source_entry_id, source_sense_id, definition,
+                        sense_order, learner_rank, usage_label,
+                        learner_score, learner_confidence, rank_reason,
+                        rank_model_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        source_entry_id,
+                        sense["source_id"],
+                        sense["definition"],
+                        sense["source_order"],
+                        sense["learner_rank"],
+                        sense["usage_label"],
+                        sense["learner_score"],
+                        sense["learner_confidence"],
+                        sense["rank_reason"],
+                        RANK_MODEL_VERSION,
+                    ),
                 )
                 sense_id = connection.execute("SELECT id FROM sense WHERE source_sense_id = ?", (sense["source_id"],)).fetchone()[0]
                 for text, source_type, quality in sense["examples"]:
@@ -403,6 +658,43 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
                         "INSERT OR IGNORE INTO example(sense_id, text, quality_score, source_type) VALUES (?, ?, ?, ?)",
                         (sense_id, text, quality, source_type),
                     )
+                for alignment in sense["alignments"]:
+                    external_source_id = source_ids.get(alignment.source_name)
+                    if external_source_id is None:
+                        continue
+                    connection.execute(
+                        """
+                        INSERT OR IGNORE INTO sense_alignment(
+                            sense_id, source_id, external_sense_id, external_rank,
+                            similarity_score, confidence, method
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            sense_id,
+                            external_source_id,
+                            alignment.external_sense_id,
+                            alignment.external_rank,
+                            alignment.similarity,
+                            alignment.confidence,
+                            alignment.method,
+                        ),
+                    )
+                connection.execute(
+                    """
+                    INSERT OR REPLACE INTO sense_rank_feature(
+                        sense_id, simple_wiktionary_signal, oewn_signal,
+                        external_support, usage_penalty, fallback_signal
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        sense_id,
+                        sense["features"]["simple_wiktionary_signal"],
+                        sense["features"]["oewn_signal"],
+                        sense["features"]["external_support"],
+                        sense["features"]["usage_penalty"],
+                        sense["features"]["fallback_signal"],
+                    ),
+                )
             pronunciations = preferred_pronunciations(entry)
             for ipa, dialect, priority in pronunciations:
                 connection.execute(
@@ -427,6 +719,8 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
                 connection.commit()
                 print(f"Selected {selected_entries:,} Kaikki entries (source line {line_number:,})", flush=True)
 
+    finalize_learner_ranks(connection)
+
     cmu = load_cmudict(cmudict_path, {word for _, word in entries_without_ipa})
     for source_entry_id, word in entries_without_ipa:
         if ipa := cmu.get(word):
@@ -448,7 +742,10 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
     CREATE INDEX term_learning ON term(is_learning_candidate, learning_band, frequency_rank);
     CREATE INDEX lexeme_term ON lexeme(term_id, part_of_speech);
     CREATE INDEX source_entry_lexeme ON source_entry(lexeme_id);
-    CREATE INDEX sense_entry ON sense(source_entry_id, sense_order);
+    CREATE INDEX sense_entry ON sense(source_entry_id, learner_rank, sense_order);
+    CREATE INDEX sense_learner_rank ON sense(source_entry_id, learner_rank);
+    CREATE INDEX sense_lexeme_rank ON sense(source_entry_id, learner_rank, id);
+    CREATE INDEX sense_alignment_sense ON sense_alignment(sense_id, confidence DESC);
     CREATE INDEX pronunciation_entry ON pronunciation(source_entry_id, priority);
     CREATE INDEX example_sense ON example(sense_id, quality_score DESC);
     CREATE INDEX word_form_normalized ON word_form(normalized_form);
@@ -456,11 +753,13 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
     ranked = connection.execute("SELECT id FROM term ORDER BY zipf_frequency DESC, normalized_word").fetchall()
     connection.executemany("UPDATE term SET frequency_rank = ? WHERE id = ?", ((rank, row[0]) for rank, row in enumerate(ranked, 1)))
     metadata = [
-        ("schema_version", "2"),
+        ("schema_version", "4"),
         ("dataset", "Kaikki / English Wiktionary"),
         ("dataset_version", KAIKKI_VERSION),
         ("source_url", "https://kaikki.org/dictionary/English/"),
         ("text_license", "CC BY-SA 4.0 and GFDL"),
+        ("rank_model_version", RANK_MODEL_VERSION),
+        ("rank_external_sources", ", ".join(sorted(external_indexes)) or "none"),
         ("pronunciation_fallback", f"CMUdict {CMUDICT_COMMIT}"),
         ("generated_pronunciation", f"eSpeak NG {ESPEAK_NG_VERSION}"),
         ("frequency_source", "wordfreq 3.1.1"),
@@ -474,12 +773,41 @@ def build(source: Path, output: Path, cmudict_path: Path | None, espeak_binary: 
     connection.execute("VACUUM")
     integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
     fts_tables = connection.execute("SELECT count(*) FROM sqlite_master WHERE sql LIKE '%VIRTUAL TABLE%FTS%' COLLATE NOCASE").fetchone()[0]
-    forbidden_source_rows = connection.execute("SELECT count(*) FROM source WHERE lower(name) LIKE '%wordnet%'").fetchone()[0]
-    if integrity != "ok" or fts_tables or forbidden_source_rows:
-        raise RuntimeError(f"Database validation failed: integrity={integrity}, fts={fts_tables}, forbidden_sources={forbidden_source_rows}")
+    external_user_rows = connection.execute(
+        """
+        SELECT count(*)
+        FROM source_entry se
+        JOIN source src ON src.id = se.source_id
+        WHERE src.name <> 'Kaikki / English Wiktionary'
+        """
+    ).fetchone()[0]
+    bad_ranked_lexemes = connection.execute(
+        """
+        SELECT count(*)
+        FROM (
+            SELECT se.lexeme_id,
+                   COUNT(*) AS sense_count,
+                   COUNT(DISTINCT s.learner_rank) AS rank_count,
+                   MIN(s.learner_rank) AS first_rank
+            FROM sense s
+            JOIN source_entry se ON se.id = s.source_entry_id
+            GROUP BY se.lexeme_id
+            HAVING rank_count <> sense_count OR first_rank <> 1
+        )
+        """
+    ).fetchone()[0]
+    if integrity != "ok" or fts_tables or external_user_rows or bad_ranked_lexemes:
+        raise RuntimeError(
+            "Database validation failed: "
+            f"integrity={integrity}, fts={fts_tables}, external_user_rows={external_user_rows}, "
+            f"bad_ranked_lexemes={bad_ranked_lexemes}"
+        )
     counts = {
         table: connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
-        for table in ("term", "lexeme", "source_entry", "sense", "pronunciation", "example", "word_form")
+        for table in (
+            "term", "lexeme", "source_entry", "sense", "sense_alignment",
+            "sense_rank_feature", "pronunciation", "example", "word_form",
+        )
     }
     connection.close()
     print(f"Built {output} ({output.stat().st_size / 1024 / 1024:.1f} MiB): {counts}")
@@ -489,6 +817,21 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, help="Pinned Kaikki English JSONL file")
     parser.add_argument("--cmudict", type=Path, help="Pinned cmudict.dict file")
+    parser.add_argument(
+        "--simple-wiktionary",
+        type=Path,
+        help="Optional pinned Simple English Wiktionary Kaikki JSONL(.gz) used only for ranking evidence",
+    )
+    parser.add_argument(
+        "--simple-version",
+        help="Version label for the optional Simple English Wiktionary input",
+    )
+    parser.add_argument(
+        "--oewn",
+        type=Path,
+        help="Optional Open English WordNet JSON directory or release .zip used only for ranking evidence",
+    )
+    parser.add_argument("--oewn-version", help="Version label for the optional OEWN input")
     parser.add_argument("--espeak", type=Path, help=f"eSpeak NG {ESPEAK_NG_VERSION} executable")
     parser.add_argument(
         "--espeak-data",
@@ -509,7 +852,21 @@ def main() -> None:
         espeak_binary = args.espeak or (Path(found) if (found := shutil.which("espeak-ng")) else None)
         if espeak_binary is None:
             raise RuntimeError(f"eSpeak NG {ESPEAK_NG_VERSION} is required; pass --espeak /path/to/espeak-ng")
-        build(source, args.output, cmudict, espeak_binary, args.espeak_data)
+        if args.simple_wiktionary and not args.simple_wiktionary.exists():
+            raise RuntimeError(f"Simple English Wiktionary input does not exist: {args.simple_wiktionary}")
+        if args.oewn and not args.oewn.exists():
+            raise RuntimeError(f"OEWN input does not exist: {args.oewn}")
+        build(
+            source,
+            args.output,
+            cmudict,
+            espeak_binary,
+            args.espeak_data,
+            args.simple_wiktionary,
+            args.oewn,
+            args.simple_version,
+            args.oewn_version,
+        )
 
 
 if __name__ == "__main__":

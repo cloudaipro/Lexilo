@@ -55,7 +55,7 @@ final class LexiconStore {
     }
 
     /// Returns the preferred teachable sense for a lemma. Learning candidates
-    /// are built with an example and ordered by corpus frequency.
+    /// are built with an example and ordered by the precomputed learner rank.
     func learningEntry(matching word: String) -> LexiconEntry? {
         let normalized = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else { return nil }
@@ -107,7 +107,8 @@ final class LexiconStore {
               SELECT s2.id FROM sense s2
               JOIN source_entry se2 ON se2.id = s2.source_entry_id
               WHERE se2.lexeme_id = l.id
-              ORDER BY s2.learner_score DESC, s2.id
+              ORDER BY CASE WHEN EXISTS (SELECT 1 FROM example e2 WHERE e2.sense_id = s2.id) THEN 0 ELSE 1 END,
+                       s2.learner_rank ASC, s2.id
               LIMIT 1
           )
         """
@@ -144,7 +145,8 @@ final class LexiconStore {
             SELECT s2.id FROM sense s2
             JOIN source_entry se2 ON se2.id = s2.source_entry_id
             WHERE se2.lexeme_id = l.id
-            ORDER BY s2.learner_score DESC, s2.id
+            ORDER BY CASE WHEN EXISTS (SELECT 1 FROM example e2 WHERE e2.sense_id = s2.id) THEN 0 ELSE 1 END,
+                     s2.learner_rank ASC, s2.id
             LIMIT 1
         )
         """
@@ -153,13 +155,13 @@ final class LexiconStore {
                COALESCE((SELECT p.ipa FROM pronunciation p WHERE p.source_entry_id = se.id ORDER BY p.priority, p.id LIMIT 1), ''),
                s.definition, t.frequency_rank, t.learning_band, t.is_phrase,
                COALESCE((SELECT group_concat(text, char(31)) FROM (SELECT text FROM example WHERE sense_id = s.id ORDER BY quality_score DESC, id LIMIT 5)), ''),
-               COALESCE(s.usage_label, ''), s.sense_order
+               COALESCE(s.usage_label, ''), s.learner_rank, s.sense_order
         FROM term t
         JOIN lexeme l ON l.term_id = t.id
         JOIN source_entry se ON se.lexeme_id = l.id
         JOIN sense s ON s.source_entry_id = se.id
         WHERE \(whereClause)\(primaryOnly ? " AND \(preferredSense)" : "")
-        ORDER BY \(exactOrdering) t.frequency_rank, t.normalized_word, l.part_of_speech, s.learner_score DESC, s.id
+        ORDER BY \(exactOrdering) t.frequency_rank, t.normalized_word, l.part_of_speech, s.learner_rank ASC, s.id
         LIMIT ? OFFSET ?
         """
         var statement: OpaquePointer?
@@ -190,7 +192,8 @@ final class LexiconStore {
                     definition: Self.string(statement, 4),
                     examples: Array(examples.prefix(5)),
                     usageLabel: Self.string(statement, 9),
-                    senseOrder: primaryOnly ? Int(sqlite3_column_int(statement, 10)) : result.count,
+                    senseOrder: Int(sqlite3_column_int(statement, 11)),
+                    learnerRank: Int(sqlite3_column_int(statement, 10)),
                     frequencyRank: Int(sqlite3_column_int(statement, 5)),
                     learningBand: Int(sqlite3_column_int(statement, 6)),
                     isPhrase: sqlite3_column_int(statement, 7) != 0

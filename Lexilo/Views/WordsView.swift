@@ -4,10 +4,16 @@ struct WordsView: View {
     @EnvironmentObject private var store: LearningStore
     @State private var search = ""
     @State private var section: WordSection = .myWords
+#if DEBUG
+    @State private var dictionaryResults: [LexiconEntry] = []
+#endif
 
     private enum WordSection: String, CaseIterable, Identifiable {
         case myWords = "My Words"
         case upcoming = "Upcoming"
+#if DEBUG
+        case dictionary = "Dictionary"
+#endif
         var id: String { rawValue }
     }
 
@@ -15,6 +21,14 @@ struct WordsView: View {
         let source = section == .upcoming ? store.upcomingWords : store.words.filter { $0.introducedAt != nil }
         let words = source.sorted { $0.frequencyRank < $1.frequencyRank }
         return search.isEmpty ? words : words.filter { $0.word.localizedCaseInsensitiveContains(search) || $0.conciseDefinition.localizedCaseInsensitiveContains(search) }
+    }
+
+    private var searchPrompt: String {
+#if DEBUG
+        return section == .dictionary ? "Search dictionary" : "Search word or meaning"
+#else
+        return "Search word or meaning"
+#endif
     }
 
     var body: some View {
@@ -29,11 +43,24 @@ struct WordsView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 10)
 
+#if DEBUG
+                    if section == .dictionary {
+                        dictionaryList
+                    } else {
+                        learningList
+                    }
+#else
                     learningList
+#endif
                 }
             }
             .navigationTitle("Words")
-            .searchable(text: $search, prompt: "Search word or meaning")
+#if DEBUG
+            .onAppear(perform: updateDictionaryResults)
+            .onChange(of: search) { _, _ in updateDictionaryResults() }
+            .onChange(of: section) { _, _ in updateDictionaryResults() }
+#endif
+            .searchable(text: $search, prompt: searchPrompt)
         }
     }
 
@@ -52,6 +79,40 @@ struct WordsView: View {
         .scrollContentBackground(.hidden)
     }
 
+#if DEBUG
+    private var dictionaryList: some View {
+        List(dictionaryResults) { entry in
+            NavigationLink { DictionaryWordDetailView(entry: entry) } label: {
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 8) {
+                        Text(entry.word).font(.lexiloDisplay(22, weight: .medium)).foregroundStyle(LexiloTheme.ink)
+                        Text(entry.partOfSpeech).font(.caption).italic().foregroundStyle(LexiloTheme.sage)
+                    }
+                    Text(entry.definition).font(.caption).foregroundStyle(LexiloTheme.muted).lineLimit(1)
+                }
+                .padding(.vertical, 7)
+            }
+            .listRowBackground(Color.white.opacity(0.35))
+        }
+        .overlay {
+            if !store.lexicon.isAvailable {
+                ContentUnavailableView(
+                    "Dictionary unavailable",
+                    systemImage: "books.vertical",
+                    description: Text("The bundled offline dictionary could not be opened.")
+                )
+            } else if dictionaryResults.isEmpty {
+                ContentUnavailableView(
+                    search.isEmpty ? "No dictionary entries" : "No matches",
+                    systemImage: "magnifyingglass",
+                    description: Text(search.isEmpty ? "The bundled dictionary has no entries to show." : "Try a different word or prefix.")
+                )
+            }
+        }
+        .scrollContentBackground(.hidden)
+    }
+#endif
+
     private func wordRow(word: VocabularyItem, state: LearningState) -> some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
@@ -67,6 +128,13 @@ struct WordsView: View {
         .padding(.vertical, 7)
     }
 
+#if DEBUG
+    private func updateDictionaryResults() {
+        guard section == .dictionary else { return }
+        dictionaryResults = store.searchDictionary(search)
+    }
+#endif
+
     private func state(for id: UUID) -> LearningState {
         let related = store.cards.filter { $0.vocabularyID == id && !$0.isPaused }
         if related.count >= 2 && related.allSatisfy({ $0.learningState == .mastered }) { return .mastered }
@@ -74,6 +142,62 @@ struct WordsView: View {
         return .new
     }
 }
+
+#if DEBUG
+private struct DictionaryWordDetailView: View {
+    @EnvironmentObject private var store: LearningStore
+    let entry: LexiconEntry
+    @State private var added = false
+
+    private var senses: [LexiconEntry] {
+        let related = store.lexicon.senses(relatedToSenseID: entry.id)
+        return related.isEmpty ? [entry] : related
+    }
+
+    var body: some View {
+        ZStack {
+            PaperBackground()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(entry.word).font(.lexiloDisplay(46, weight: .medium)).foregroundStyle(LexiloTheme.ink)
+                        Text("\(entry.partOfSpeech)  ·  \(entry.ipa.isEmpty ? "pronunciation unavailable" : entry.ipa)")
+                            .font(.subheadline).foregroundStyle(LexiloTheme.sage)
+                    }
+
+                    ForEach(Array(senses.enumerated()), id: \.element.id) { index, sense in
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(index == 0 ? "CORE SENSE" : "SENSE \(sense.learnerRank)")
+                                .font(.caption.bold()).tracking(1.2).foregroundStyle(LexiloTheme.brass)
+                            if !sense.usageLabel.isEmpty {
+                                Text(sense.usageLabel).font(.caption).italic().foregroundStyle(LexiloTheme.sage)
+                            }
+                            Text(sense.definition).font(.title3).foregroundStyle(LexiloTheme.ink)
+                            ForEach(sense.examples.prefix(3), id: \.self) { example in
+                                Text("“\(example)”").font(.lexiloDisplay(19)).italic().foregroundStyle(LexiloTheme.muted)
+                            }
+                        }
+                        .padding(18)
+                        .background((index == 0 ? LexiloTheme.sageLight : LexiloTheme.paperDeep).opacity(0.52), in: RoundedRectangle(cornerRadius: 20))
+                    }
+
+                    Button {
+                        _ = store.addToLearning(entry)
+                        added = true
+                    } label: {
+                        Label(added ? "Added to learning" : "Add to learning", systemImage: added ? "checkmark" : "plus")
+                            .font(.headline).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
+                            .background(LexiloTheme.ink, in: RoundedRectangle(cornerRadius: 18))
+                    }
+                    .disabled(added)
+                }
+                .padding(22)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+#endif
 
 struct StatePill: View {
     let state: LearningState

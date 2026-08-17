@@ -38,7 +38,7 @@ xcodegen generate
 - XCUITest coverage for the daily practice flow and simplified word-detail hierarchy
 - App icon generated from the supplied `logo.png`
 
-All lexical content comes from the versioned Kaikki English Wiktionary extract in `Lexilo/Resources/lexilo-lexicon.sqlite`. The bundled Learning Core contains 115,201 validated usage examples; definitions, collocations, and fragments are never substituted for a missing example. CMUdict fills IPA gaps only, eSpeak NG supplies explicitly marked generated IPA where needed, and spoken pronunciation uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. There is no OEWN merge or FTS5 index. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
+All user-facing lexical content comes from the versioned Kaikki English Wiktionary sense inventory in `Lexilo/Resources/lexilo-lexicon.sqlite`. The bundled Learning Core contains 115,202 validated usage examples; definitions, collocations, and fragments are never substituted for a missing example. A build-time learner-sense ranker uses optional Simple English Wiktionary and OEWN alignment evidence without merging their sense rows into the app inventory. CMUdict fills IPA gaps only, eSpeak NG supplies explicitly marked generated IPA where needed, and spoken pronunciation uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. There is no FTS5 index. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
 
 ## Validation
 
