@@ -141,11 +141,11 @@ final class ReviewSchedulerTests: XCTestCase {
         let staleID = UUID()
         let staleNounSense = VocabularyItem(
             id: staleID,
-            lexiconID: "legacy:pragmatic:noun",
-            word: "pragmatic",
+            lexiconID: "legacy:dictionary:noun",
+            word: "dictionary",
             partOfSpeech: "noun",
-            ipa: "/præɡˈmætɪk/",
-            conciseDefinition: "an imperial decree that becomes part of the fundamental law of the land",
+            ipa: "",
+            conciseDefinition: "legacy definition",
             example: "",
             frequencyRank: 1,
             introducedAt: .now
@@ -162,10 +162,10 @@ final class ReviewSchedulerTests: XCTestCase {
 
         let store = makeStore(persistenceURL: persistenceURL)
         let repaired = try XCTUnwrap(store.words.first(where: { $0.id == staleID }))
-        XCTAssertTrue(repaired.lexiconID?.hasPrefix("en-pragmatic-") == true)
-        XCTAssertEqual(repaired.partOfSpeech, "adjective")
+        XCTAssertTrue(repaired.lexiconID?.hasPrefix("simple:") == true)
+        XCTAssertEqual(repaired.partOfSpeech, "noun")
         XCTAssertFalse(repaired.examples.isEmpty)
-        XCTAssertTrue(repaired.example.localizedCaseInsensitiveContains("pragmatic"))
+        XCTAssertTrue(repaired.example.localizedCaseInsensitiveContains("dictionary"))
         XCTAssertFalse(store.featuredWord()?.examples.isEmpty ?? true)
     }
 
@@ -206,12 +206,13 @@ final class ReviewSchedulerTests: XCTestCase {
     func testBundledLexiconIsSearchableAndHasRotationCandidates() {
         let lexicon = Self.stableLexicon
         XCTAssertTrue(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.version, "2026-08-12-quality-v3")
-        XCTAssertGreaterThan(lexicon.information.lexemeCount, 35_000)
-        XCTAssertGreaterThan(lexicon.information.learningCandidateCount, 10_000)
+        XCTAssertEqual(lexicon.information.dataset, "Simple English Wiktionary")
+        XCTAssertEqual(lexicon.information.version, "simplewiktionary-20260801")
+        XCTAssertGreaterThan(lexicon.information.lexemeCount, 5_000)
+        XCTAssertGreaterThan(lexicon.information.learningCandidateCount, 5_000)
 
-        let results = lexicon.search("resilient")
-        XCTAssertEqual(results.first?.word.lowercased(), "resilient")
+        let results = lexicon.search("dictionary")
+        XCTAssertEqual(results.first?.word.lowercased(), "dictionary")
         XCTAssertFalse(results.first?.definition.isEmpty ?? true)
 
         let candidates = lexicon.learningCandidates(inBand: VocabularyBand.intermediate.rawValue, includePhrases: false, offset: 0, limit: 100)
@@ -229,21 +230,19 @@ final class ReviewSchedulerTests: XCTestCase {
 
         let recreationEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "recreation"))
         let recreation = store.addToLearning(recreationEntry)
-        XCTAssertFalse(recreation.examples.contains("time for rest and refreshment by the pool"))
         XCTAssertFalse(recreation.examples.isEmpty)
         XCTAssertTrue(recreation.examples.allSatisfy { $0.localizedCaseInsensitiveContains("recreation") })
-        XCTAssertFalse(recreation.senses[0].examples.contains("time for rest and refreshment by the pool"))
-        XCTAssertEqual(recreation.ipa, "/ˌɹɛkɹiˈeɪʃən/")
+        XCTAssertEqual(recreation.ipa, "/rɛkriˈeɪʃən/")
 
-        let junkEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "junk"))
-        let junk = store.addToLearning(junkEntry)
-        XCTAssertEqual(junk.ipa, "/d͡ʒʌŋk/")
-        XCTAssertFalse(junk.examples.isEmpty)
+        let kittenEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "kitten"))
+        let kitten = store.addToLearning(kittenEntry)
+        XCTAssertEqual(kitten.ipa, "/kˈɪtən/")
+        XCTAssertFalse(kitten.examples.isEmpty)
     }
 
     @MainActor
     func testCommonLearningExamplesAreCompleteUsageSentences() throws {
-        for word in ["loyal", "licensed", "lean"] {
+        for word in ["lean", "recreation", "harbor"] {
             let entry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: word))
             XCTAssertFalse(entry.examples.isEmpty, "Expected a usage example for \(word)")
             XCTAssertTrue(entry.examples.allSatisfy { $0.range(of: #"[.!?…][\"’'”»)]*$"#, options: .regularExpression) != nil }, "Gloss-like fragment leaked for \(word): \(entry.examples)")
@@ -544,23 +543,24 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
-    func testNewStoreUsesOnlyKaikkiEntries() {
+    func testNewStoreUsesOnlySimpleWiktionaryEntries() {
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
         XCTAssertEqual(store.words.count, 40)
         XCTAssertTrue(store.words.allSatisfy { $0.lexiconID != nil })
+        XCTAssertTrue(store.words.allSatisfy { $0.lexiconID?.hasPrefix("simple:") == true })
         XCTAssertTrue(store.words.allSatisfy { !$0.word.isEmpty && !$0.conciseDefinition.isEmpty })
     }
 
     @MainActor
-    func testUnavailableKaikkiDatabaseDoesNotCreateFallbackVocabulary() {
+    func testUnavailableSimpleWiktionaryDatabaseDoesNotCreateFallbackVocabulary() {
         let missingDatabase = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "missing.sqlite")
         let lexicon = LexiconStore(databaseURL: missingDatabase)
         let persistenceURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = LearningStore(persistenceURL: persistenceURL, lexicon: lexicon)
 
         XCTAssertFalse(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.dataset, "Kaikki / English Wiktionary")
+        XCTAssertEqual(lexicon.information.dataset, "Simple English Wiktionary")
         XCTAssertTrue(store.words.isEmpty)
         XCTAssertTrue(store.cards.isEmpty)
     }
@@ -603,14 +603,13 @@ final class ReviewSchedulerTests: XCTestCase {
     func testHarborUsesAutomaticallyRankedNounSense() throws {
         let entry = try XCTUnwrap(Self.stableLexicon.entry(matching: "harbor", partOfSpeech: "noun"))
         XCTAssertEqual(entry.learnerRank, 1)
-        XCTAssertEqual(entry.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
-        XCTAssertTrue(entry.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
+        XCTAssertEqual(entry.definition, "A harbor is some water in a curve of land where it's safe for boats because there are no big waves.")
+        XCTAssertTrue(entry.primaryExample.localizedCaseInsensitiveContains("ship in the harbor"))
 
         let senses = Self.stableLexicon.senses(relatedToSenseID: entry.id)
-        XCTAssertGreaterThanOrEqual(senses.count, 2)
+        XCTAssertEqual(senses.count, 1)
         XCTAssertEqual(senses.first?.learnerRank, 1)
-        XCTAssertTrue(senses.first?.definition.localizedCaseInsensitiveContains("ships") == true)
-        XCTAssertTrue(senses.dropFirst().contains { $0.definition == "Any place of shelter." })
+        XCTAssertTrue(senses.first?.definition.localizedCaseInsensitiveContains("boats") == true)
     }
 
     @MainActor
@@ -618,8 +617,8 @@ final class ReviewSchedulerTests: XCTestCase {
         let results = Self.stableLexicon.search("harbor", limit: 20)
         let noun = try XCTUnwrap(results.first { $0.partOfSpeech == "noun" })
         XCTAssertEqual(noun.learnerRank, 1)
-        XCTAssertEqual(noun.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
-        XCTAssertTrue(noun.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
+        XCTAssertEqual(noun.definition, "A harbor is some water in a curve of land where it's safe for boats because there are no big waves.")
+        XCTAssertTrue(noun.primaryExample.localizedCaseInsensitiveContains("ship in the harbor"))
     }
 
     @MainActor

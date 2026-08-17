@@ -1,4 +1,9 @@
-# Lexilo Kaikki Dictionary Data Proposal
+# Lexilo Kaikki Dictionary Data Proposal (Historical)
+
+> Historical note: this proposal describes the superseded English Wiktionary/
+> Kaikki source design. The current Learning Core uses the official Simple
+> English Wiktionary Wikimedia dump; see `CONTENT_SOURCES.md` and
+> `Lexilo/Resources/LEXICON_NOTICES.md` for the active source policy.
 
 **Status:** Proposed
 **Date:** 2026-08-15

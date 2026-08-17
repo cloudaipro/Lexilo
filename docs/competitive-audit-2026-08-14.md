@@ -1,4 +1,9 @@
-# LEXILO Competitive Audit and Product Improvement Plan
+# LEXILO Competitive Audit and Product Improvement Plan (Historical)
+
+> Historical note: this audit predates the migration from the English
+> Wiktionary/Kaikki Learning Core to the official Simple English Wiktionary
+> Wikimedia dump. Its source-specific counts and recommendations describe the
+> earlier build and are not current bundle metadata.
 
 > Research date: August 14, 2026
 > Code-state refresh: August 16, 2026

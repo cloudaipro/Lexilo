@@ -160,7 +160,7 @@ struct TodayView: View {
             ContentUnavailableView(
                 "Dictionary unavailable",
                 systemImage: "books.vertical",
-                description: Text("The bundled Kaikki learning database could not be opened.")
+                description: Text("The bundled Simple English Wiktionary database could not be opened.")
             )
         }
     }

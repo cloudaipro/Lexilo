@@ -297,9 +297,10 @@ private struct ImportVocabularyView: View {
 private struct LexiconLicensesView: View {
     var body: some View {
         List {
-            Section("Kaikki / English Wiktionary") {
-                Text("Definitions, examples, parts of speech, forms, and IPA are derived from the structured English Wiktionary extract. Licensed under CC BY-SA 4.0 and GFDL.")
-                Link("Kaikki English dictionary", destination: URL(string: "https://kaikki.org/dictionary/English/")!)
+            Section("Simple English Wiktionary") {
+                Text("Definitions, examples, parts of speech, forms, and IPA are derived from the official Simple English Wiktionary dump. Licensed under CC BY-SA 4.0 and GFDL.")
+                Link("Simple English Wiktionary dump", destination: URL(string: "https://dumps.wikimedia.org/simplewiktionary/latest/")!)
+                Link("Simple English Wiktionary", destination: URL(string: "https://simple.wiktionary.org/")!)
                 Link("Wiktionary licenses", destination: URL(string: "https://en.wiktionary.org/wiki/Wiktionary:Copyrights")!)
             }
             Section("CMU Pronouncing Dictionary") {

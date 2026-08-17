@@ -46,16 +46,18 @@ learner task.
 
 ## Content and pronunciation
 
-Kaikki's structured English Wiktionary extract is Lexilo's sole lexical source.
+The official Simple English Wiktionary Wikimedia dump is Lexilo's sole lexical
+source. The build parses the dump locally and does not use the English
+Wiktionary/Kaikki extract.
 Open English WordNet is not bundled or merged. The current Learning Core build
-is `2026-08-12-quality-v3` and contains:
+is `simplewiktionary-20260801` and contains:
 
-- 39,179 learning terms
-- 45,477 term/POS lexemes
-- 100,588 retained senses
-- 115,201 validated usage examples
-- 69,889 pronunciation rows
-- 79,195 word forms
+- 5,591 learning terms
+- 6,710 term/POS lexemes
+- 11,731 retained senses
+- 13,264 validated usage examples
+- 9,439 pronunciation rows
+- 1,838 word forms
 
 The importer keeps an example only when it contains the learning word or a
 valid inflected form, has at least four tokens, and reads as a complete sentence
@@ -65,7 +67,7 @@ example field remains empty.
 
 Pronunciation precedence is:
 
-1. Kaikki human-authored IPA.
+1. Simple English Wiktionary human-authored IPA.
 2. CMUdict General American IPA converted directly from ARPAbet.
 3. Explicitly marked eSpeak NG 1.52.0 generated IPA.
 
@@ -113,7 +115,7 @@ Deferred:
 ## Source and licensing requirements
 
 The app ships attribution and license notices in
-`CONTENT_SOURCES.md` and `Lexilo/Resources/LEXICON_NOTICES.md`. Kaikki and
+`CONTENT_SOURCES.md` and `Lexilo/Resources/LEXICON_NOTICES.md`. Simple English
 Wiktionary text remains subject to CC BY-SA 4.0 and GFDL requirements. CMUdict
 and eSpeak NG are pronunciation layers only and cannot introduce definitions,
 senses, examples, or learning terms.
@@ -134,5 +136,4 @@ Simulator:
 - Full simulator build and unsigned arm64 build: passed.
 
 See `README.md`, `CONTENT_SOURCES.md`, and
-`kaikki-dictionary-data-proposal-revised.md` for implementation and data-build
-details.
+`Lexilo/Resources/LEXICON_NOTICES.md` for implementation and data-build details.

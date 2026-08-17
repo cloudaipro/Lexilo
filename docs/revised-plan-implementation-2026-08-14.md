@@ -1,7 +1,7 @@
 # Lexilo v0.9 Implementation Status
 
 > Updated: August 16, 2026
-> Scope: the simplified product direction, Kaikki Learning Core, and release validation
+> Scope: the simplified product direction, Simple English Wiktionary Learning Core, and release validation
 
 This document records what is implemented in the current source tree. It replaces
 the earlier plan that described a separate Memory screen, OEWN-backed content,
@@ -19,21 +19,22 @@ and a fixed interval scheduler.
 | Recovery | Core answer controls remain available in practice; advanced pause, sense-correction, difficulty, and content-report actions are not exposed in the default UI. |
 | Personal content | CSV/TSV import supports Word, Meaning, Example, and Tags, with duplicate detection, preview, and merge-or-skip behavior. |
 | Portability | JSON export/restore, rolling local backup, tolerant migration, and optional iCloud snapshot sync. |
-| Pronunciation | Kaikki IPA, CMUdict conversion, eSpeak NG generated IPA, and offline Kitten Nano speech with system-voice failure fallback. |
+| Pronunciation | Simple English Wiktionary IPA, CMUdict conversion, eSpeak NG generated IPA, and offline Kitten Nano speech with system-voice failure fallback. |
 | Widget | Small and medium WidgetKit layouts backed by an App Group snapshot. Small is word-first; Medium shows the complete Definition or Example selected in Settings, with Definition as the default. |
 | Dictionary scope | The bundled database is a Learning Core. Full Dictionary browsing and downloadable dictionary packs are future work. |
 
 ## Lexical data quality
 
-Kaikki / English Wiktionary is the sole lexical source. OEWN is not bundled or
-merged. The production database is `2026-08-12-quality-v3` and contains:
+The official Simple English Wiktionary Wikimedia dump is the sole lexical
+source. OEWN is not bundled or merged. The production database is
+`simplewiktionary-20260801` and contains:
 
-- 39,179 learning terms
-- 45,477 term/POS lexemes
-- 100,588 retained senses
-- 115,201 validated examples
-- 69,889 pronunciation rows
-- 79,195 word forms
+- 5,591 learning terms
+- 6,710 term/POS lexemes
+- 11,731 retained senses
+- 13,264 validated examples
+- 9,439 pronunciation rows
+- 1,838 word forms
 
 Example quality is enforced during import. A record must contain the learning
 word or a valid inflected form, contain at least four tokens, and end with
@@ -86,8 +87,8 @@ Validated on an iPhone 17 Pro, iOS 26.2 Simulator:
 - Unsigned arm64 iPhone build: passed.
 - SQLite integrity check: passed.
 - Selected source entries missing pronunciation: 0.
-- Regression coverage confirms complete usage sentences for `loyal`, `licensed`,
-  and `lean`, and rejects the old definition-like `recreation` fragment.
+- Regression coverage confirms complete usage sentences for `lean`,
+  `recreation`, and `harbor`, and validates the Simple Wiktionary parser.
 - Widget snapshot tests cover complete definition/example payloads, the
   Definition default, Example selection, and decoding older snapshots.
 

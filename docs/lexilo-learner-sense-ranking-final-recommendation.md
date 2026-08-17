@@ -1,4 +1,9 @@
-# Lexilo Learner-Oriented Sense Ranking — Final Recommendation
+# Lexilo Learner-Oriented Sense Ranking — Final Recommendation (Historical)
+
+> Historical note: this recommendation predates the source migration. The
+> active implementation now uses the official Simple English Wiktionary dump
+> as its canonical inventory; the ranking concepts below remain useful as
+> background only.
 
 ## Final Conclusion
 

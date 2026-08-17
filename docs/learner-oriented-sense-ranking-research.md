@@ -5,9 +5,11 @@
 **Purpose:** Copy this brief into another AI system for an independent opinion, while preserving the local evidence and research already completed.
 
 **Implementation status:** This brief contains the original investigation and the
-recommendation that led to the current implementation. The shipped solution uses
-automatic build-time ranking only. It has no hand-authored per-word ranking or
-content-replacement layer.
+recommendation that led to the previous implementation. The current branch has
+since switched the canonical inventory to the official Simple English
+Wiktionary Wikimedia dump. The historical solution used automatic build-time
+ranking only and had no hand-authored per-word ranking or content-replacement
+layer.
 
 ## Copy-paste question for another AI
 

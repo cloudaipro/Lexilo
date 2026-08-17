@@ -195,7 +195,7 @@ The app does not silently generate or overwrite translations.
 
 ## 14. Sources and licenses
 
-The bundled Learning Core is derived from Kaikki's structured English Wiktionary extract (`2026-08-12-quality-v3`), CMUdict fills IPA gaps only, and wordfreq values help order learning candidates. Example records are kept only when they contain the learning word or a valid inflected form and read as complete usage sentences; a definition, description, or collocation is never presented as an example. **Settings → Vocabulary → Dictionary sources and licenses** shows upstream sources and license information. Pronunciation model sources are documented there as well.
+The bundled Learning Core is derived from the official Simple English Wiktionary Wikimedia dump (`simplewiktionary-20260801`); CMUdict fills IPA gaps only, and wordfreq values help order learning candidates. Example records are kept only when they contain the learning word or a valid inflected form and read as complete usage sentences; a definition, description, or collocation is never presented as an example. **Settings → Vocabulary → Dictionary sources and licenses** shows upstream sources and license information. Pronunciation model sources are documented there as well.
 
 ## 15. Pronunciation and audio
 
@@ -380,7 +380,7 @@ Portability is explicit: full backups are exportable, restores are validated, an
 
 ## 14. Content provenance deserves a visible place
 
-Built-in Kaikki/Wiktionary content, personal imports, and user translations do not have equal authority. Lexilo preserves their source and review status instead of flattening them into one undifferentiated answer.
+Built-in Simple English Wiktionary content, personal imports, and user translations do not have equal authority. Lexilo preserves their source and review status instead of flattening them into one undifferentiated answer.
 
 Personal translations begin unreviewed. Imported meanings remain personal. Reports feed internal quality review. Trust comes from showing what the app knows about its content—and what it does not.
 

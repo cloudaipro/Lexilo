@@ -3,9 +3,9 @@
 ## 0.9.1 — 2026-08-16
 
 - Added automatic learner-oriented sense ranking at lexicon build time.
-- Kept Kaikki as the canonical user-facing sense inventory while using optional
-  Simple English Wiktionary and Open English WordNet alignment as ranking
-  evidence only.
+- Switched the canonical user-facing inventory to the official Simple English
+  Wiktionary Wikimedia dump and removed the English Wiktionary/Kaikki extract
+  from the build.
 - Added deterministic `learner_rank`, confidence, reason, and model metadata to
   the bundled SQLite Learning Core.
 - Removed the old example-presence ranking bias and all per-word manual ranking

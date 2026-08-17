@@ -197,7 +197,7 @@ App 不會在背景中自動產生或覆寫翻譯。
 
 ## 14. 來源與授權
 
-內建 Learning Core 來自 Kaikki 的結構化 English Wiktionary 資料（`2026-08-12-quality-v3`）；CMUdict 只補足 IPA 缺口，並使用 wordfreq 數值排列學習候選項目。例句必須包含學習單字或有效的詞形變化，並且讀起來是完整的使用句子；定義、描述或搭配詞不會被冒充成例句。**Settings → Vocabulary → Dictionary sources and licenses** 會顯示上游來源及授權資訊。發音模型的來源也記錄在此。
+內建 Learning Core 來自官方 Simple English Wiktionary Wikimedia dump（`simplewiktionary-20260801`）；CMUdict 只補足 IPA 缺口，並使用 wordfreq 數值排列學習候選項目。例句必須包含學習單字或有效的詞形變化，並且讀起來是完整的使用句子；定義、描述或搭配詞不會被冒充成例句。**Settings → Vocabulary → Dictionary sources and licenses** 會顯示上游來源及授權資訊。發音模型的來源也記錄在此。
 
 ## 15. 發音與音訊
 
@@ -382,7 +382,7 @@ Lexilo 的設計目標是可反覆持續的練習，而不是無止境的內容�
 
 ## 14. 內容來源值得被清楚呈現
 
-內建的 Kaikki/Wiktionary 內容、個人匯入資料及使用者翻譯，並不具有相同的權威性。Lexilo 會保留來源及審閱狀態，而不是把它們壓平成無法區分的答案。
+內建的 Simple English Wiktionary 內容、個人匯入資料及使用者翻譯，並不具有相同的權威性。Lexilo 會保留來源及審閱狀態，而不是把它們壓平成無法區分的答案。
 
 個人翻譯起初是未審閱狀態；匯入詞義會保留為個人內容；回報則會進入內部品質檢查。信任來自於清楚顯示 App 對內容知道什麼，以及不知道什麼。
 

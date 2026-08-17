@@ -15,7 +15,7 @@ final class LexiconStore {
            sqlite3_open_v2(databaseURL.path, &opened, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK {
             database = opened
             information = LexiconInformation(
-                dataset: Self.metadata("dataset", in: opened) ?? "Kaikki / English Wiktionary",
+                dataset: Self.metadata("dataset", in: opened) ?? "Simple English Wiktionary",
                 version: Self.metadata("dataset_version", in: opened) ?? "unknown",
                 lexemeCount: Int(Self.metadata("lexeme_count", in: opened) ?? "") ?? 0,
                 learningCandidateCount: Int(Self.metadata("learning_candidate_count", in: opened) ?? "") ?? 0
