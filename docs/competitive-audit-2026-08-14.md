@@ -1,9 +1,35 @@
-# LEXILO Competitive Audit and Product Improvement Plan
+# LEXILO Competitive Audit and Product Improvement Plan (Historical)
+
+> Historical note: the market research and most competitive observations are
+> historical. The current implementation snapshot below was refreshed against
+> the August 17, 2026 codebase; older source-specific counts and roadmap
+> recommendations are not current bundle metadata.
 
 > Research date: August 14, 2026
-> Code-state refresh: August 16, 2026
+> Code-state refresh: August 17, 2026
 > Market: United States iPhone App Store
 > Scope: English-learning category leaders, Anki and the English 60K deck ecosystem, LEXILO product audit, SWOT analysis, gap analysis, and UI/product roadmap
+
+## Current implementation snapshot
+
+- **Source:** Simple English Wiktionary dump `simplewiktionary-20260801` is the
+  canonical user-facing Learning Core. Current counts are 5,591 learning terms,
+  6,710 lexemes, 11,731 retained senses, 13,264 validated examples, 9,439
+  pronunciation rows, and 1,838 forms.
+- **Navigation:** Today, Words, History, and Settings. Onboarding is minimal;
+  first-language support is optional in Settings rather than an onboarding
+  choice.
+- **Today:** opens directly on the daily word-study pager. Quiz tests only the
+  current set. Learn More at the final card appends five words by default; the
+  old Next Round action is gone.
+- **History:** calendar selection shows one combined list of words studied on a
+  date and offers Relearn these words. There are no First learned/Reviewed
+  sections or Practice these words button.
+- **Pronunciation:** Apple TTS is the default offline engine; Kitten is an
+  optional engine with Apple fallback.
+- **Widget:** each timeline refresh advances through today's daily set in order
+  and wraps to the first word. Tapping it opens Today’s words directly instead
+  of starting Quiz.
 
 ## Executive conclusion
 
@@ -11,7 +37,10 @@ LEXILO should not compete as a smaller Duolingo or another generic AI conversati
 
 > A private, focused vocabulary-memory coach that turns words you recognize into words you can actively use.
 
-The foundation is strong: calm editorial UI, two-way recall on different days, an offline Kaikki Learning Core, neural pronunciation, adaptive scheduling, a bounded daily session, and a useful widget.
+The foundation is strong: calm editorial UI, two-way recall on different days,
+an offline Simple English Wiktionary Learning Core, selectable offline
+pronunciation, adaptive scheduling, a bounded daily session, calendar history,
+and a useful widget.
 
 The current release now verifies meaning-to-word production with typed input and precise correction, while recognition still uses a deliberate Know/Don’t know self-assessment. The main remaining product risk is content trust at scale: examples, pronunciations, and sense selection must remain useful as the source refreshes.
 
@@ -146,8 +175,8 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 - Clear, research-aligned two-way recall model.
 - Paired recognition and production cards cannot appear on the same calendar day.
 - Calm, recognizable editorial identity instead of category-standard cartoon gamification.
-- Local learning history, Kaikki Learning Core, adaptive scheduler, and neural text-to-speech.
-- 39,179 learning terms, 115,201 validated usage examples, and complete pronunciation coverage for selected source entries.
+- Local learning history, Simple English Wiktionary Learning Core, adaptive scheduler, and selectable offline text-to-speech.
+- 5,591 learning terms, 13,264 validated usage examples, and pronunciation coverage for selected source entries.
 - Fast, finite daily sessions with failed-card recycling.
 - Direction-specific progress and a Home Screen widget.
 - Deterministic scheduler tests, persistence recovery, UI-flow tests, and a healthy build.
@@ -156,16 +185,15 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 
 - **Recognition remains self-reported.** “Know” and “Don’t know” are intentionally lightweight; production cards now verify typed word recall. See [`PracticeSessionView.swift`](../Lexilo/Views/PracticeSessionView.swift#L138).
 - **Speech is playback, not assessment.** Lexilo provides offline pronunciation but does not yet grade spoken output.
-- No placement check, exam target, or interest profile; onboarding currently focuses on optional first-language support.
+- No placement check, exam target, or interest profile; onboarding intentionally stays minimal and optional first-language support is configured in Settings.
 - No cloze, listening discrimination, or pronunciation assessment.
 - Dictionary content is not organized around collocations, confusable words, word families, or learner-friendly senses.
 - There is no separate Progress or Memory dashboard; scheduling diagnostics remain intentionally behind the interface.
 - No reminders, subscription strategy, or cross-platform continuity. Optional iCloud snapshot sync is available for portability.
-- The widget supports Small and Medium layouts and carries the displayed
-  vocabulary ID in its URL, but the application currently opens a generic
-  practice session instead of targeting that exact word. See
-  [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L45) and
-  [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
+- The widget supports Small and Medium layouts and opens Today’s words when
+  tapped. It does not start Quiz automatically; the learner chooses Quiz from
+  the Today navigation bar. See [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L45)
+  and [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
 
 ### Opportunities
 
@@ -179,7 +207,7 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 
 - WordUp already competes directly with broader personalization and exercise variety.
 - Learners increasingly expect speaking feedback from English-learning products.
-- Generic, obsolete, or context-poor source definitions can reduce perceived content quality; the Kaikki quality pipeline now rejects definition-like example fragments.
+- Generic, obsolete, or context-poor source definitions can reduce perceived content quality; the Simple English Wiktionary quality pipeline rejects definition-like example fragments.
 - A calm visual experience can feel static unless feedback and progress remain emotionally rewarding.
 - A narrow product may struggle with App Store discovery without exceptionally clear positioning and screenshots.
 
@@ -206,7 +234,7 @@ The estimates below assume one primary iOS engineer with part-time design and co
 
 ### Phase 1: Protect content trust
 
-1. Keep the Kaikki quality pipeline reproducible and publish the source hash,
+1. Keep the Simple English Wiktionary quality pipeline reproducible and publish the source hash,
    database version, row counts, and rejection counts with each release.
 2. Expand regression fixtures around common failure modes: definition-like
    fragments, missing headword examples, duplicate pronunciations, heteronyms,
@@ -220,7 +248,7 @@ The estimates below assume one primary iOS engineer with part-time design and co
 
 1. Build the future Full Dictionary as an optional, versioned download rather
    than expanding the v0.9 bundle.
-2. Keep the future pack Kaikki-only, source-attributed, and free of OEWN,
+2. Keep the future pack Simple English Wiktionary-based, source-attributed, and free of OEWN,
    FTS5, and unlicensed commercial dictionary content.
 3. Support exact headword, prefix, and inflected-form lookup with ordinary
    indexes; do not add full-text definition search unless a later product need
@@ -237,7 +265,12 @@ The estimates below assume one primary iOS engineer with part-time design and co
    curriculum outside the focused vocabulary product until retention evidence
    supports the expansion.
 
-## UI design plan
+## UI design plan (historical recommendations)
+
+The following recommendations were written before the current Today/History
+implementation. They are retained as design rationale and future ideas, not as
+descriptions of the shipped UI. The current behavior is defined in the
+implementation snapshot above and in `USER_GUIDE_AND_DESIGN_PHILOSOPHY.md`.
 
 ### Recommended design direction
 
@@ -245,7 +278,7 @@ Use an **editorial memory-coach** direction: evolve the existing warm visual ide
 
 The interface should add information only when it proves learning or guides the next action. It should not adopt trophy grids, decorative data, cartoon currencies, or generic AI avatars.
 
-### Today screen
+### Historical Today-screen recommendations
 
 - Keep one dominant daily CTA.
 - Replace the generic session label with concrete workload and duration:
@@ -284,7 +317,7 @@ Replace a generic completion message with a learning summary:
 - Primary action: `Finish`
 - Secondary action: `Review the 2 misses`
 
-### Words screen
+### Historical Words-screen recommendations
 
 Keep the **Words** name and its two simple sections:
 
@@ -323,14 +356,13 @@ Avoid decorative charts and trophy collections. Every metric should lead to an a
 - Add an explicit privacy summary: what remains local and what, if anything, leaves the device.
 - Keep licenses and dataset attribution accessible but visually secondary.
 
-### Widget
+### Historical widget recommendations
 
 - Preserve the current small editorial widget. **Implemented:** it is
   word-first and keeps the learning word visible without an example or
   definition.
-- Make tapping it open the displayed word. **Partially implemented:** the
-  widget URL carries the vocabulary ID, but the app still opens a generic
-  practice session.
+- Make tapping it open Today’s words. **Implemented:** tapping the widget opens
+  Today’s words directly; the learner can start Quiz from Today.
 - Add medium-size support with one word, one complete secondary content block,
   and a practice tap. **Implemented:** the medium widget places the word above
   a complete selected definition or example, with Definition as the default;
@@ -499,7 +531,7 @@ This power creates setup and maintenance costs. Learners must choose or construc
 | Sync and reach | Desktop, mobile, web, optional sync | iOS, local-first, optional iCloud snapshot sync | Material gap for multi-device learners |
 | Content pathway | Platform is content-agnostic | Curated English-first discovery and workload | LEXILO advantage |
 | Cognitive load | Powerful but administration-heavy | Focused, automatic, finite | LEXILO advantage |
-| Offline pronunciation | Depends on each deck’s media | Bundled offline neural TTS | LEXILO advantage |
+| Offline pronunciation | Depends on each deck’s media | Apple TTS by default, optional bundled Kitten neural TTS, all offline | LEXILO advantage |
 | Visual cohesion | Highly configurable and platform-like | Calm, coherent native product | LEXILO advantage |
 
 The product lesson is to borrow Anki’s memory science and learner-control primitives, not its entire configuration surface.
@@ -563,16 +595,16 @@ LEXILO should therefore **not copy or bundle this deck’s content** without a f
 
 | Capability | English 60K deck | LEXILO today | Assessment |
 |---|---|---|---|
-| Breadth | 66,332 sense notes / 32,381 unique surface forms | 39,179 Learning Core terms; broader Full Dictionary deferred | 60K has deeper ready-to-study long tail |
+| Breadth | 66,332 sense notes / 32,381 unique surface forms | 5,591 Learning Core terms; broader Full Dictionary deferred | 60K has deeper ready-to-study long tail |
 | Sense modeling | One note per definition; core/extend/rare tags | Usually one selected learning sense; no visible sense progression | Material LEXILO gap |
 | Workload selection | Frequency subdecks plus manual suspend/delete | Automatic suggestions, level bands, finite active workload | LEXILO advantage |
 | Practice direction | Supplied template is word to meaning | Recognition and production, separated by day | Strong LEXILO advantage |
 | Objective recall | Self-rated; supplied template has no typed check | Typed production correction; recognition remains self-rated | LEXILO has a stronger production default |
 | Context | Usage labels and up to three displayed examples; random front cue | Up to three examples with simpler metadata | 60K is richer, but front cue can weaken retrieval |
 | Pronunciation | Mostly available remote dictionary audio | Consistent offline synthesized audio | Authenticity favors 60K where present; reliability/privacy favor LEXILO |
-| Translation | Optional AI-generated Simplified Chinese | English-only | Potential accessibility gap, not necessarily a core-product gap |
+| Translation | Optional AI-generated Simplified Chinese | Optional personal translations in Settings; English remains primary | Potential accessibility gap, not necessarily a core-product gap |
 | Administration | Requires Anki import and deck/card management | Integrated and automatic | LEXILO advantage |
-| Content rights | Mixed and field-specific | Kaikki/Wiktionary with explicit attribution and license notices | LEXILO advantage and lower product risk |
+| Content rights | Mixed and field-specific | Simple English Wiktionary with explicit attribution and license notices | LEXILO advantage and lower product risk |
 
 ## Revised product plan after the Anki audit
 
@@ -587,13 +619,17 @@ The audit recommendations that became product work are now implemented:
 3. Sense-aware content supports core, extended, and rare senses, independent
    directions, sequential unlocking, and item-level recovery actions.
 4. CSV/TSV import, JSON backup/restore, optional iCloud snapshots, and
-   first-language support are available.
-5. The Kaikki-only quality pipeline validates examples and pronunciation and
-   refreshes lexical content without resetting learner progress.
+   optional personal translations in Settings are available.
+5. The Simple English Wiktionary quality pipeline validates examples and
+   pronunciation and refreshes lexical content without resetting learner
+   progress.
+6. Today learning, Quiz, Learn More expansion, calendar History, and the
+   current sequential daily-word widget behavior are implemented.
 
 ### Next priorities
 
-1. Keep regression fixtures and source-quality reports growing with each Kaikki
+1. Keep regression fixtures and source-quality reports growing with each Simple
+   English Wiktionary
    refresh.
 2. Ship a separately versioned Full Dictionary download only when its licensing,
    integrity, size, and update flow are ready.

@@ -4,7 +4,7 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 logs/
-
+**/__pycache__/
 # Installed locally by scripts/install_sherpa_runtime.sh. These XCFrameworks
 # contain hundreds of megabytes of static archives and must not enter Git.
 Vendor/SherpaOnnx/onnxruntime.xcframework/

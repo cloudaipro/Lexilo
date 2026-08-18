@@ -36,6 +36,7 @@
 		D03E730B4DF3E44E7149B90D /* onnxruntime.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F7C517408C856C80F39FD02 /* onnxruntime.xcframework */; };
 		D4C3A91535E1D323E743B906 /* LEXICON_NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 95E63356F7CB2611DCEC9FCA /* LEXICON_NOTICES.md */; };
 		DE540716678B24E92750DB70 /* WordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCD3B697AE958F3CA8F4064 /* WordsView.swift */; };
+		F0E87FBA56AB078EB314B002 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A2909AAEC380D68C90D9C3 /* HistoryView.swift */; };
 		F64C24F08B5636FE75A88A3A /* SpeechPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */; };
 		F949ACDDE22778C6FE9974AE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E2BD554E2AE3B3E1649CA /* TodayView.swift */; };
 /* End PBXBuildFile section */
@@ -108,6 +109,7 @@
 		9C60BE997B25220E811390B4 /* lexilo-lexicon.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lexilo-lexicon.sqlite"; sourceTree = "<group>"; };
 		A4BB9A57365277412DB426B1 /* LexiloWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LexiloWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A698A605E0760AAB573FA73E /* KittenPronunciationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KittenPronunciationEngine.swift; sourceTree = "<group>"; };
+		B0A2909AAEC380D68C90D9C3 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		B6E48F5F1E3FE1CA5C6FA52E /* SpeechPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechPlayer.swift; sourceTree = "<group>"; };
 		BD86545EC27E3429D2CC988A /* Lexilo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lexilo.entitlements; sourceTree = "<group>"; };
 		BD8711E1565D482C7F2A9B07 /* LICENSE-onnxruntime.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-onnxruntime.txt"; sourceTree = "<group>"; };
@@ -208,6 +210,7 @@
 		5F412E49008A98A8E52444F4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				B0A2909AAEC380D68C90D9C3 /* HistoryView.swift */,
 				2C4814C379248B68C4EEB9BC /* PracticeSessionView.swift */,
 				0C37A92A8971A5E4657ABDD7 /* RootView.swift */,
 				90D523E7D01084B9799E8E66 /* SettingsView.swift */,
@@ -454,6 +457,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0E87FBA56AB078EB314B002 /* HistoryView.swift in Sources */,
 				7B03C0BAAB0B777902C9FA8D /* KittenPronunciationEngine.swift in Sources */,
 				720FAD8ACE62C933994EA054 /* LearningModels.swift in Sources */,
 				AF3C70BCD5F4E9913EC5E379 /* LearningService.swift in Sources */,
@@ -544,6 +548,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = C8EQ7EL7JY;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -560,6 +565,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",
@@ -779,6 +785,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lexilo/Lexilo.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = C8EQ7EL7JY;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -795,6 +802,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lc++",

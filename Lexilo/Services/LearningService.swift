@@ -81,6 +81,7 @@ final class LearningStore: ObservableObject {
     @Published private(set) var cards: [StudyCard] = []
     @Published private(set) var logs: [ReviewLog] = []
     @Published private(set) var studyDays: [StudyDay] = []
+    @Published private(set) var dailyStudySet: DailyStudySet? = nil
     @Published private(set) var contentReports: [ContentReport] = []
 
     let lexicon: LexiconStore
@@ -90,16 +91,18 @@ final class LearningStore: ObservableObject {
         let cards: [StudyCard]
         let logs: [ReviewLog]
         let studyDays: [StudyDay]
+        let dailyStudySet: DailyStudySet?
         let lexiconVersion: String?
         let retiredLexiconIDs: Set<String>
         let contentReports: [ContentReport]
         let modifiedAt: Date
 
-        init(words: [VocabularyItem], cards: [StudyCard], logs: [ReviewLog], studyDays: [StudyDay], lexiconVersion: String?, retiredLexiconIDs: Set<String>, contentReports: [ContentReport], modifiedAt: Date = .now) {
+        init(words: [VocabularyItem], cards: [StudyCard], logs: [ReviewLog], studyDays: [StudyDay], dailyStudySet: DailyStudySet? = nil, lexiconVersion: String?, retiredLexiconIDs: Set<String>, contentReports: [ContentReport], modifiedAt: Date = .now) {
             self.words = words
             self.cards = cards
             self.logs = logs
             self.studyDays = studyDays
+            self.dailyStudySet = dailyStudySet
             self.lexiconVersion = lexiconVersion
             self.retiredLexiconIDs = retiredLexiconIDs
             self.contentReports = contentReports
@@ -113,6 +116,7 @@ final class LearningStore: ObservableObject {
             logs = try container.decode([ReviewLog].self, forKey: .logs)
             // These fields were added after the first persisted format.
             studyDays = try container.decodeIfPresent([StudyDay].self, forKey: .studyDays) ?? []
+            dailyStudySet = try container.decodeIfPresent(DailyStudySet.self, forKey: .dailyStudySet)
             lexiconVersion = try container.decodeIfPresent(String.self, forKey: .lexiconVersion)
             retiredLexiconIDs = try container.decodeIfPresent(Set<String>.self, forKey: .retiredLexiconIDs) ?? []
             contentReports = try container.decodeIfPresent([ContentReport].self, forKey: .contentReports) ?? []
@@ -172,7 +176,7 @@ final class LearningStore: ObservableObject {
             }
             for key in [
                 "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
-                "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
+                "soundEnabled", PronunciationEngineChoice.preferenceKey, "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
                 "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage",
                 "hasCompletedOnboarding", MediumWidgetContent.preferenceKey
             ] {
@@ -212,6 +216,193 @@ final class LearningStore: ObservableObject {
 
     var upcomingWords: [VocabularyItem] {
         words.filter { $0.introducedAt == nil }.sorted { $0.frequencyRank < $1.frequencyRank }
+    }
+
+    /// Returns the persistent set shown by the Today learning mode. The set
+    /// is chosen once per local calendar day so reopening the app never
+    /// silently swaps the learner's words.
+    @discardableResult
+    func ensureDailyStudySet(now: Date = .now, calendar: Calendar = .current) -> DailyStudySet? {
+        let day = calendar.startOfDay(for: now)
+        if let existing = dailyStudySet,
+           calendar.isDate(existing.date, inSameDayAs: day),
+           !existing.vocabularyIDs.isEmpty,
+           existing.vocabularyIDs.allSatisfy({ vocabularyID in
+               words.contains { $0.id == vocabularyID }
+           }) {
+            return existing
+        }
+
+        var selectedIDs: [UUID] = []
+
+        // A learner may upgrade after using the previous practice-first
+        // screen. Reconstruct today's set from its review logs so the new
+        // learning mode never leaves an already-active day blank.
+        let previouslyPracticedIDs = practicedVocabularyIDs(on: now, calendar: calendar)
+        let reusablePracticeIDs = previouslyPracticedIDs.filter { vocabularyID in
+            words.contains { $0.id == vocabularyID }
+        }
+        for vocabularyID in reusablePracticeIDs.prefix(configuredNewWordLimit)
+            where words.contains(where: { $0.id == vocabularyID }) {
+            selectedIDs.append(vocabularyID)
+        }
+
+        if selectedIDs.isEmpty {
+            let selectedCards = roundCards(wordCount: configuredNewWordLimit, now: now, calendar: calendar)
+            for card in selectedCards where !selectedIDs.contains(card.vocabularyID) {
+                selectedIDs.append(card.vocabularyID)
+            }
+        }
+        guard !selectedIDs.isEmpty else {
+            dailyStudySet = nil
+            return nil
+        }
+
+        let set = DailyStudySet(
+            date: day,
+            vocabularyIDs: selectedIDs,
+            currentIndex: reusablePracticeIDs.isEmpty ? 0 : selectedIDs.count - 1,
+            learningCompleted: !reusablePracticeIDs.isEmpty
+        )
+        dailyStudySet = set
+        save()
+        return set
+    }
+
+    func dailyStudyWords(now: Date = .now, calendar: Calendar = .current) -> [VocabularyItem] {
+        guard let set = ensureDailyStudySet(now: now, calendar: calendar) else { return [] }
+        let wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        return set.vocabularyIDs.compactMap { wordsByID[$0] }
+    }
+
+    func updateDailyStudyProgress(index: Int, now: Date = .now, calendar: Calendar = .current) {
+        guard var set = ensureDailyStudySet(now: now, calendar: calendar), !set.learningCompleted else { return }
+        set.currentIndex = max(0, min(index, max(set.vocabularyIDs.count - 1, 0)))
+        dailyStudySet = set
+        save()
+    }
+
+    /// Completing the first study pass makes new words part of the learner's
+    /// personal collection. Merely swiping through a card does not mark it as
+    /// learned or complete the day.
+    func completeDailyLearning(now: Date = .now, calendar: Calendar = .current) {
+        guard var set = ensureDailyStudySet(now: now, calendar: calendar), !set.vocabularyIDs.isEmpty, !set.learningCompleted else { return }
+        let day = calendar.startOfDay(for: now)
+        var newWords = 0
+        for vocabularyID in set.vocabularyIDs {
+            guard let index = words.firstIndex(where: { $0.id == vocabularyID }) else { continue }
+            if words[index].introducedAt == nil {
+                words[index].introducedAt = day
+                newWords += 1
+            }
+        }
+        set.currentIndex = max(0, set.vocabularyIDs.count - 1)
+        set.learningCompleted = true
+        dailyStudySet = set
+        upsertStudyDay(on: now, reviewedCount: 0, newWordsIntroduced: newWords, calendar: calendar)
+        save()
+        if newWords > 0 { _ = replenishVocabularyIfNeeded(now: now) }
+    }
+
+    func dailyLearningCompleted(now: Date = .now, calendar: Calendar = .current) -> Bool {
+        ensureDailyStudySet(now: now, calendar: calendar)?.learningCompleted == true
+    }
+
+    func dailyPracticeCompleted(now: Date = .now, calendar: Calendar = .current) -> Bool {
+        guard let set = ensureDailyStudySet(now: now, calendar: calendar), set.learningCompleted else { return false }
+        let selected = Set(set.vocabularyIDs)
+        let reviewed = Set(logs.compactMap { log -> UUID? in
+            guard selected.contains(log.vocabularyID), calendar.isDate(log.reviewedAt, inSameDayAs: now) else { return nil }
+            return log.vocabularyID
+        })
+        return !selected.isEmpty && selected.isSubset(of: reviewed)
+    }
+
+    func wordsIntroduced(on date: Date, calendar: Calendar = .current) -> [VocabularyItem] {
+        words
+            .filter { word in
+                guard let introducedAt = word.introducedAt else { return false }
+                return calendar.isDate(introducedAt, inSameDayAs: date)
+            }
+            .sorted { lhs, rhs in
+                (lhs.introducedAt ?? .distantPast, lhs.word) < (rhs.introducedAt ?? .distantPast, rhs.word)
+            }
+    }
+
+    func reviewedWordIDs(on date: Date, calendar: Calendar = .current) -> [UUID] {
+        var seen = Set<UUID>()
+        return logs
+            .filter { calendar.isDate($0.reviewedAt, inSameDayAs: date) }
+            .sorted { $0.reviewedAt < $1.reviewedAt }
+            .compactMap { log in
+                seen.insert(log.vocabularyID).inserted ? log.vocabularyID : nil
+            }
+    }
+
+    func wordsReviewed(on date: Date, calendar: Calendar = .current) -> [VocabularyItem] {
+        let wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        return reviewedWordIDs(on: date, calendar: calendar).compactMap { wordsByID[$0] }
+    }
+
+    func wordsStudied(on date: Date, calendar: Calendar = .current) -> [VocabularyItem] {
+        let introduced = wordsIntroduced(on: date, calendar: calendar)
+        let introducedIDs = Set(introduced.map(\.id))
+        let reviewed = wordsReviewed(on: date, calendar: calendar).filter { !introducedIDs.contains($0.id) }
+        return introduced + reviewed
+    }
+
+    func plannedWords(on date: Date, calendar: Calendar = .current) -> [VocabularyItem] {
+        guard let set = dailyStudySet, calendar.isDate(set.date, inSameDayAs: date) else { return [] }
+        let wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        return set.vocabularyIDs.compactMap { wordsByID[$0] }
+    }
+
+    /// The Words tab includes words already introduced to the learner and
+    /// words currently prepared in today's learning set. Planned words stay
+    /// in the `new` state until their learning pass is completed.
+    func wordsForCollection(now: Date = .now, calendar: Calendar = .current) -> [VocabularyItem] {
+        let plannedIDs = Set(plannedWords(on: now, calendar: calendar).map(\.id))
+        return words.filter { $0.introducedAt != nil || plannedIDs.contains($0.id) }
+    }
+
+    func hasStudyActivity(on date: Date, calendar: Calendar = .current) -> Bool {
+        !wordsIntroduced(on: date, calendar: calendar).isEmpty
+            || !reviewedWordIDs(on: date, calendar: calendar).isEmpty
+            || !plannedWords(on: date, calendar: calendar).isEmpty
+            || studyDays.contains { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    func studyDay(on date: Date, calendar: Calendar = .current) -> StudyDay? {
+        studyDays.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    func learningState(for vocabularyID: UUID) -> LearningState {
+        let related = cards.filter { $0.vocabularyID == vocabularyID && !$0.isPaused }
+        if related.count >= 2 && related.allSatisfy({ $0.learningState == .mastered }) { return .mastered }
+        if related.contains(where: { $0.learningState != .new }) || word(for: vocabularyID)?.introducedAt != nil { return .learning }
+        return .new
+    }
+
+    func firstLearnedDate(for vocabularyID: UUID) -> Date? {
+        if let introducedAt = word(for: vocabularyID)?.introducedAt { return introducedAt }
+        return logs.filter { $0.vocabularyID == vocabularyID }.map(\.reviewedAt).min()
+    }
+
+    func lastReviewedDate(for vocabularyID: UUID) -> Date? {
+        logs.filter { $0.vocabularyID == vocabularyID }.map(\.reviewedAt).max()
+    }
+
+    func nextReviewDate(for vocabularyID: UUID) -> Date? {
+        cards.filter { $0.vocabularyID == vocabularyID && !$0.isPaused }.map(\.nextReviewDate).min()
+    }
+
+    func isDue(vocabularyID: UUID, now: Date = .now, calendar: Calendar = .current) -> Bool {
+        cards.contains {
+            $0.vocabularyID == vocabularyID
+                && !$0.isPaused
+                && $0.nextReviewDate <= now
+                && !ReviewScheduler.isSameDay($0.lastReviewedDate, now, calendar: calendar)
+        }
     }
 
 #if DEBUG
@@ -558,6 +749,7 @@ final class LearningStore: ObservableObject {
             cards: cards,
             logs: logs,
             studyDays: studyDays,
+            dailyStudySet: dailyStudySet,
             lexiconVersion: persistedLexiconVersion,
             retiredLexiconIDs: retiredLexiconIDs,
             contentReports: contentReports,
@@ -680,7 +872,12 @@ final class LearningStore: ObservableObject {
 
     /// Selects the next group of distinct words for today's cumulative set.
     /// Due reviews remain first; unseen vocabulary fills any remaining slots.
-    func roundCards(wordCount: Int? = nil, now: Date = .now, calendar: Calendar = .current) -> [StudyCard] {
+    func roundCards(
+        wordCount: Int? = nil,
+        excludingVocabularyIDs: Set<UUID> = [],
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> [StudyCard] {
         let count = max(1, wordCount ?? configuredNewWordLimit)
         let alreadyPractised = Set(practicedVocabularyIDs(on: now, calendar: calendar))
         let ordered = cards.sorted { lhs, rhs in
@@ -702,6 +899,7 @@ final class LearningStore: ObservableObject {
         for card in ordered where card.nextReviewDate <= now && !card.isPaused {
             guard word(for: card.vocabularyID) != nil,
                   !alreadyPractised.contains(card.vocabularyID),
+                  !excludingVocabularyIDs.contains(card.vocabularyID),
                   !servedVocabulary.contains(card.vocabularyID),
                   sense(for: card)?.isPaused != true,
                   !ReviewScheduler.isSameDay(card.lastReviewedDate, now, calendar: calendar),
@@ -713,6 +911,53 @@ final class LearningStore: ObservableObject {
             if result.count == count { break }
         }
         return result
+    }
+
+    /// Returns whether the completed daily set can be expanded with another
+    /// batch of new words. The quiz is independent, so learners can add more
+    /// words as soon as they finish looking through the current set.
+    func canLearnMoreDailyWords(now: Date = .now, calendar: Calendar = .current) -> Bool {
+        guard let set = ensureDailyStudySet(now: now, calendar: calendar),
+              set.learningCompleted
+        else { return false }
+
+        return !roundCards(
+            wordCount: 1,
+            excludingVocabularyIDs: Set(set.vocabularyIDs),
+            now: now,
+            calendar: calendar
+        ).isEmpty
+    }
+
+    /// Adds the next batch of words to today's persistent set. The caller can
+    /// then return to Today, where the learning pager starts on the first new
+    /// word. Existing words remain part of the same daily set.
+    @discardableResult
+    func addMoreDailyWords(count: Int? = nil, now: Date = .now, calendar: Calendar = .current) -> [VocabularyItem] {
+        guard var set = ensureDailyStudySet(now: now, calendar: calendar),
+              set.learningCompleted
+        else { return [] }
+
+        let amount = max(1, count ?? configuredNewWordLimit)
+        let existingIDs = Set(set.vocabularyIDs)
+        let selected = roundCards(
+            wordCount: amount,
+            excludingVocabularyIDs: existingIDs,
+            now: now,
+            calendar: calendar
+        )
+        let newIDs = selected.map(\.vocabularyID).filter { !existingIDs.contains($0) }
+        guard !newIDs.isEmpty else { return [] }
+
+        let firstNewIndex = set.vocabularyIDs.count
+        set.vocabularyIDs.append(contentsOf: newIDs)
+        set.currentIndex = firstNewIndex
+        set.learningCompleted = false
+        dailyStudySet = set
+        save()
+
+        let wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        return newIDs.compactMap { wordsByID[$0] }
     }
 
     /// Begins one normal round. Every call selects the next group of words not
@@ -895,12 +1140,28 @@ final class LearningStore: ObservableObject {
     }
 
     func widgetSnapshot(now: Date = .now, calendar: Calendar = .current) -> WidgetStudySnapshot? {
-        guard let word = featuredWord(now: now, calendar: calendar) else { return nil }
+        let todaySet = dailyStudySet.flatMap { set in
+            calendar.isDate(set.date, inSameDayAs: now) ? set : nil
+        }
+        let wordsByID = Dictionary(uniqueKeysWithValues: words.map { ($0.id, $0) })
+        let todayWords = todaySet?.vocabularyIDs.compactMap { wordsByID[$0] } ?? []
+        let word = todayWords.first ?? featuredWord(now: now, calendar: calendar)
+        guard let word else { return nil }
         let examples = word.examples.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         let primaryExample = examples.first ?? word.example
         let mediumContent = MediumWidgetContent(
             rawValue: UserDefaults.standard.string(forKey: MediumWidgetContent.preferenceKey) ?? ""
         ) ?? .definition
+        let dailyWidgetWords = todayWords.map { item in
+            let itemExamples = item.examples.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            return WidgetStudyWord(
+                vocabularyID: item.id,
+                word: item.word,
+                example: itemExamples.first ?? item.example,
+                definition: item.conciseDefinition,
+                additionalExamples: Array(itemExamples.dropFirst())
+            )
+        }
         return WidgetStudySnapshot(
             vocabularyID: word.id,
             word: word.word,
@@ -908,7 +1169,9 @@ final class LearningStore: ObservableObject {
             definition: word.conciseDefinition,
             additionalExamples: Array(examples.dropFirst()),
             mediumContent: mediumContent,
-            streak: currentStreak(now: now, calendar: calendar)
+            streak: currentStreak(now: now, calendar: calendar),
+            dailyWords: dailyWidgetWords,
+            dailyDate: todaySet?.date
         )
     }
 
@@ -1055,6 +1318,7 @@ final class LearningStore: ObservableObject {
         cards = []
         logs = []
         studyDays = []
+        dailyStudySet = nil
         contentReports = []
         if replenishVocabularyIfNeeded() == 0 { save() }
     }
@@ -1252,6 +1516,7 @@ final class LearningStore: ObservableObject {
         cards = snapshot.cards
         logs = snapshot.logs
         studyDays = snapshot.studyDays
+        dailyStudySet = snapshot.dailyStudySet
         persistedLexiconVersion = snapshot.lexiconVersion
         retiredLexiconIDs = snapshot.retiredLexiconIDs
         contentReports = snapshot.contentReports
@@ -1261,7 +1526,7 @@ final class LearningStore: ObservableObject {
     private func save() {
         if lexicon.isAvailable { persistedLexiconVersion = lexicon.information.version }
         lastModifiedAt = .now
-        if let persistenceURL, let data = try? JSONEncoder().encode(Snapshot(words: words, cards: cards, logs: logs, studyDays: studyDays, lexiconVersion: persistedLexiconVersion, retiredLexiconIDs: retiredLexiconIDs, contentReports: contentReports, modifiedAt: lastModifiedAt)) {
+        if let persistenceURL, let data = try? JSONEncoder().encode(Snapshot(words: words, cards: cards, logs: logs, studyDays: studyDays, dailyStudySet: dailyStudySet, lexiconVersion: persistedLexiconVersion, retiredLexiconIDs: retiredLexiconIDs, contentReports: contentReports, modifiedAt: lastModifiedAt)) {
             try? FileManager.default.createDirectory(at: persistenceURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             if let currentData = try? Data(contentsOf: persistenceURL),
                (try? JSONDecoder().decode(Snapshot.self, from: currentData)) != nil,

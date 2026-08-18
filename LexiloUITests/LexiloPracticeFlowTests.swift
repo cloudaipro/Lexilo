@@ -8,17 +8,17 @@ final class LexiloPracticeFlowTests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments += ["--ui-testing-reset", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        if app.state != .notRunning {
+            app.terminate()
+        }
         app.launch()
     }
 
     func testFullPracticeFlow() throws {
-        let pronunciation = app.buttons["featured-word-pronunciation"]
-        XCTAssertTrue(pronunciation.waitForExistence(timeout: 8), "The featured word should expose a pronunciation control")
-        XCTAssertTrue(pronunciation.isHittable, "The pronunciation control should be tappable")
-        pronunciation.tap()
+        completeDailyLearning()
 
-        let start = app.buttons["Start practice"]
-        XCTAssertTrue(start.waitForExistence(timeout: 8), "Today should offer the primary practice action")
+        let start = app.buttons["daily-study-start-quiz"]
+        XCTAssertTrue(start.waitForExistence(timeout: 8), "Today should offer the quiz action in the navigation bar")
         capture("01 Today")
         start.tap()
 
@@ -45,16 +45,20 @@ final class LexiloPracticeFlowTests: XCTestCase {
             safetyCount += 1
         }
 
-        XCTAssertTrue(app.staticTexts["Round complete"].waitForExistence(timeout: 5), "The session should reach completion")
-        XCTAssertTrue(app.staticTexts["5 words practised today. Add another round or repeat today’s set."].exists)
-        XCTAssertTrue(app.buttons["Next Round"].exists)
-        XCTAssertTrue(app.buttons["Practice Again"].exists)
-        XCTAssertTrue(app.buttons["Back to Today"].exists)
+        XCTAssertTrue(app.staticTexts["6 of 10"].waitForExistence(timeout: 5), "Completing the daily quiz should return to Today")
+        XCTAssertFalse(app.buttons["Next Round"].exists)
+        XCTAssertTrue(app.buttons["daily-study-start-quiz"].exists, "The top action should remain Quiz")
+        for _ in 0..<4 {
+            let next = app.buttons["daily-study-next"]
+            XCTAssertTrue(next.waitForExistence(timeout: 4), "The learner should be able to reach the end of the expanded set")
+            next.tap()
+        }
+        XCTAssertTrue(app.buttons["daily-study-learn-more"].exists)
         capture("05 Practice complete")
-        let practiceAgain = app.buttons["Practice Again"]
-        practiceAgain.tap()
-        XCTAssertTrue(reveal.waitForExistence(timeout: 5), "Practice Again should replay the cumulative set of words practised today")
-        XCTAssertTrue(app.staticTexts["1 of 5"].exists, "Practice Again should contain the five distinct words in today's set")
+
+        app.buttons["daily-study-learn-more"].tap()
+        XCTAssertTrue(app.staticTexts["11 of 15"].waitForExistence(timeout: 5), "Learn More should append five words and start on the first new word")
+        XCTAssertTrue(app.staticTexts["Today’s words"].exists)
     }
 
     func testTypedProductionShowsPreciseCorrection() throws {
@@ -62,7 +66,8 @@ final class LexiloPracticeFlowTests: XCTestCase {
         app.launchArguments.append("--ui-testing-recall")
         app.launch()
 
-        let start = app.buttons["Start practice"]
+        completeDailyLearning()
+        let start = app.buttons["daily-study-start-quiz"]
         XCTAssertTrue(start.waitForExistence(timeout: 8))
         start.tap()
 
@@ -85,7 +90,8 @@ final class LexiloPracticeFlowTests: XCTestCase {
         app.launchArguments.append("--ui-testing-recall")
         app.launch()
 
-        let start = app.buttons["Start practice"]
+        completeDailyLearning()
+        let start = app.buttons["daily-study-start-quiz"]
         XCTAssertTrue(start.waitForExistence(timeout: 8))
         start.tap()
 
@@ -128,7 +134,63 @@ final class LexiloPracticeFlowTests: XCTestCase {
         XCTAssertFalse(app.staticTexts["MEMORY"].exists)
         XCTAssertFalse(app.staticTexts["DIFFICULTY"].exists)
         XCTAssertFalse(app.staticTexts["CARD DIFFICULTY"].exists)
+        XCTAssertFalse(app.buttons["Study this word"].exists)
         capture("08 Simplified word detail")
+    }
+
+    func testHistoryAndMyWordsExposeTheCompletedDailySet() throws {
+        completeDailyLearning()
+
+        let words = app.tabBars.buttons["Words"]
+        words.tap()
+        XCTAssertTrue(app.buttons["word-filter-all"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["word-filter-all"].label.contains("10"))
+
+        let history = app.tabBars.buttons["History"]
+        XCTAssertTrue(history.waitForExistence(timeout: 5))
+        history.tap()
+        XCTAssertTrue(app.navigationBars["Study history"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Words studied"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Study this word"].exists)
+        XCTAssertFalse(app.staticTexts["FIRST LEARNED"].exists)
+        XCTAssertFalse(app.staticTexts["REVIEWED"].exists)
+        XCTAssertTrue(app.buttons["history-relearn"].exists)
+        XCTAssertFalse(app.buttons["history-practice"].exists)
+
+        app.buttons["history-relearn"].tap()
+        XCTAssertTrue(app.staticTexts["1 of 5"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["No words to review"].exists)
+        for _ in 0..<4 {
+            XCTAssertTrue(app.buttons["daily-study-next"].waitForExistence(timeout: 3))
+            app.buttons["daily-study-next"].tap()
+        }
+        XCTAssertTrue(app.buttons["daily-study-finish"].waitForExistence(timeout: 3))
+        app.buttons["daily-study-finish"].tap()
+        XCTAssertFalse(app.buttons["history-practice"].exists)
+    }
+
+    private func completeDailyLearning() {
+        let count = app.staticTexts["daily-study-count"]
+        XCTAssertTrue(count.waitForExistence(timeout: 15), "Today should open in the daily learning mode")
+
+        XCTAssertTrue(app.buttons["daily-study-start-quiz"].waitForExistence(timeout: 5), "The quiz button should be available from the start of Today")
+
+        let pronunciation = app.buttons["daily-study-pronunciation"]
+        XCTAssertTrue(pronunciation.waitForExistence(timeout: 5), "Each learning card should expose pronunciation")
+        XCTAssertTrue(pronunciation.isHittable)
+        pronunciation.tap()
+
+        for _ in 0..<4 {
+            let next = app.buttons["daily-study-next"]
+            XCTAssertTrue(next.waitForExistence(timeout: 4), "The learner should be able to move to the next card")
+            next.tap()
+        }
+
+        let learnMore = app.buttons["daily-study-learn-more"]
+        XCTAssertTrue(learnMore.waitForExistence(timeout: 4), "The final card should show Learn More")
+        learnMore.tap()
+        XCTAssertTrue(app.staticTexts["6 of 10"].waitForExistence(timeout: 5), "The first Learn More should append five words")
+        XCTAssertTrue(app.buttons["daily-study-start-quiz"].waitForExistence(timeout: 5))
     }
 
     private func capture(_ name: String) {

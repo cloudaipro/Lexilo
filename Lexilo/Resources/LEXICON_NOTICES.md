@@ -1,54 +1,56 @@
 # Lexilo offline lexicon notices
 
-## Kaikki / English Wiktionary
+## Simple English Wiktionary
 
-Lexilo's offline Learning Core is derived from the English Wiktionary extract
-published by Kaikki.org and produced with Wiktextract. Lexilo reformats and
-filters the extract into SQLite for offline learning. Kaikki remains the
-canonical user-facing sense inventory.
+Lexilo's offline Learning Core is derived from the official Simple English
+Wiktionary `pages-articles.xml.bz2` dump. Lexilo parses the dump locally,
+preserving Simple English definitions, examples, parts of speech, forms, and
+IPA before packaging the selected learning entries as SQLite.
 
-The bundled build is `2026-08-12-quality-v3` with rank model
-`learner-sense-ranker-v1`. It contains 39,179 learning terms and 115,202
-validated usage examples. Example records must contain the
+The bundled build is `simplewiktionary-20260801` with rank model
+`learner-sense-ranker-v1`. It contains 5,591 learning terms, 11,731 retained
+senses, and 13,264 validated usage examples. Example records must contain the
 learning word or a valid inflected form and read as complete sentences;
 definitions, descriptions, collocations, and bare phrases are not relabeled as
 examples.
 
-Kaikki: https://kaikki.org/dictionary/English/
-English Wiktionary: https://en.wiktionary.org/
-Wiktextract: https://github.com/tatuylonen/wiktextract
+Source dump index:
+https://dumps.wikimedia.org/simplewiktionary/latest/
+
+Source artifact:
+https://dumps.wikimedia.org/simplewiktionary/latest/simplewiktionary-latest-pages-articles.xml.bz2
+
+Pinned artifact SHA-256:
+`f52c4492e187478fe4bf1cb47fbd37039168b5dea4c793996ef48f187bce6593`
+
+Simple English Wiktionary:
+https://simple.wiktionary.org/
+
+Wiktionary copyright and license details:
+https://en.wiktionary.org/wiki/Wiktionary:Copyrights
+
+Wikimedia dump text is available under Creative Commons Attribution-ShareAlike
+4.0 International and the GNU Free Documentation License. Lexilo reformats
+and filters the dump; the source license and attribution remain applicable.
 
 ## Learner-oriented ranking evidence
 
-Lexilo stores a separate deterministic `learner_rank` for each sense. The
-upstream `sense_order` is preserved for provenance. When supplied to the build,
-Simple English Wiktionary and Open English WordNet contribute alignment
-evidence and ranking features only; their definitions and sense rows are not
-merged into the user-facing dictionary inventory.
-
-Simple English Wiktionary source and license:
-https://kaikki.org/simplewiktionary/rawdata.html
+Lexilo stores a separate deterministic `learner_rank` for each Simple English
+Wiktionary sense. The upstream `sense_order` is preserved for provenance.
+Optional Open English WordNet data can contribute alignment evidence and
+ranking features only; it cannot add definitions, examples, or source rows to
+the user-facing dictionary inventory.
 
 Open English WordNet source and license:
 https://github.com/globalwordnet/english-wordnet
 
-The current bundle records Simple English Wiktionary
-`simplewiktionary-2026-08-15` (SHA-256
-`679c49137170095022f6c40ce5800a8ba0d604bac565164cd1d5f5b6ac4f3bb9`) and
-OEWN `OEWN-2025` (SHA-256
-`9a2d2d446397aa8cac9b0c9a4e5d9b32376312594e2670eaace3c13cf260d29e`).
-
 No hand-authored per-word ranking or content-replacement data is bundled.
-
-Wiktionary text is available under Creative Commons Attribution-ShareAlike
-4.0 International and the GNU Free Documentation License. Attribution and
-license details: https://en.wiktionary.org/wiki/Wiktionary:Copyrights
 
 ## CMU Pronouncing Dictionary
 
-Pronunciations missing from selected Kaikki entries may be converted from the
-CMU Pronouncing Dictionary. CMUdict does not supply Lexilo's vocabulary,
-definitions, senses, or examples.
+Pronunciations missing from selected Simple English Wiktionary entries may be
+converted from the CMU Pronouncing Dictionary. CMUdict does not supply
+Lexilo's vocabulary, definitions, senses, or examples.
 
 Source and license: https://github.com/cmusphinx/cmudict
 
@@ -66,6 +68,7 @@ Source, complete credits, and license: https://github.com/rspeer/wordfreq
 
 ## eSpeak NG 1.52.0
 
-Where neither Kaikki nor CMUdict has a pronunciation, Lexilo stores an
-explicitly marked generated IPA value produced by eSpeak NG 1.52.0. Human IPA
-always has higher priority. Source and license: https://github.com/espeak-ng/espeak-ng
+Where neither Simple English Wiktionary nor CMUdict has a pronunciation,
+Lexilo stores an explicitly marked generated IPA value produced by eSpeak NG
+1.52.0. Human IPA always has higher priority. Source and license:
+https://github.com/espeak-ng/espeak-ng

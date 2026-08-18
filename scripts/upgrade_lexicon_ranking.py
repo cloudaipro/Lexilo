@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Upgrade an existing Lexilo Learning Core to learner-oriented ranking.
 
-This is useful when a pinned Kaikki JSONL rebuild is not locally available.
-It preserves the canonical Kaikki rows, adds ranking metadata, and optionally
-loads external alignment evidence.
+This preserves the bundled source rows, adds ranking metadata, and optionally
+loads Open English WordNet alignment evidence. New bundles should be produced
+with ``build_lexicon.py`` from the official Simple English Wiktionary dump.
 """
 
 from __future__ import annotations
@@ -16,7 +16,6 @@ from typing import Any
 
 from build_lexicon import (
     load_oewn,
-    load_simple_wiktionary,
     source_digest,
 )
 from learner_sense_ranker import RANK_MODEL_VERSION, rank_senses
@@ -120,14 +119,10 @@ def source_id(
 
 def upgrade(
     database: Path,
-    simple_path: Path | None,
     oewn_path: Path | None,
-    simple_version: str | None,
     oewn_version: str | None,
 ) -> None:
     external_indexes = {}
-    if simple_path:
-        external_indexes["simple_wiktionary"] = load_simple_wiktionary(simple_path)
     if oewn_path:
         external_indexes["oewn"] = load_oewn(oewn_path)
 
@@ -136,14 +131,6 @@ def upgrade(
     ensure_schema(connection)
 
     external_source_ids: dict[str, int] = {}
-    if simple_path:
-        external_source_ids["simple_wiktionary"] = source_id(
-            connection,
-            "Kaikki / Simple English Wiktionary",
-            f"{simple_version or 'unversioned'} sha256:{source_digest(simple_path)}",
-            "https://kaikki.org/simplewiktionary/rawdata.html",
-            "CC BY-SA 4.0 and GFDL",
-        )
     if oewn_path:
         external_source_ids["oewn"] = source_id(
             connection,
@@ -280,16 +267,12 @@ def upgrade(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database", type=Path, default=Path("Lexilo/Resources/lexilo-lexicon.sqlite"))
-    parser.add_argument("--simple-wiktionary", type=Path)
-    parser.add_argument("--simple-version")
     parser.add_argument("--oewn", type=Path)
     parser.add_argument("--oewn-version")
     args = parser.parse_args()
     upgrade(
         args.database,
-        args.simple_wiktionary,
         args.oewn,
-        args.simple_version,
         args.oewn_version,
     )
 

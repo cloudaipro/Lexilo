@@ -1,7 +1,7 @@
-# Lexilo v0.9 Product Proposal
+# Lexilo v0.9.1 Product Proposal
 
 > Status: implemented in the current source tree
-> Updated: August 16, 2026
+> Updated: August 17, 2026
 
 Lexilo is a focused, local-first iOS vocabulary trainer. It helps learners turn
 recognition into active recall through short daily sessions, automatic review
@@ -14,19 +14,20 @@ your memory needs it. Lexilo deliberately avoids deck administration, public
 leaderboards, decorative memory dashboards, and unnecessary dictionary surface
 area.
 
-## v0.9 information architecture
+## v0.9.1 information architecture
 
-The app has three primary areas:
+The app has four primary areas:
 
-- **Today** — daily round, streak, featured word, and practice entry point.
+- **Today** — the daily word-study pager, Quiz entry point, and Learn More action.
 - **Words** — learned and upcoming vocabulary, with word/meaning filtering and
   a focused word-detail view.
+- **History** — calendar-based study history with a combined list of words studied on a selected date and a relearning entry point.
 - **Settings** — practice preferences, pronunciation, translations, imports,
   backup/sync, and source licenses.
 
 There is no Memory or Progress tab. Scheduling evidence remains in the
-background, and the Words tab does not expose a Dictionary browser. A broader
-Dictionary feature is intentionally deferred to a future release.
+background. The Words tab's Dictionary browser is development-only, and a
+broader Dictionary feature is intentionally deferred to a future release.
 
 ## Learning experience
 
@@ -36,8 +37,10 @@ Every active sense produces two independent cards:
 2. **Production:** meaning to word, with typed answer checking.
 
 The two directions cannot be served on the same calendar day. Failed cards can
-return later in the same session and are scheduled to return sooner. Practice
-Again repeats the words completed today without changing the schedule.
+return later in the same session and are scheduled to return sooner. Today first
+shows the daily words for study; the top-right Quiz tests only that current set.
+When the learner reaches the last word, Learn More appends another configured
+batch (five by default) and returns the pager to the first new word.
 
 The scheduler is adaptive but intentionally quiet. It uses correctness,
 response time, hints, difficulty, stability, retrievability, and recent review
@@ -46,16 +49,18 @@ learner task.
 
 ## Content and pronunciation
 
-Kaikki's structured English Wiktionary extract is Lexilo's sole lexical source.
+The official Simple English Wiktionary Wikimedia dump is Lexilo's sole lexical
+source. The build parses the dump locally and does not use the English
+Wiktionary/Kaikki extract.
 Open English WordNet is not bundled or merged. The current Learning Core build
-is `2026-08-12-quality-v3` and contains:
+is `simplewiktionary-20260801` and contains:
 
-- 39,179 learning terms
-- 45,477 term/POS lexemes
-- 100,588 retained senses
-- 115,201 validated usage examples
-- 69,889 pronunciation rows
-- 79,195 word forms
+- 5,591 learning terms
+- 6,710 term/POS lexemes
+- 11,731 retained senses
+- 13,264 validated usage examples
+- 9,439 pronunciation rows
+- 1,838 word forms
 
 The importer keeps an example only when it contains the learning word or a
 valid inflected form, has at least four tokens, and reads as a complete sentence
@@ -65,13 +70,14 @@ example field remains empty.
 
 Pronunciation precedence is:
 
-1. Kaikki human-authored IPA.
+1. Simple English Wiktionary human-authored IPA.
 2. CMUdict General American IPA converted directly from ARPAbet.
 3. Explicitly marked eSpeak NG 1.52.0 generated IPA.
 
-Spoken audio uses the bundled Kitten Nano v0.2 model through sherpa-onnx, with
-an installed iOS voice retained only as a runtime failure fallback. All core
-learning data and audio work offline.
+Spoken audio defaults to Apple's offline `AVSpeechSynthesizer`. Kitten Nano
+v0.2 remains available as an optional offline engine through sherpa-onnx; when
+Kitten is selected but cannot run, Apple TTS is used as a runtime fallback. All
+core learning data and audio work offline.
 
 ## Data architecture
 
@@ -85,22 +91,25 @@ dictionary update refreshes lexical fields and migrates by stable source sense
 ID, normalized word, and part of speech without resetting cards, review history,
 or mastery.
 
-## v0.9 release scope
+## v0.9.1 release scope
 
 Included:
 
-- Today, Words, and Settings surfaces.
+- Today, Words, History, and Settings surfaces.
+- Learning-first daily pager, Quiz for the current daily set, and Learn More for
+  adding another batch of words.
 - Recognition and typed production practice.
 - Adaptive offline scheduling with separate directions.
-- Daily goal, streak, Next Round, and Practice Again.
+- Daily goal, streak, combined calendar history, and historical relearning.
 - Sense-aware word details with examples, pronunciation, collocations, and
   optional personal translations.
 - CSV/TSV personal vocabulary import.
 - JSON backup/restore and optional iCloud snapshot sync.
-- Offline Kitten pronunciation with system-voice fallback.
+- Offline Apple TTS by default, with optional Kitten pronunciation and fallback.
 - Small and medium WidgetKit study widgets backed by an App Group snapshot. The
-  small widget is word-first; the medium widget places the complete selected
-  definition or example below the word, with Definition as the default setting.
+  small widget is word-first; tapping it opens Today’s words rather than Quiz;
+  the medium widget places the complete selected definition or example below
+  the word, with Definition as the default setting.
 
 Deferred:
 
@@ -113,7 +122,7 @@ Deferred:
 ## Source and licensing requirements
 
 The app ships attribution and license notices in
-`CONTENT_SOURCES.md` and `Lexilo/Resources/LEXICON_NOTICES.md`. Kaikki and
+`CONTENT_SOURCES.md` and `Lexilo/Resources/LEXICON_NOTICES.md`. Simple English
 Wiktionary text remains subject to CC BY-SA 4.0 and GFDL requirements. CMUdict
 and eSpeak NG are pronunciation layers only and cannot introduce definitions,
 senses, examples, or learning terms.
@@ -124,15 +133,14 @@ appropriate license.
 
 ## Verification
 
-The current v0.9 source tree was validated on an iPhone 17 Pro, iOS 26.2
+The current v0.9.1 source tree was validated on an iPhone 17 Pro, iOS 26.2
 Simulator:
 
-- ReviewSchedulerTests: 34/34 passed.
+- ReviewSchedulerTests: 43/43 passed.
 - LexiloPracticeFlowTests: 4/4 passed.
 - SQLite integrity check: passed.
 - Selected source entries missing pronunciation: 0.
 - Full simulator build and unsigned arm64 build: passed.
 
 See `README.md`, `CONTENT_SOURCES.md`, and
-`kaikki-dictionary-data-proposal-revised.md` for implementation and data-build
-details.
+`Lexilo/Resources/LEXICON_NOTICES.md` for implementation and data-build details.

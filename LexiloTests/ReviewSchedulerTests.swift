@@ -4,7 +4,7 @@ import XCTest
 final class ReviewSchedulerTests: XCTestCase {
     private static let preferenceKeys = [
         "dailyGoal", "newWordLimit", "vocabularyBand", "includePhrases", "rotationNonce",
-        "soundEnabled", "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
+        "soundEnabled", PronunciationEngineChoice.preferenceKey, "kittenVoiceID", "kittenSpeechRate", "pronunciationLocale",
         "desiredRetention", "iCloudSyncEnabled", "translationEnabled", "translationLanguage", "hasCompletedOnboarding",
         MediumWidgetContent.preferenceKey
     ]
@@ -94,6 +94,29 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertEqual(exampleSnapshot.example, definitionSnapshot.example)
     }
 
+    @MainActor
+    func testWidgetSnapshotUsesTodayWordsAndCyclesInOrder() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let set = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        let snapshot = try XCTUnwrap(store.widgetSnapshot(now: now))
+
+        XCTAssertEqual(snapshot.dailyWordIDs, set.vocabularyIDs)
+        XCTAssertEqual(snapshot.dailyWords.count, set.vocabularyIDs.count)
+
+        let second = snapshot.showingDailyWord(at: 1)
+        XCTAssertEqual(second.vocabularyID, snapshot.dailyWords[1].vocabularyID)
+        XCTAssertEqual(second.dailyRotationIndex, 1)
+
+        let wrapped = snapshot.showingDailyWord(at: snapshot.dailyWords.count)
+        XCTAssertEqual(wrapped.vocabularyID, snapshot.dailyWords[0].vocabularyID)
+        XCTAssertEqual(wrapped.dailyRotationIndex, 0)
+    }
+
     func testBundledKittenPackWarmsAndGeneratesWaveform() throws {
         let synthesizer = try XCTUnwrap(KittenSynthesizer())
         XCTAssertTrue(synthesizer.prewarm())
@@ -141,11 +164,11 @@ final class ReviewSchedulerTests: XCTestCase {
         let staleID = UUID()
         let staleNounSense = VocabularyItem(
             id: staleID,
-            lexiconID: "legacy:pragmatic:noun",
-            word: "pragmatic",
+            lexiconID: "legacy:dictionary:noun",
+            word: "dictionary",
             partOfSpeech: "noun",
-            ipa: "/præɡˈmætɪk/",
-            conciseDefinition: "an imperial decree that becomes part of the fundamental law of the land",
+            ipa: "",
+            conciseDefinition: "legacy definition",
             example: "",
             frequencyRank: 1,
             introducedAt: .now
@@ -162,10 +185,10 @@ final class ReviewSchedulerTests: XCTestCase {
 
         let store = makeStore(persistenceURL: persistenceURL)
         let repaired = try XCTUnwrap(store.words.first(where: { $0.id == staleID }))
-        XCTAssertTrue(repaired.lexiconID?.hasPrefix("en-pragmatic-") == true)
-        XCTAssertEqual(repaired.partOfSpeech, "adjective")
+        XCTAssertTrue(repaired.lexiconID?.hasPrefix("simple:") == true)
+        XCTAssertEqual(repaired.partOfSpeech, "noun")
         XCTAssertFalse(repaired.examples.isEmpty)
-        XCTAssertTrue(repaired.example.localizedCaseInsensitiveContains("pragmatic"))
+        XCTAssertTrue(repaired.example.localizedCaseInsensitiveContains("dictionary"))
         XCTAssertFalse(store.featuredWord()?.examples.isEmpty ?? true)
     }
 
@@ -206,12 +229,13 @@ final class ReviewSchedulerTests: XCTestCase {
     func testBundledLexiconIsSearchableAndHasRotationCandidates() {
         let lexicon = Self.stableLexicon
         XCTAssertTrue(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.version, "2026-08-12-quality-v3")
-        XCTAssertGreaterThan(lexicon.information.lexemeCount, 35_000)
-        XCTAssertGreaterThan(lexicon.information.learningCandidateCount, 10_000)
+        XCTAssertEqual(lexicon.information.dataset, "Simple English Wiktionary")
+        XCTAssertEqual(lexicon.information.version, "simplewiktionary-20260801")
+        XCTAssertGreaterThan(lexicon.information.lexemeCount, 5_000)
+        XCTAssertGreaterThan(lexicon.information.learningCandidateCount, 5_000)
 
-        let results = lexicon.search("resilient")
-        XCTAssertEqual(results.first?.word.lowercased(), "resilient")
+        let results = lexicon.search("dictionary")
+        XCTAssertEqual(results.first?.word.lowercased(), "dictionary")
         XCTAssertFalse(results.first?.definition.isEmpty ?? true)
 
         let candidates = lexicon.learningCandidates(inBand: VocabularyBand.intermediate.rawValue, includePhrases: false, offset: 0, limit: 100)
@@ -229,21 +253,19 @@ final class ReviewSchedulerTests: XCTestCase {
 
         let recreationEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "recreation"))
         let recreation = store.addToLearning(recreationEntry)
-        XCTAssertFalse(recreation.examples.contains("time for rest and refreshment by the pool"))
         XCTAssertFalse(recreation.examples.isEmpty)
         XCTAssertTrue(recreation.examples.allSatisfy { $0.localizedCaseInsensitiveContains("recreation") })
-        XCTAssertFalse(recreation.senses[0].examples.contains("time for rest and refreshment by the pool"))
-        XCTAssertEqual(recreation.ipa, "/ˌɹɛkɹiˈeɪʃən/")
+        XCTAssertEqual(recreation.ipa, "/rɛkriˈeɪʃən/")
 
-        let junkEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "junk"))
-        let junk = store.addToLearning(junkEntry)
-        XCTAssertEqual(junk.ipa, "/d͡ʒʌŋk/")
-        XCTAssertFalse(junk.examples.isEmpty)
+        let kittenEntry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: "kitten"))
+        let kitten = store.addToLearning(kittenEntry)
+        XCTAssertEqual(kitten.ipa, "/kˈɪtən/")
+        XCTAssertFalse(kitten.examples.isEmpty)
     }
 
     @MainActor
     func testCommonLearningExamplesAreCompleteUsageSentences() throws {
-        for word in ["loyal", "licensed", "lean"] {
+        for word in ["lean", "recreation", "harbor"] {
             let entry = try XCTUnwrap(Self.stableLexicon.learningEntry(matching: word))
             XCTAssertFalse(entry.examples.isEmpty, "Expected a usage example for \(word)")
             XCTAssertTrue(entry.examples.allSatisfy { $0.range(of: #"[.!?…][\"’'”»)]*$"#, options: .regularExpression) != nil }, "Gloss-like fragment leaked for \(word): \(entry.examples)")
@@ -436,6 +458,130 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
+    func testDailyStudySetPersistsPositionAndCompletesLearningPass() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let set = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        XCTAssertEqual(set.vocabularyIDs.count, 5)
+        XCTAssertEqual(set.currentIndex, 0)
+        XCTAssertFalse(set.learningCompleted)
+
+        store.updateDailyStudyProgress(index: 2, now: now)
+        XCTAssertEqual(store.dailyStudySet?.currentIndex, 2)
+
+        let reloaded = makeStore(persistenceURL: persistenceURL)
+        XCTAssertEqual(reloaded.dailyStudySet?.currentIndex, 2)
+        XCTAssertFalse(reloaded.dailyLearningCompleted(now: now))
+
+        reloaded.completeDailyLearning(now: now)
+        XCTAssertTrue(reloaded.dailyLearningCompleted(now: now))
+        XCTAssertEqual(reloaded.wordsIntroduced(on: now).count, 5)
+        XCTAssertTrue(reloaded.wordsIntroduced(on: now).allSatisfy { $0.introducedAt != nil })
+    }
+
+    @MainActor
+    func testLearnMoreExpandsDailySetByOneBatchAndStartsAtFirstNewWord() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let firstSet = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        store.completeDailyLearning(now: now)
+
+        let firstPractice = store.startFocusedSession(
+            vocabularyIDs: Set(firstSet.vocabularyIDs),
+            limit: firstSet.vocabularyIDs.count,
+            now: now
+        )
+        XCTAssertEqual(firstPractice.count, 5)
+        for card in firstPractice {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+        }
+        XCTAssertTrue(store.dailyPracticeCompleted(now: now))
+        XCTAssertTrue(store.canLearnMoreDailyWords(now: now))
+
+        let added = store.addMoreDailyWords(now: now)
+        XCTAssertEqual(added.count, 5)
+        XCTAssertEqual(store.dailyStudySet?.vocabularyIDs.count, 10)
+        XCTAssertEqual(store.dailyStudySet?.currentIndex, 5)
+        XCTAssertFalse(store.dailyStudySet?.learningCompleted ?? true)
+        XCTAssertEqual(store.wordsIntroduced(on: now).count, 5)
+        XCTAssertEqual(store.wordsForCollection(now: now).count, 10)
+        XCTAssertTrue(Set(firstSet.vocabularyIDs).isDisjoint(with: Set(added.map(\.id))))
+    }
+
+    @MainActor
+    func testLearnMoreExpandsImmediatelyAfterTheFirstLearningPass() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let firstSet = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        store.completeDailyLearning(now: now)
+
+        XCTAssertFalse(store.dailyPracticeCompleted(now: now))
+        let added = store.addMoreDailyWords(now: now)
+
+        XCTAssertEqual(added.count, 5)
+        XCTAssertEqual(store.dailyStudySet?.vocabularyIDs.count, 10)
+        XCTAssertEqual(store.dailyStudySet?.currentIndex, firstSet.vocabularyIDs.count)
+        XCTAssertFalse(store.dailyStudySet?.learningCompleted ?? true)
+        XCTAssertTrue(Set(firstSet.vocabularyIDs).isDisjoint(with: Set(added.map(\.id))))
+    }
+
+    @MainActor
+    func testStudyHistorySeparatesFirstLearningFromPracticeReviews() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let set = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        store.completeDailyLearning(now: now)
+
+        let firstWordID = try XCTUnwrap(set.vocabularyIDs.first)
+        let focused = store.startFocusedSession(vocabularyIDs: [firstWordID], now: now)
+        let card = try XCTUnwrap(focused.first)
+        store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+
+        XCTAssertEqual(store.wordsIntroduced(on: now).count, set.vocabularyIDs.count)
+        XCTAssertEqual(store.wordsReviewed(on: now).map(\.id), [firstWordID])
+        XCTAssertEqual(Set(store.wordsStudied(on: now).map(\.id)), Set(set.vocabularyIDs))
+        XCTAssertTrue(store.hasStudyActivity(on: now))
+        XCTAssertEqual(store.learningState(for: firstWordID), .learning)
+        XCTAssertNotNil(store.lastReviewedDate(for: firstWordID))
+    }
+
+    @MainActor
+    func testDailyStudySetReconstructsAnAlreadyPractisedLegacyDay() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        let legacyRound = store.startRound(wordCount: 2, now: now)
+        for card in legacyRound {
+            store.answer(cardID: card.id, correct: true, now: now)
+        }
+        XCTAssertNil(store.dailyStudySet)
+
+        let reconstructed = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        XCTAssertEqual(reconstructed.vocabularyIDs, legacyRound.map(\.vocabularyID))
+        XCTAssertTrue(reconstructed.learningCompleted)
+        XCTAssertTrue(store.dailyPracticeCompleted(now: now))
+    }
+
+    @MainActor
     func testNextRoundGrowsTodaySetAndPracticeAgainReplaysAllWordsWithoutChangingSchedule() {
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
@@ -544,23 +690,24 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
-    func testNewStoreUsesOnlyKaikkiEntries() {
+    func testNewStoreUsesOnlySimpleWiktionaryEntries() {
         let temporaryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = makeStore(persistenceURL: temporaryURL)
         XCTAssertEqual(store.words.count, 40)
         XCTAssertTrue(store.words.allSatisfy { $0.lexiconID != nil })
+        XCTAssertTrue(store.words.allSatisfy { $0.lexiconID?.hasPrefix("simple:") == true })
         XCTAssertTrue(store.words.allSatisfy { !$0.word.isEmpty && !$0.conciseDefinition.isEmpty })
     }
 
     @MainActor
-    func testUnavailableKaikkiDatabaseDoesNotCreateFallbackVocabulary() {
+    func testUnavailableSimpleWiktionaryDatabaseDoesNotCreateFallbackVocabulary() {
         let missingDatabase = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "missing.sqlite")
         let lexicon = LexiconStore(databaseURL: missingDatabase)
         let persistenceURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString).appending(path: "store.json")
         let store = LearningStore(persistenceURL: persistenceURL, lexicon: lexicon)
 
         XCTAssertFalse(lexicon.isAvailable)
-        XCTAssertEqual(lexicon.information.dataset, "Kaikki / English Wiktionary")
+        XCTAssertEqual(lexicon.information.dataset, "Simple English Wiktionary")
         XCTAssertTrue(store.words.isEmpty)
         XCTAssertTrue(store.cards.isEmpty)
     }
@@ -603,14 +750,13 @@ final class ReviewSchedulerTests: XCTestCase {
     func testHarborUsesAutomaticallyRankedNounSense() throws {
         let entry = try XCTUnwrap(Self.stableLexicon.entry(matching: "harbor", partOfSpeech: "noun"))
         XCTAssertEqual(entry.learnerRank, 1)
-        XCTAssertEqual(entry.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
-        XCTAssertTrue(entry.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
+        XCTAssertEqual(entry.definition, "A harbor is some water in a curve of land where it's safe for boats because there are no big waves.")
+        XCTAssertTrue(entry.primaryExample.localizedCaseInsensitiveContains("ship in the harbor"))
 
         let senses = Self.stableLexicon.senses(relatedToSenseID: entry.id)
-        XCTAssertGreaterThanOrEqual(senses.count, 2)
+        XCTAssertEqual(senses.count, 1)
         XCTAssertEqual(senses.first?.learnerRank, 1)
-        XCTAssertTrue(senses.first?.definition.localizedCaseInsensitiveContains("ships") == true)
-        XCTAssertTrue(senses.dropFirst().contains { $0.definition == "Any place of shelter." })
+        XCTAssertTrue(senses.first?.definition.localizedCaseInsensitiveContains("boats") == true)
     }
 
     @MainActor
@@ -618,8 +764,8 @@ final class ReviewSchedulerTests: XCTestCase {
         let results = Self.stableLexicon.search("harbor", limit: 20)
         let noun = try XCTUnwrap(results.first { $0.partOfSpeech == "noun" })
         XCTAssertEqual(noun.learnerRank, 1)
-        XCTAssertEqual(noun.definition, "A sheltered expanse of water, adjacent to land, in which ships may anchor or dock, especially for loading and unloading.")
-        XCTAssertTrue(noun.primaryExample.localizedCaseInsensitiveContains("adventurers come into it"))
+        XCTAssertEqual(noun.definition, "A harbor is some water in a curve of land where it's safe for boats because there are no big waves.")
+        XCTAssertTrue(noun.primaryExample.localizedCaseInsensitiveContains("ship in the harbor"))
     }
 
     @MainActor
@@ -698,6 +844,22 @@ final class ReviewSchedulerTests: XCTestCase {
         store.reportContent(vocabularyID: card.vocabularyID, senseID: card.senseID, reason: "Test")
         XCTAssertEqual(store.contentQualitySummary.learnerReports, 1)
     }
+
+    @MainActor
+    func testSpeechPlayerDefaultsToAppleTTSAndHonorsKittenSelection() {
+        let apple = RecordingPronunciationEngine()
+        let kitten = RecordingPronunciationEngine()
+        let player = SpeechPlayer(appleEngine: apple, kittenEngine: kitten)
+
+        UserDefaults.standard.removeObject(forKey: PronunciationEngineChoice.preferenceKey)
+        player.play("hello")
+        XCTAssertEqual(apple.spokenTexts, ["hello"])
+        XCTAssertTrue(kitten.spokenTexts.isEmpty)
+
+        UserDefaults.standard.set(PronunciationEngineChoice.kitten.rawValue, forKey: PronunciationEngineChoice.preferenceKey)
+        player.play("world")
+        XCTAssertEqual(kitten.spokenTexts, ["world"])
+    }
 }
 
 private struct LearningSnapshotFixture: Codable {
@@ -707,4 +869,15 @@ private struct LearningSnapshotFixture: Codable {
     let studyDays: [StudyDay]
     let lexiconVersion: String?
     let retiredLexiconIDs: Set<String>
+}
+
+@MainActor
+private final class RecordingPronunciationEngine: OfflinePronunciationEngine {
+    private(set) var spokenTexts: [String] = []
+
+    func stop() {}
+
+    func speak(_ text: String, locale: String) {
+        spokenTexts.append(text)
+    }
 }

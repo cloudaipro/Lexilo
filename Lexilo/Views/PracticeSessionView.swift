@@ -3,6 +3,7 @@ import SwiftUI
 struct PracticeSessionView: View {
     let focusVocabularyIDs: Set<UUID>?
     let startWithPracticeAgain: Bool
+    let allowsLearningExpansion: Bool
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: LearningStore
     @EnvironmentObject private var speechPlayer: SpeechPlayer
@@ -26,9 +27,14 @@ struct PracticeSessionView: View {
     private var current: StudyCard? { index < queue.count ? queue[index] : nil }
     private var word: VocabularyItem? { current.flatMap { store.word(for: $0.vocabularyID) } }
 
-    init(focusVocabularyIDs: Set<UUID>? = nil, startWithPracticeAgain: Bool = false) {
+    init(
+        focusVocabularyIDs: Set<UUID>? = nil,
+        startWithPracticeAgain: Bool = false,
+        allowsLearningExpansion: Bool = false
+    ) {
         self.focusVocabularyIDs = focusVocabularyIDs
         self.startWithPracticeAgain = startWithPracticeAgain
+        self.allowsLearningExpansion = allowsLearningExpansion
     }
 
     var body: some View {
@@ -36,6 +42,10 @@ struct PracticeSessionView: View {
             PaperBackground()
             if loading { SwiftUI.ProgressView().tint(LexiloTheme.sage) }
             else if let card = current, let word { study(card: card, word: word) }
+            else if isDailyQuiz {
+                Color.clear
+                    .onAppear { dismiss() }
+            }
             else { completion }
         }
         .task { loadSession() }
@@ -46,7 +56,7 @@ struct PracticeSessionView: View {
         queue = if startWithPracticeAgain {
             store.practiceAgainCards()
         } else if let focusVocabularyIDs {
-            store.startFocusedSession(vocabularyIDs: focusVocabularyIDs, limit: roundSize)
+            store.startFocusedSession(vocabularyIDs: focusVocabularyIDs, limit: focusVocabularyIDs.count)
         } else {
             store.startRound(wordCount: roundSize)
         }
@@ -334,12 +344,12 @@ struct PracticeSessionView: View {
         max(1, UserDefaults.standard.object(forKey: "newWordLimit") as? Int ?? 5)
     }
 
-    private func startNextRound() {
-        startSession(with: store.startRound(wordCount: configuredRoundSize), practiceAgain: false)
-    }
-
     private func startPracticeAgain() {
         startSession(with: store.practiceAgainCards(), practiceAgain: true)
+    }
+
+    private var isDailyQuiz: Bool {
+        allowsLearningExpansion && focusVocabularyIDs != nil && !startWithPracticeAgain
     }
 
     private func startSession(with cards: [StudyCard], practiceAgain: Bool) {
@@ -360,7 +370,7 @@ struct PracticeSessionView: View {
                 Circle().fill(LexiloTheme.sageLight).frame(width: 98, height: 98)
                 Image(systemName: "leaf.fill").font(.system(size: 38)).foregroundStyle(LexiloTheme.sage)
             }
-            Text(isExtraPractice ? "Practice Again complete" : "Round complete")
+            Text(completionTitle)
                 .font(.lexiloDisplay(36, weight: .semibold)).foregroundStyle(LexiloTheme.ink)
             Text(completionMessage)
                 .font(.body).multilineTextAlignment(.center).foregroundStyle(LexiloTheme.muted).padding(.horizontal, 36)
@@ -373,10 +383,6 @@ struct PracticeSessionView: View {
             }
             Spacer()
             VStack(spacing: 12) {
-                if !store.roundCards(wordCount: 1).isEmpty {
-                    Button { startNextRound() } label: { primaryButtonLabel("Next Round", symbol: "arrow.right") }
-                        .buttonStyle(PressableScale())
-                }
                 if store.practicedWordCount() > 0 {
                     Button { startPracticeAgain() } label: { secondaryButtonLabel("Practice Again", symbol: "arrow.clockwise") }
                         .buttonStyle(PressableScale())
@@ -391,13 +397,19 @@ struct PracticeSessionView: View {
         }
     }
 
+    private var completionTitle: String {
+        if isExtraPractice { return "Practice Again complete" }
+        return "Practice complete"
+    }
+
     private var completionMessage: String {
         guard completed > 0 else { return "No more words are available right now." }
-        let todayCount = store.practicedWordCount()
         if isExtraPractice {
+            let todayCount = store.practicedWordCount()
             return "You practised today’s \(todayCount) words again. Your scheduled reviews are unchanged."
         }
-        return "\(todayCount) word\(todayCount == 1 ? "" : "s") practised today. Add another round or repeat today’s set."
+        let todayCount = store.practicedWordCount()
+        return "\(todayCount) word\(todayCount == 1 ? "" : "s") practised today. You can practise them again later."
     }
 
     private func secondaryButtonLabel(_ title: String, symbol: String) -> some View {

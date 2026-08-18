@@ -25,20 +25,22 @@ xcodegen generate
 
 ## Included
 
-- SwiftUI app with focused Today, Words, and Settings tabs
-- Two-direction daily practice flow with reveal and Know/Don’t Know decisions
+- SwiftUI app with focused Today, Words, History, and Settings tabs
+- Learning-first Today flow: study the daily word set, then use Quiz for recognition and active recall
+- Learn More adds the next batch of words to today; the default batch is five
 - Compact adaptive scheduler using difficulty, stability, retrievability, response time, and hints (capped at 3,650 days), with paired-card same-day exclusion
 - Atomic offline JSON persistence with last-known-good recovery and immutable review history
-- Bundled Kaikki / English Wiktionary Learning Core with 39,179 learning terms, verified usage examples, CMUdict pronunciation fallback, and eSpeak NG coverage
+- Bundled Simple English Wiktionary Learning Core with 5,591 learning terms, verified usage examples, CMUdict pronunciation fallback, and eSpeak NG coverage
 - Deterministic offline vocabulary rotation by learning band, with learner progress stored separately from dictionary content
-- Kitten Nano v0.2 neural pronunciation through sherpa-onnx, launch prewarming, and a bounded on-device audio cache
-- Small and medium WidgetKit widgets backed by an App Group study snapshot; the medium widget shows the full definition or example selected in Settings (Definition by default)
+- Apple TTS is the default offline pronunciation engine; Kitten Nano v0.2 is an optional neural voice through sherpa-onnx, with a bounded on-device audio cache and fallback handling
+- Small and medium WidgetKit widgets backed by an App Group study snapshot; each refresh advances through today’s words in order and wraps around, while tapping a widget opens Today’s words directly and the medium widget shows the full definition or example selected in Settings (Definition by default)
+- Calendar-based History shows one combined list of words studied on a selected day and can start a relearning session
 - Daily new-word cap, explicit StudyDay streak records, and migration-safe persistence
 - Unit tests for adaptive intervals, content migration, example quality, pronunciation fallbacks, persistence, new-word limits, streaks, and paired-card constraints
 - XCUITest coverage for the daily practice flow and simplified word-detail hierarchy
 - App icon generated from the supplied `logo.png`
 
-All user-facing lexical content comes from the versioned Kaikki English Wiktionary sense inventory in `Lexilo/Resources/lexilo-lexicon.sqlite`. The bundled Learning Core contains 115,202 validated usage examples; definitions, collocations, and fragments are never substituted for a missing example. A build-time learner-sense ranker uses optional Simple English Wiktionary and OEWN alignment evidence without merging their sense rows into the app inventory. CMUdict fills IPA gaps only, eSpeak NG supplies explicitly marked generated IPA where needed, and spoken pronunciation uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. There is no FTS5 index. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
+All user-facing lexical content comes from the pinned Simple English Wiktionary dump in `Lexilo/Resources/lexilo-lexicon.sqlite`. The bundled Learning Core contains 11,731 retained senses and 13,264 validated usage examples; definitions, collocations, and fragments are never substituted for a missing example. Simple English Wiktionary source order is preserved, with optional OEWN alignment available as build-time ranking evidence only. CMUdict fills IPA gaps only, eSpeak NG supplies explicitly marked generated IPA where needed, and spoken pronunciation defaults to Apple TTS; the optional Kitten engine uses the model in `Lexilo/Resources/Kitten/KittenVoice.bundle`. There is no FTS5 index. See `CONTENT_SOURCES.md` and `TTS_RESEARCH.md`.
 
 ## Validation
 
@@ -46,7 +48,7 @@ Validated on **iPhone 17 Pro, iOS 26.2 Simulator**:
 
 - Full simulator build: passed
 - Practice-flow XCUITest: 4 tests passed
-- ReviewSchedulerTests: 34 tests passed, including Kaikki-only seeding, exact-band rotation, unavailable-state, sense repair, widget snapshot compatibility, example-quality regression, persistence recovery, adaptive scheduling, cache, greeting, and real Kitten inference
+- ReviewSchedulerTests: 43/43 passed, including source-aware seeding, exact-band rotation, daily expansion, History/Words persistence, widget snapshots, example-quality regression, persistence recovery, adaptive scheduling, pronunciation fallback, cache, and real Kitten inference
 - Unsigned arm64 iPhone build: passed
 - Visual checks: Today, recognition front, revealed answer, failure recycling, and completion
 

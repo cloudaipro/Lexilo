@@ -1,9 +1,8 @@
 """Deterministic, build-time learner-oriented sense ranking.
 
-The ranker deliberately keeps the canonical Kaikki sense inventory intact.
-Other dictionaries are alignment evidence only.  The output is plain Python
-data so the SQLite builder can persist both the final order and the evidence
-used to produce it.
+The ranker keeps the canonical source inventory intact. Other dictionaries
+are alignment evidence only. The output is plain Python data so the SQLite
+builder can persist both the final order and the evidence used to produce it.
 """
 
 from __future__ import annotations
@@ -165,7 +164,7 @@ def rank_senses(
     senses: list[dict[str, Any]],
     external_indexes: dict[str, dict[tuple[str, str], list[ExternalSense]]],
 ) -> list[dict[str, Any]]:
-    """Rank local senses using external evidence, labels, and Kaikki order."""
+    """Rank local senses using external evidence, labels, and source order."""
 
     if not senses:
         return []
@@ -216,7 +215,7 @@ def rank_senses(
                 rank_reason += "; usage labels"
             confidence = round(min(0.95, 0.35 + max(source_features.values()) * 0.55 + (0.10 if len(source_features) > 1 else 0.0)), 6)
         else:
-            rank_reason = "Kaikki source order fallback"
+            rank_reason = "Simple English Wiktionary source order fallback"
             if usage_penalty:
                 rank_reason += "; usage labels"
             confidence = 0.20

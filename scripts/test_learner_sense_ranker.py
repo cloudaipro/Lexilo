@@ -5,7 +5,7 @@ from learner_sense_ranker import ExternalSense, rank_senses
 
 
 class LearnerSenseRankerTests(unittest.TestCase):
-    def test_external_first_sense_can_outvote_kaikki_order(self) -> None:
+    def test_external_first_sense_can_outvote_source_order(self) -> None:
         senses = [
             {
                 "source_id": "abstract",
@@ -29,12 +29,6 @@ class LearnerSenseRankerTests(unittest.TestCase):
             "noun",
             senses,
             {
-                "simple_wiktionary": {
-                    ("harbor", "noun"): [
-                        ExternalSense("simple_wiktionary", "simple-nautical", "A protected area of water where ships are safe.", 0),
-                        ExternalSense("simple_wiktionary", "simple-abstract", "A place where people or animals are safe.", 1),
-                    ]
-                },
                 "oewn": {
                     ("harbor", "noun"): [
                         ExternalSense("oewn", "oewn-nautical", "a sheltered port where ships can take on or discharge cargo", 0),

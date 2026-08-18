@@ -1,12 +1,31 @@
 # Offline pronunciation decision
 
-Checked: 2026-08-15
+Checked: 2026-08-17
 
 ## Implemented decision
 
-Lexilo bundles `kitten-nano-en-v0_2-fp16` and runs it with sherpa-onnx v1.13.2 for every word. Apple's `AVSpeechSynthesizer` is retained only as the automatic runtime failure fallback. All synthesis is local.
+Lexilo defaults to Apple's offline `AVSpeechSynthesizer` through the system
+American (`en-US`) or British (`en-GB`) voice selected in Settings. The app
+also exposes Kitten Nano v0.2 as an optional offline pronunciation engine.
+When Kitten is selected but its bundled model or voice cannot run, Apple TTS is
+used as the runtime fallback. All synthesis is local.
 
-The app exposes all 8 Kitten voices, a 0.7–1.2× speech-rate control, cancellation, serialized background inference, and WAV playback through `AVAudioPlayer`. It initializes the model after launch and pre-generates the Today word plus the current/next practice words into a bounded 96-item memory and 192-file disk cache. Cache keys include model version, normalized word, voice, and rate. The model and runtime are pinned by SHA-256 and their licenses are bundled.
+When Kitten is selected, the app exposes all 8 Kitten voices, a 0.7–1.2×
+speech-rate control, cancellation, serialized background inference, and WAV
+playback through `AVAudioPlayer`. It initializes the model after launch and
+pre-generates the Today word plus the current/next practice words into a
+bounded 96-item memory and 192-file disk cache. Cache keys include model
+version, normalized word, voice, and rate. The model and runtime are pinned by
+SHA-256 and their licenses are bundled.
+
+The user-facing choice is **Settings → Pronunciation → Engine**:
+
+- **Apple TTS** (default): offline system voices with American/British accent
+  selection.
+- **Kitten**: bundled neural voices with local inference and Apple fallback.
+
+The engine choice applies consistently to word, definition, example, and
+practice-card audio. It does not alter the IPA text shown by the dictionary.
 
 On the iPhone 17 Pro simulator, a direct same-runtime test of “resilient” measured about 0.99 seconds cold and 0.37 seconds warm for Kitten, compared with 2.91 seconds cold and 1.69 seconds warm for the former Kokoro int8 pack. Cached playback avoids inference entirely. Device performance remains a release gate.
 
@@ -27,7 +46,7 @@ The integration is functionally verified by a real model-inference test. Before 
 
 1. iPhone deployment and App Store-compatible dependencies.
 2. Offline cold start, first-audio latency, real-time factor, peak resident memory, and thermal behavior on the oldest supported iPhone.
-3. Word-level intelligibility across heteronyms, inflections, abbreviations, and uncommon Kaikki learning terms.
+3. Word-level intelligibility across heteronyms, inflections, abbreviations, and uncommon Simple English Wiktionary learning terms.
 4. A/B listener preference against installed iOS enhanced voices.
 5. Model and voice licensing, attribution, safety terms, and update strategy.
 
