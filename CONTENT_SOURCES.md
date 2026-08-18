@@ -28,7 +28,7 @@ The current Learning Core contains 5,591 learning terms, 6,710 lexemes, 11,731 r
 - **Today** creates a persistent daily set, presents it in a left/right study pager, and starts the quiz only for the words currently in that set. **Learn More** appends one configured batch (five by default) after the learner reaches the final word.
 - **Words** immediately includes the current planned daily set, so its counts update when Learn More adds words.
 - **History** records the combined set of words studied on a selected date. It does not split the list into first-learned and reviewed sections.
-- Widget timelines advance through the current daily set in order and wrap around to the first word; no network lookup is required.
+- Widget timelines advance through the current daily set in order and wrap around to the first word; tapping a widget opens Today’s words directly and does not start Quiz; no network lookup is required.
 
 ## Packaging
 

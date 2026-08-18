@@ -107,8 +107,9 @@ Included:
 - JSON backup/restore and optional iCloud snapshot sync.
 - Offline Apple TTS by default, with optional Kitten pronunciation and fallback.
 - Small and medium WidgetKit study widgets backed by an App Group snapshot. The
-  small widget is word-first; the medium widget places the complete selected
-  definition or example below the word, with Definition as the default setting.
+  small widget is word-first; tapping it opens Today’s words rather than Quiz;
+  the medium widget places the complete selected definition or example below
+  the word, with Definition as the default setting.
 
 Deferred:
 

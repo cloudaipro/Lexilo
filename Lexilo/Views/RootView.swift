@@ -1,8 +1,11 @@
 import SwiftUI
 
+extension Notification.Name {
+    static let lexiloOpenToday = Notification.Name("LexiloOpenToday")
+}
+
 struct RootView: View {
     @State private var selection = 0
-    @State private var widgetPracticeRequested = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
@@ -14,11 +17,10 @@ struct RootView: View {
         }
         .tint(LexiloTheme.sage)
         .onOpenURL { url in
-            guard url.scheme == "lexilo", url.host == "practice" else { return }
-            widgetPracticeRequested = true
-        }
-        .fullScreenCover(isPresented: $widgetPracticeRequested) {
-            PracticeSessionView()
+            guard url.scheme == "lexilo" else { return }
+            guard url.host == nil || url.host == "today" || url.host == "practice" else { return }
+            selection = 0
+            NotificationCenter.default.post(name: .lexiloOpenToday, object: nil)
         }
         .fullScreenCover(isPresented: Binding(
             get: { !hasCompletedOnboarding && !CommandLine.arguments.contains("--ui-testing-reset") },

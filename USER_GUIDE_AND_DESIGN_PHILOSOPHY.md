@@ -244,7 +244,7 @@ next word in the set, in order, and wraps back to the first word after the last.
 - **Medium** shows the LEXILO label, the learning word, and one secondary text block below it. The default secondary content is the complete definition.
 - To choose the Medium widget content, open **Settings → Widget → Medium widget shows** and select **Definition** or **Example**. The setting is Definition by default.
 - Medium definitions and examples wrap without intentional truncation or ellipses. If the selected example does not fit at the preferred size, Lexilo tries a smaller presentation and then another complete available example; it never cuts a sentence mid-text.
-- Tap either widget to open Lexilo's practice flow. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule. The widget carries the displayed word's ID, but the app opens the regular practice flow rather than a special single-word screen.
+- Tap either widget to open Lexilo directly on **Today’s words**. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule. The widget does not start Quiz automatically; use the **Quiz** button in Today when you are ready to test the current set.
 
 ## Quick reference
 

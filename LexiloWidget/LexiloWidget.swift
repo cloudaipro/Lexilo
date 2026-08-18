@@ -51,11 +51,7 @@ struct LexiloWidgetView: View {
     var body: some View {
         content
             .containerBackground(LexiloWidgetPalette.paper, for: .widget)
-            .widgetURL(
-                entry.snapshot.vocabularyID == WordProvider.placeholderID
-                    ? URL(string: "lexilo://")
-                    : URL(string: "lexilo://practice/\(entry.snapshot.vocabularyID.uuidString)")
-            )
+            .widgetURL(URL(string: "lexilo://today"))
     }
 
     @ViewBuilder

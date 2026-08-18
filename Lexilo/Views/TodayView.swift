@@ -59,6 +59,9 @@ struct DailyStudyView: View {
             .task {
                 store.ensureDailyStudySet()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .lexiloOpenToday)) { _ in
+                showingPractice = false
+            }
             .fullScreenCover(isPresented: $showingPractice) {
                 PracticeSessionView(
                     focusVocabularyIDs: Set(todayWords.map(\.id)),

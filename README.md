@@ -33,7 +33,7 @@ xcodegen generate
 - Bundled Simple English Wiktionary Learning Core with 5,591 learning terms, verified usage examples, CMUdict pronunciation fallback, and eSpeak NG coverage
 - Deterministic offline vocabulary rotation by learning band, with learner progress stored separately from dictionary content
 - Apple TTS is the default offline pronunciation engine; Kitten Nano v0.2 is an optional neural voice through sherpa-onnx, with a bounded on-device audio cache and fallback handling
-- Small and medium WidgetKit widgets backed by an App Group study snapshot; each refresh advances through today’s words in order and wraps around, while the medium widget shows the full definition or example selected in Settings (Definition by default)
+- Small and medium WidgetKit widgets backed by an App Group study snapshot; each refresh advances through today’s words in order and wraps around, while tapping a widget opens Today’s words directly and the medium widget shows the full definition or example selected in Settings (Definition by default)
 - Calendar-based History shows one combined list of words studied on a selected day and can start a relearning session
 - Daily new-word cap, explicit StudyDay streak records, and migration-safe persistence
 - Unit tests for adaptive intervals, content migration, example quality, pronunciation fallbacks, persistence, new-word limits, streaks, and paired-card constraints

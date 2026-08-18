@@ -7,6 +7,7 @@
 - Removed the old Next Round and Practice these words flows, the Words/History Study this word controls, and the onboarding first-language-support switch.
 - Made Apple TTS the default pronunciation engine while retaining Kitten as an optional offline engine.
 - Updated the Home Screen widget contract: it advances through today’s word set in order and wraps back to the first word.
+- Updated Widget deep links so tapping a widget opens Today’s words directly; Quiz now starts only from the Today screen.
 - Refreshed documentation and validation references for the Simple English Wiktionary Learning Core and current UI behavior.
 
 ## 0.9.1 — 2026-08-16

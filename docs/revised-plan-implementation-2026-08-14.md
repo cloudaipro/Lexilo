@@ -26,7 +26,7 @@ scheduler, and a multi-round practice flow.
 | Personal content | CSV/TSV import supports Word, Meaning, Example, and Tags, with duplicate detection, preview, and merge-or-skip behavior. |
 | Portability | JSON export/restore, rolling local backup, tolerant migration, and optional iCloud snapshot sync. |
 | Pronunciation | Apple TTS is the default offline engine. Kitten Nano is an optional offline engine with eight voices, rate control, and Apple fallback. |
-| Widget | Small and medium WidgetKit layouts use the current daily set. Each timeline refresh advances one word in order and wraps around; Medium shows the complete Definition or Example selected in Settings. |
+| Widget | Small and medium WidgetKit layouts use the current daily set. Each timeline refresh advances one word in order and wraps around; tapping a widget opens Today’s words directly, while Medium shows the complete Definition or Example selected in Settings. |
 
 ## Lexical data quality
 
