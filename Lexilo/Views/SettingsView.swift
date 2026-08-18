@@ -100,16 +100,16 @@ struct SettingsView: View {
                             LexiconLicensesView()
                         }
                     }
-                    Section("Language support") {
-                        Toggle("Show first-language support", isOn: $translationEnabled)
-                        if translationEnabled {
-                            Picker("First language", selection: $translationLanguage) {
-                                ForEach(["Spanish", "Simplified Chinese", "Japanese", "Korean", "French", "German", "Other"], id: \.self) { Text($0) }
-                            }
-                                Text("English definitions stay primary. Personal translations remain clearly labeled.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
+                    // Section("Language support") {
+                    //     Toggle("Show first-language support", isOn: $translationEnabled)
+                    //     if translationEnabled {
+                    //         Picker("First language", selection: $translationLanguage) {
+                    //             ForEach(["Spanish", "Simplified Chinese", "Japanese", "Korean", "French", "German", "Other"], id: \.self) { Text($0) }
+                    //         }
+                    //             Text("English definitions stay primary. Personal translations remain clearly labeled.")
+                    //             .font(.caption).foregroundStyle(.secondary)
+                    //     }
+                    // }
                     Section("Your data") {
                         Button { showingImport = true } label: { Label("Import CSV or TSV", systemImage: "tablecells") }
                         Button {
