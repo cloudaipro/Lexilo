@@ -1,6 +1,6 @@
 # Lexilo User Guide & Design Philosophy
 
-_Updated for the codebase on August 16, 2026._
+_Updated for the codebase on August 17, 2026._
 
 Lexilo is a focused vocabulary-memory coach. It helps you learn precise word senses, practise both understanding and recall, and return to each card when your memory needs it—not merely on a fixed calendar.
 
@@ -16,48 +16,46 @@ This document describes the current app behavior and the product principles behi
 
 ## 1. First launch
 
-The welcome flow introduces Lexilo's memory-based approach and lets you enable optional first-language support. Available language choices include Spanish, Simplified Chinese, Japanese, Korean, French, German, and Other.
+The welcome flow introduces Lexilo's memory-based approach and offers **Begin learning**. It does not ask you to configure a first language.
 
 English remains the primary learning language. Enabling language support does not silently machine-translate the dictionary. Translations are added explicitly and carry a visible provenance label.
 
-You can change the language-support setting later in **Settings**.
+Optional first-language support and personal translations can be configured later in **Settings**.
 
-## 2. The three main areas
+## 2. The four main areas
 
-Lexilo is organised into three tabs:
+Lexilo is organised into four tabs:
 
 | Tab | Purpose |
 |---|---|
-| **Today** | See today's workload and begin a focused practice session. |
+| **Today** | Study today's prepared words, then quiz the current set. |
 | **Words** | Browse saved and upcoming words; inspect and manage individual senses. |
+| **History** | Select a calendar date, see the words studied that day, and relearn them. |
 | **Settings** | Adjust practice, speech, vocabulary, language support, widget content, imports, backups, and sync. |
 
 ## 3. Today
 
-The Today screen is the normal starting point. It shows:
+The Today screen is the normal starting point and opens directly in the daily
+word-learning mode. Lexilo creates one persistent set for the local calendar
+day and presents it in order.
 
-- progress through today's round;
-- your current study streak when one is active;
-- a featured word; and
-- the primary action to start practice.
+1. The first word appears with its spelling, part of speech, IPA, audio,
+   meaning, and example.
+2. Swipe left or use the right arrow to move forward. Swipe right or use the
+   left arrow to return to the previous word.
+3. The top-right **Quiz** button is always available and opens a quiz for the
+   words currently in today's set. The quiz uses recognition and typed
+   meaning-to-word recall; it does not add another round of words.
+4. On the final word, the bottom-right action is **Learn More**. The first tap
+   completes the current learning batch and appends the next configured batch
+   (five words by default), changing today's set from 5 to 10, then 15, and so
+   on while eligible words are available.
+5. After expansion, the pager starts at the first newly added word. The current
+   set remains the source for both Today and the Words tab.
 
-Practice is organised into rounds. The first round contains the configured number of distinct words (five by default) and completes the day's minimum commitment. Lexilo serves due reviews first and fills any remaining places with upcoming words.
-
-After a round, **Next Round** adds another group of the same size to today's cumulative word set. With the default setting, the total therefore grows from 5 to 10 to 15 distinct words, and can continue while eligible words are available. A missed retry or the other card direction does not increase this count: each vocabulary item counts once per day.
-
-**Practice Again** is available after the first practised word, both on Today and on the completion screen. It repeats the whole cumulative set for today: after three five-word rounds it repeats 15 words. Practice Again is schedule-neutral—its answers do not create review logs, change adaptive intervals, add words to today's count, or affect the streak.
-
-### How the featured word is chosen
-
-The featured word is a daily spotlight, not necessarily the exact next card in the practice queue. Lexilo:
-
-1. excludes mastered words (at least two active cards, all mastered);
-2. prefers unmastered words with example sentences when any are available;
-3. prioritises a word with at least one card due now and not already reviewed today;
-4. uses the lowest successful-review count across that word's cards as the next tie-breaker; and
-5. uses frequency rank as the final tie-breaker, favouring more common words.
-
-Because new cards are due when they are created, an **Upcoming** word can be featured. The featured word is a calm daily spotlight; the practice scheduler independently chooses the session cards.
+The daily set is built from due words first and upcoming words when more are
+needed. A retry, a second card direction, or taking the quiz does not increase
+the set size; only **Learn More** does.
 
 ## 4. Two different practice directions
 
@@ -147,13 +145,29 @@ The Words tab in release builds has two sections:
 
 Debug builds may additionally expose a development-only **Dictionary** section for searching the bundled offline lexicon. It does not add anything to your study list automatically.
 
-Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target.
+**My Words** can be filtered by **All**, **Learning**, **Mastered**, and **Due**.
+The current planned Today set is included immediately, so these counts update
+when Learn More adds words. **Upcoming** shows words that have not yet entered
+the active collection.
+
+Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target. Word detail is for inspection; it does not include a separate **Study this word** action.
 
 Each meaning shows the available definition, usage label, common pairings, examples, audio controls, priority, and learning state.
 
 Scheduler difficulty and memory estimates are intentionally not displayed. They influence review timing but do not help with the learner's immediate task: understanding and using the word.
 
-## 11. Importing personal vocabulary
+## 11. History
+
+**History** contains a calendar of study activity. Select a date to see one
+combined list of all words studied on that day. The list is intentionally not
+split into **First learned** and **Reviewed** sections.
+
+Select a word to inspect it, or tap **Relearn these words** to open the study
+pager for that date's set. If a date has planned words but no completed study,
+the action is **Study these words**. History does not provide a separate
+**Practice these words** action; use **Today → Quiz** for the current daily set.
+
+## 12. Importing personal vocabulary
 
 Lexilo can import UTF-8 CSV or TSV files. The importer uses a three-step flow:
 
@@ -175,7 +189,7 @@ Existing words are identified during preview. You can merge an imported meaning 
 
 Imported vocabulary remains distinguishable as personal content and can coexist with dictionary senses.
 
-## 12. Backup, restore, and optional iCloud sync
+## 13. Backup, restore, and optional iCloud sync
 
 In **Settings → Your data**, you can export a complete learning-data JSON backup and restore one later. The backup includes vocabulary, senses, scheduling state, review history, study-day records, reports, and lexicon migration metadata. Device preferences such as voice and words-per-round settings remain outside this snapshot.
 
@@ -185,7 +199,7 @@ Optional iCloud Drive sync can keep the snapshot available across your devices. 
 
 No account is required for local use. iCloud availability depends on the device's iCloud configuration and on the app build having the required entitlement.
 
-## 13. First-language support and translation provenance
+## 14. First-language support and translation provenance
 
 Translations are optional aids, not replacements for the English definition.
 
@@ -193,13 +207,16 @@ A translation you add is initially labelled as a **personal, unreviewed** transl
 
 The app does not silently generate or overwrite translations.
 
-## 14. Sources and licenses
+## 15. Sources and licenses
 
 The bundled Learning Core is derived from the official Simple English Wiktionary Wikimedia dump (`simplewiktionary-20260801`); CMUdict fills IPA gaps only, and wordfreq values help order learning candidates. Example records are kept only when they contain the learning word or a valid inflected form and read as complete usage sentences; a definition, description, or collocation is never presented as an example. **Settings → Vocabulary → Dictionary sources and licenses** shows upstream sources and license information. Pronunciation model sources are documented there as well.
 
-## 15. Pronunciation and audio
+## 16. Pronunciation and audio
 
-Tap the speaker control on a word or revealed answer to hear it. Lexilo uses local speech components and bundled voices where available, with system speech as a fallback when necessary.
+Tap the speaker control on a word or revealed answer to hear it. Lexilo uses
+Apple TTS by default, entirely offline. You can choose the American or British
+Apple voice in **Settings → Pronunciation**, or switch the engine to Kitten for
+bundled neural voices. If Kitten cannot run, Apple TTS is used as a fallback.
 
 In **Settings → Pronunciation**, you can choose a voice and adjust speaking rate. The app previews the selected configuration so you can find a clear, comfortable voice.
 
@@ -207,29 +224,36 @@ Pronunciation is reinforcement, not proof of recall. On a recall card, audio and
 
 Practice definitions preserve the complete available text. When a definition is long, the card grows and wraps it rather than replacing the ending with an ellipsis.
 
-## 16. Daily rhythm and streaks
+## 17. Daily rhythm and streaks
 
-A study day follows the device's local calendar. Normal-round answers are recorded as you complete them. Practising the configured number of distinct words—the first round, five by default—completes that study day. Additional rounds grow today's total but are not required for the streak. Practice Again does not affect completion. Consecutive completed days build the streak; missing the first-round commitment for a day ends it.
+A study day follows the device's local calendar. Today first presents the
+configured batch of distinct words (five by default). Reaching the last card
+and tapping **Learn More** records that learning batch as completed before
+adding the next batch. Quiz answers are recorded as practice for the current
+set. Consecutive completed days build the streak; adding more words is optional.
 
 The streak is a gentle continuity signal, not a grade or the main measure of learning.
 
-## 17. Widget
+## 18. Widget
 
-Lexilo supports Small and Medium Home Screen widgets. Both use the current featured word described in Section 3; the widget is a glanceable study prompt, not a separate practice queue.
+Lexilo supports Small and Medium Home Screen widgets. Both use today's planned
+word set, not a separate queue. Each WidgetKit timeline refresh advances to the
+next word in the set, in order, and wraps back to the first word after the last.
 
 - **Small** shows the LEXILO label, the complete learning word at an adaptive size, and **Tap to practise**. It does not show an example or definition, keeping the word as the focus.
 - **Medium** shows the LEXILO label, the learning word, and one secondary text block below it. The default secondary content is the complete definition.
 - To choose the Medium widget content, open **Settings → Widget → Medium widget shows** and select **Definition** or **Example**. The setting is Definition by default.
 - Medium definitions and examples wrap without intentional truncation or ellipses. If the selected example does not fit at the preferred size, Lexilo tries a smaller presentation and then another complete available example; it never cuts a sentence mid-text.
-- Tap either widget to open Lexilo's practice flow. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule.
+- Tap either widget to open Lexilo's practice flow. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule. The widget carries the displayed word's ID, but the app opens the regular practice flow rather than a special single-word screen.
 
 ## Quick reference
 
 | If you want to… | Go to… |
 |---|---|
-| Start today's reviews | **Today → Start practice** |
-| Add more words today | Round completion or **Today → Next Round** |
-| Repeat every word practised today | Round completion or **Today → Practice Again** |
+| Study today's words | **Today**; move through the pager with swipe or arrows |
+| Quiz today's words | **Today → Quiz** |
+| Add more words today | Last word → **Learn More** |
+| Review a previous date | **History → select a date → Relearn these words** |
 | Understand a shown word | Recognition card → **Reveal → Know / Don't know** |
 | Recall a word from meaning | Recall card → type the word → **Check** |
 | Admit you do not know a recall answer | Recall card → **Reveal answer** |
@@ -247,7 +271,7 @@ Lexilo supports Small and Medium Home Screen widgets. Both use the current featu
 
 ### No cards are available
 
-Lexilo may have no other eligible due or upcoming words, or the relevant meanings may be paused. Check **Words** for paused content. You can still use **Practice Again** whenever today's cumulative set is not empty.
+Lexilo may have no other eligible due or upcoming words, or the relevant meanings may be paused. Check **Words** for paused content. If today's set is not empty, you can still study it or use **Today → Quiz**.
 
 ### A missed card appeared again immediately
 
@@ -267,7 +291,7 @@ Practice cards wrap long definitions to preserve the complete available text. If
 
 ### Pronunciation does not play
 
-Check the device volume, then try another voice in **Settings → Pronunciation**. If a bundled voice is unavailable, Lexilo attempts to use a system voice.
+Check the device volume, then try another voice or engine in **Settings → Pronunciation**. Apple TTS is the default offline fallback when Kitten cannot run.
 
 ### An expected meaning is not being practised
 
@@ -354,11 +378,16 @@ The study surface stays narrow:
 
 Secondary controls live in hints, disclosure sections, and menus. The main action remains visually dominant, while expert controls remain reachable.
 
-## 10. A finite round with an optional longer day is a feature
+## 10. A finite learning set with optional expansion is a feature
 
-Lexilo is designed for repeatable practice rather than an endless feed. Each round has a clear, configurable size, and due cards come first. The first round creates a small daily commitment, while **Next Round** gives the learner explicit control over whether today's set grows.
+Lexilo is designed for repeatable practice rather than an endless feed. Today
+opens with a clear, configurable learning batch, and due cards come first.
+After the final word, **Learn More** gives the learner explicit control over
+whether another batch is added to today's set.
 
-The system should make stopping after any completed round feel valid. Continuing is a deliberate learner choice, and **Practice Again** reinforces the chosen daily set without silently changing its memory schedule.
+The system should make stopping after the current batch feel valid. Continuing
+is a deliberate learner choice. The quiz checks the current set, while Learn
+More changes the set only when the learner asks for more words.
 
 ## 11. Learner agency should preserve history
 

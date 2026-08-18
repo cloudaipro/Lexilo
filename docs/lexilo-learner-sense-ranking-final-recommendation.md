@@ -5,7 +5,7 @@
 > as its canonical inventory; the ranking concepts below remain useful as
 > background only.
 
-## Final Conclusion
+## Historical conclusion
 
 The recommended direction for Lexilo is to build a **learner-oriented sense ranking pipeline at database build time**.
 
@@ -13,7 +13,7 @@ The main issue is not that Kaikki / English Wiktionary contains invalid data. Th
 
 For example, with **harbor**, the figurative sense can outrank the normal nautical sense because the current score rewards source position, example presence, and definition length. Those are useful for data-quality checks, but they are not reliable indicators of which meaning a learner should see first.
 
-The best solution is therefore:
+The historical recommendation was:
 
 - Keep **Kaikki / English Wiktionary** as the canonical sense inventory.
 - Use **Simple English Wiktionary**, **Open English WordNet (OEWN)**, usage labels, and sense-frequency signals as ranking evidence.
@@ -22,12 +22,12 @@ The best solution is therefore:
 
 ---
 
-## Recommended Architecture
+## Historical recommended architecture
 
 ```text
                          BUILD TIME
 
-Kaikki / Wiktionary
+Historical Kaikki / Wiktionary
         ↓
 Normalize + validate senses
         ↓
@@ -61,9 +61,14 @@ This keeps all complex semantic work out of the app. Runtime cost is effectively
 
 ## Core Design Principle
 
-**Kaikki remains the canonical user-facing sense inventory.**
+**The canonical source decision has since changed.** The active app uses the
+official Simple English Wiktionary dump as its user-facing sense inventory.
 
-Simple English Wiktionary and OEWN should normally be used as **evidence for ranking Kaikki senses**, not inserted as additional user-facing sense rows.
+In the historical architecture, Simple English Wiktionary and OEWN were
+proposed as **evidence for ranking Kaikki senses**, not as additional
+user-facing rows. In the active architecture, Simple English Wiktionary itself
+is the canonical user-facing inventory; OEWN remains optional ranking evidence
+only.
 
 This avoids duplicate or competing definitions.
 
@@ -80,7 +85,10 @@ OEWN:
 "a sheltered port where ships can..."
 ```
 
-These should all support the conclusion that the same Kaikki nautical sense is the learner-oriented primary meaning.
+In the historical case study, these sources supported the conclusion that the
+same Kaikki nautical sense was the learner-oriented primary meaning. The active
+build instead preserves and ranks the corresponding Simple English Wiktionary
+senses.
 
 They should not become three separate definitions shown to the user.
 
@@ -321,7 +329,7 @@ harbor / noun
 
 ---
 
-## Final Engineering Goal
+## Historical final engineering goal
 
 Avoid claiming:
 
@@ -331,17 +339,30 @@ There is often no single universally correct order across all learners, corpora,
 
 A better goal is:
 
-> **Lexilo generates a deterministic learner-oriented sense ranking from multiple lexical signals, with confidence scoring and Kaikki order as the final fallback.**
+> **Lexilo generates a deterministic learner-oriented sense ranking from multiple lexical signals, with confidence scoring and the active source order as the final fallback.**
 
 ---
 
-## Final Recommendation
+## Current implementation note
+
+The active implementation keeps the useful build-time ranking idea while
+changing the source:
+
+- Simple English Wiktionary is the canonical user-facing inventory.
+- OEWN may provide build-time alignment evidence, but never adds user-facing
+  senses.
+- `learner_rank`, confidence, reason, and model version are stored in SQLite.
+- The iOS app reads the precomputed order and performs no semantic ranking at
+  runtime.
+- There is no Kaikki fallback in the active build.
+
+## Historical final recommendation
 
 Proceed with the build-time **Learner Sense Ranker**.
 
 The strongest architecture is:
 
-- **Kaikki** as the canonical dictionary source;
+- **Kaikki** as the historical canonical dictionary source;
 - **Simple English Wiktionary** as learner-oriented evidence;
 - **OEWN** as semantic alignment evidence;
 - **sense-frequency and usage signals** as supporting features;
@@ -349,4 +370,6 @@ The strongest architecture is:
 - **precomputed `learner_rank`** stored in SQLite;
 - **regression testing** against a reviewed learner-oriented gold set.
 
-This approach is efficient, deterministic, offline-friendly, and substantially better aligned with Lexilo's purpose than either replacing Kaikki or dynamically combining multiple dictionaries inside the app. It contains no hand-authored per-word ranking or content-replacement path.
+This approach remains useful as historical architecture research, but the
+current product applies it to Simple English Wiktionary instead of Kaikki. It
+contains no hand-authored per-word ranking or content-replacement path.

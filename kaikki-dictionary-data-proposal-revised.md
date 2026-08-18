@@ -5,11 +5,26 @@
 > English Wiktionary Wikimedia dump; see `CONTENT_SOURCES.md` and
 > `Lexilo/Resources/LEXICON_NOTICES.md` for the active source policy.
 
-**Status:** Proposed
+**Status:** Superseded historical proposal
 **Date:** 2026-08-15
 **Scope:** Offline English dictionary data, pronunciation coverage, compact SQLite packaging, and future downloadable dictionary support
 
-## Executive summary
+## Current implementation note
+
+This proposal is retained as historical design research. It is not the active
+data plan. Lexilo currently uses the official Simple English Wiktionary dump
+`simplewiktionary-20260801` from
+<https://dumps.wikimedia.org/simplewiktionary/latest/> as its canonical,
+user-facing lexical source. The current Learning Core contains 5,591 learning
+terms, 6,710 lexemes, 11,731 retained senses, 13,264 validated examples,
+9,439 pronunciation rows, and 1,838 forms.
+
+The app does not ship the Kaikki/English Wiktionary extraction described below,
+does not use Kaikki as a runtime fallback, and does not bundle a separate Full
+Dictionary pack. CMUdict and eSpeak NG only fill pronunciation gaps; optional
+OEWN input is build-time ranking evidence and never adds user-facing senses.
+
+## Historical executive summary
 
 Lexilo should adopt a layered dictionary architecture:
 
@@ -333,11 +348,20 @@ It retained:
 
 This is the recommended basis for the future downloadable Dictionary pack.
 
-### Production Learning Core
+### Historical production Learning Core (pre-migration)
 
-The implemented Learning Core derives candidates directly from Kaikki using frequency, modern-sense, and verified-usage criteria. It does not use a second dictionary's headword list or an arbitrary maximum word count. This is a packaging choice for the current app experience, not a proposed upper bound on learnable English vocabulary.
+The pre-migration Learning Core derived candidates directly from Kaikki using
+frequency, modern-sense, and verified-usage criteria. It did not use a second
+dictionary's headword list or an arbitrary maximum word count. This was a
+packaging choice for the historical app experience, not a proposed upper bound
+on learnable English vocabulary.
 
-The production build (quality pipeline v3) contains 39,179 learning terms, 45,477 term/POS lexemes, 100,588 retained senses, 69,889 pronunciation rows, 115,201 validated examples, and 79,195 forms. Pronunciation provenance and fallback coverage remain complete for every selected source entry. Example filtering additionally rejects phrase-like records without sentence-ending punctuation, so definitions and gloss fragments are not displayed as usage examples.
+The historical production build (quality pipeline v3) contained 39,179 learning
+terms, 45,477 term/POS lexemes, 100,588 retained senses, 69,889 pronunciation
+rows, 115,201 validated examples, and 79,195 forms. These numbers do not
+describe the current bundle. Example filtering additionally rejected
+phrase-like records without sentence-ending punctuation, so definitions and
+gloss fragments were not displayed as usage examples.
 
 | Artifact | Measured size |
 |---|---:|
@@ -345,7 +369,8 @@ The production build (quality pipeline v3) contains 39,179 learning terms, 45,47
 | Apple LZFSE | 26.5 MiB |
 | Zstandard level 10 | 22.1 MiB |
 
-The Learning Core should remain a compact Kaikki-based dictionary database. Its installed size should be governed by the selected vocabulary, retained senses, examples, forms, pronunciations, and indexes rather than by an additional semantic dataset.
+The historical proposal recommended a compact Kaikki-based database. The
+active source and counts are defined in `CONTENT_SOURCES.md`.
 
 ## Proposed production schema
 
@@ -567,7 +592,10 @@ The bundled database should contain:
 - Generated pronunciation metadata where required
 - Frequency and learning-band fields
 
-Expected installed size should be validated from the final selected Kaikki vocabulary and retained content. The current prototype demonstrates that a focused learning dataset can remain compact without introducing a second lexical database.
+Expected installed size should be validated from the final selected historical
+Kaikki vocabulary and retained content. The prototype demonstrated that a
+focused learning dataset can remain compact without introducing a second
+lexical database.
 
 ### Optional Full Dictionary
 
@@ -709,7 +737,7 @@ Required automated checks:
 - Add storage management and database version UI.
 - Release the Dictionary feature separately from the v0.9 learning experience.
 
-## Decision
+## Historical decision (superseded)
 
 Proceed with:
 
@@ -728,3 +756,10 @@ Do not proceed with:
 - Treating a word-level pronunciation as valid for every etymology.
 - Bundling the approximately 393 MiB Full Dictionary in Lexilo v0.9.
 - Bundling Commons audio without per-file license handling.
+
+## Current decision
+
+Use the Simple English Wiktionary Learning Core as the product source. Keep the
+Kaikki measurements and schema discussion above only as historical context for
+future source comparisons; any new content-source proposal must start from the
+active policy in `CONTENT_SOURCES.md`.

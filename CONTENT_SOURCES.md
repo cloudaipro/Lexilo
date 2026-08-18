@@ -1,6 +1,6 @@
 # Lexilo content-source policy
 
-Checked: 2026-08-16
+Checked: 2026-08-17
 
 ## Decisions
 
@@ -18,10 +18,17 @@ Checked: 2026-08-16
 - Stable deterministic Simple Wiktionary sense IDs allow lexical content to refresh without resetting cards, history, or mastery. Source changes can also migrate an existing item by its normalized term and part of speech.
 - `sense_order` preserves upstream order. `learner_rank` is a separate deterministic build-time order, with confidence, reason, and model version recorded for QA. External alignment is ranking evidence only; Simple English Wiktionary remains the canonical user-facing sense inventory.
 - Simple English Wiktionary IPA is preferred. CMUdict-derived IPA fills eligible single-word gaps, then eSpeak NG 1.52.0 generates explicitly marked fallback IPA for remaining words and phrases. Lexilo does not keep hand-written per-word pronunciation patches.
-- Spoken pronunciation uses the bundled Kitten Nano v0.2 model through sherpa-onnx, with an installed iOS voice as a runtime failure fallback.
+- Spoken pronunciation defaults to Apple's offline `AVSpeechSynthesizer` voices. Kitten Nano v0.2 remains available as an optional offline engine through sherpa-onnx; if the selected Kitten voice cannot run, Lexilo falls back to Apple TTS.
 - Complete notices travel with the app in `Lexilo/Resources/LEXICON_NOTICES.md` and `Lexilo/Resources/NEURAL_VOICE_NOTICES.md`.
 
 The current Learning Core contains 5,591 learning terms, 6,710 lexemes, 11,731 retained senses, 9,439 pronunciation rows, 13,264 validated examples, and 1,838 forms. Every selected source entry has at least one pronunciation after Simple English Wiktionary, CMUdict, and generated eSpeak fallback processing. The bundled rank metadata contains 11,731 compact feature rows; ranking evidence does not add external dictionary senses.
+
+## Runtime content behavior
+
+- **Today** creates a persistent daily set, presents it in a left/right study pager, and starts the quiz only for the words currently in that set. **Learn More** appends one configured batch (five by default) after the learner reaches the final word.
+- **Words** immediately includes the current planned daily set, so its counts update when Learn More adds words.
+- **History** records the combined set of words studied on a selected date. It does not split the list into first-learned and reviewed sections.
+- Widget timelines advance through the current daily set in order and wrap around to the first word; no network lookup is required.
 
 ## Packaging
 

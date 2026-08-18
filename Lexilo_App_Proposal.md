@@ -1,7 +1,7 @@
-# Lexilo v0.9 Product Proposal
+# Lexilo v0.9.1 Product Proposal
 
 > Status: implemented in the current source tree
-> Updated: August 16, 2026
+> Updated: August 17, 2026
 
 Lexilo is a focused, local-first iOS vocabulary trainer. It helps learners turn
 recognition into active recall through short daily sessions, automatic review
@@ -14,19 +14,20 @@ your memory needs it. Lexilo deliberately avoids deck administration, public
 leaderboards, decorative memory dashboards, and unnecessary dictionary surface
 area.
 
-## v0.9 information architecture
+## v0.9.1 information architecture
 
-The app has three primary areas:
+The app has four primary areas:
 
-- **Today** — daily round, streak, featured word, and practice entry point.
+- **Today** — the daily word-study pager, Quiz entry point, and Learn More action.
 - **Words** — learned and upcoming vocabulary, with word/meaning filtering and
   a focused word-detail view.
+- **History** — calendar-based study history with a combined list of words studied on a selected date and a relearning entry point.
 - **Settings** — practice preferences, pronunciation, translations, imports,
   backup/sync, and source licenses.
 
 There is no Memory or Progress tab. Scheduling evidence remains in the
-background, and the Words tab does not expose a Dictionary browser. A broader
-Dictionary feature is intentionally deferred to a future release.
+background. The Words tab's Dictionary browser is development-only, and a
+broader Dictionary feature is intentionally deferred to a future release.
 
 ## Learning experience
 
@@ -36,8 +37,10 @@ Every active sense produces two independent cards:
 2. **Production:** meaning to word, with typed answer checking.
 
 The two directions cannot be served on the same calendar day. Failed cards can
-return later in the same session and are scheduled to return sooner. Practice
-Again repeats the words completed today without changing the schedule.
+return later in the same session and are scheduled to return sooner. Today first
+shows the daily words for study; the top-right Quiz tests only that current set.
+When the learner reaches the last word, Learn More appends another configured
+batch (five by default) and returns the pager to the first new word.
 
 The scheduler is adaptive but intentionally quiet. It uses correctness,
 response time, hints, difficulty, stability, retrievability, and recent review
@@ -71,9 +74,10 @@ Pronunciation precedence is:
 2. CMUdict General American IPA converted directly from ARPAbet.
 3. Explicitly marked eSpeak NG 1.52.0 generated IPA.
 
-Spoken audio uses the bundled Kitten Nano v0.2 model through sherpa-onnx, with
-an installed iOS voice retained only as a runtime failure fallback. All core
-learning data and audio work offline.
+Spoken audio defaults to Apple's offline `AVSpeechSynthesizer`. Kitten Nano
+v0.2 remains available as an optional offline engine through sherpa-onnx; when
+Kitten is selected but cannot run, Apple TTS is used as a runtime fallback. All
+core learning data and audio work offline.
 
 ## Data architecture
 
@@ -87,19 +91,21 @@ dictionary update refreshes lexical fields and migrates by stable source sense
 ID, normalized word, and part of speech without resetting cards, review history,
 or mastery.
 
-## v0.9 release scope
+## v0.9.1 release scope
 
 Included:
 
-- Today, Words, and Settings surfaces.
+- Today, Words, History, and Settings surfaces.
+- Learning-first daily pager, Quiz for the current daily set, and Learn More for
+  adding another batch of words.
 - Recognition and typed production practice.
 - Adaptive offline scheduling with separate directions.
-- Daily goal, streak, Next Round, and Practice Again.
+- Daily goal, streak, combined calendar history, and historical relearning.
 - Sense-aware word details with examples, pronunciation, collocations, and
   optional personal translations.
 - CSV/TSV personal vocabulary import.
 - JSON backup/restore and optional iCloud snapshot sync.
-- Offline Kitten pronunciation with system-voice fallback.
+- Offline Apple TTS by default, with optional Kitten pronunciation and fallback.
 - Small and medium WidgetKit study widgets backed by an App Group snapshot. The
   small widget is word-first; the medium widget places the complete selected
   definition or example below the word, with Definition as the default setting.
@@ -126,10 +132,10 @@ appropriate license.
 
 ## Verification
 
-The current v0.9 source tree was validated on an iPhone 17 Pro, iOS 26.2
+The current v0.9.1 source tree was validated on an iPhone 17 Pro, iOS 26.2
 Simulator:
 
-- ReviewSchedulerTests: 34/34 passed.
+- ReviewSchedulerTests: 43/43 passed.
 - LexiloPracticeFlowTests: 4/4 passed.
 - SQLite integrity check: passed.
 - Selected source entries missing pronunciation: 0.

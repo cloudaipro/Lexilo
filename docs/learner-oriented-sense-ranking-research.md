@@ -1,19 +1,37 @@
 # Learner-Oriented Sense Ranking: Harbor Investigation and Research Brief
 
-**Date:** 2026-08-16
+**Date:** 2026-08-17
 **Project:** Lexilo
 **Purpose:** Copy this brief into another AI system for an independent opinion, while preserving the local evidence and research already completed.
 
-**Implementation status:** This brief contains the original investigation and the
-recommendation that led to the previous implementation. The current branch has
-since switched the canonical inventory to the official Simple English
-Wiktionary Wikimedia dump. The historical solution used automatic build-time
-ranking only and had no hand-authored per-word ranking or content-replacement
-layer.
+**Implementation status:** This brief contains the original investigation and
+the recommendation that led to the previous implementation. The active build
+now uses the official Simple English Wiktionary Wikimedia dump as its canonical
+inventory. The historical Kaikki case study remains useful for explaining why
+source order and learner order must be separate; it is not current bundle
+metadata.
+
+## Current implementation snapshot
+
+- Canonical user-facing source: pinned Simple English Wiktionary dump
+  `simplewiktionary-20260801` from
+  <https://dumps.wikimedia.org/simplewiktionary/latest/>.
+- Current Learning Core: 5,591 learning terms, 6,710 lexemes, 11,731 retained
+  senses, 13,264 validated examples, 9,439 pronunciation rows, and 1,838
+  forms.
+- `learner_rank`, confidence, reason, and model metadata are precomputed at
+  build time. The iOS app reads the order and performs no semantic ranking at
+  runtime.
+- Optional OEWN input contributes ranking/alignment evidence only. It never
+  adds user-facing senses. There is no Kaikki source fallback in the active
+  build.
 
 ## Copy-paste question for another AI
 
-Lexilo is an offline English vocabulary-learning app. Its bundled dictionary is built from a pinned Kaikki extract of English Wiktionary. The app currently shows a strange-looking primary definition and example for **harbor**:
+The following is the historical question that motivated this research. Lexilo is
+an offline English vocabulary-learning app. The pre-migration build used a
+pinned Kaikki extract of English Wiktionary and showed a strange-looking
+primary definition and example for **harbor**:
 
 - Noun primary definition: **“Any place of shelter.”**
 - Example: **“The neighborhood is a well-known harbor for petty thieves.”**
@@ -46,14 +64,20 @@ Do not assume that a dictionary’s source order equals sense frequency. Do not 
 
 The **Harbor** result is not primarily a corrupted-dictionary problem. It is the interaction of three legitimate but different layers:
 
-1. **English Wiktionary is a broad community dictionary, not a learner dictionary.** It includes literal, figurative, historical, technical, regional, and quotation-based material. Its sense order is editorial/source order, not a guaranteed learner-frequency order.
-2. **Kaikki is an extraction and structuring layer.** It publishes structured data extracted from Wiktionary; it does not turn the source into a carefully sequenced learner dictionary.
-3. **Lexilo’s original local ranking heuristic promoted the wrong proxy.** The importer gave a large bonus to senses that had any accepted example and a smaller bonus to short definitions. The app then selected the highest `learner_score`. For `harbor`, that made the abstract “place of shelter” sense narrowly outrank the physical nautical sense. The current ranker separates source order from learner rank and uses automatic cross-source alignment, usage labels, and Kaikki order as fallback evidence.
+1. **A broad community dictionary is not automatically a learner dictionary.**
+   Source order, examples, and historical senses do not guarantee learner
+   priority.
+2. **The original ranking heuristic promoted the wrong proxy.** A sense having
+   an example or a short definition was not enough to make it the best first
+   meaning.
+3. **The active source decision is now Simple English Wiktionary.** Lexilo
+   validates the simpler-source entries, preserves provenance, and computes a
+   deterministic learner-oriented order at build time.
 
-The best solution is therefore **not to replace Kaikki wholesale**. Lexilo retains Kaikki for broad open coverage and adds an automatic build-time learner-oriented ranking layer:
+The active pipeline is:
 
 ```text
-Kaikki / English Wiktionary
+Simple English Wiktionary
         ↓
 structural validation and normalization
         ↓
@@ -62,11 +86,14 @@ automatic learner-oriented ranking
 Core / Extended / Rare sense presentation
 ```
 
-A second open resource can improve ranking evidence and coverage. A licensed learner dictionary can improve definitions and examples substantially, but it introduces cost, contract restrictions, attribution requirements, and content-distribution constraints. It should be considered a later product decision, not an immediate replacement for Kaikki.
+Optional OEWN alignment can improve ranking evidence, but it never becomes a
+second user-facing dictionary. A licensed learner dictionary remains a future
+product decision because it introduces cost, contract restrictions, and
+redistribution constraints.
 
-## What Lexilo currently contains for “harbor”
+## Historical Kaikki case study: “harbor”
 
-The current bundled database is:
+The following was a pre-migration database snapshot:
 
 - **Database:** `Lexilo/Resources/lexilo-lexicon.sqlite`
 - **Dataset metadata:** `Kaikki / English Wiktionary`
@@ -74,7 +101,7 @@ The current bundled database is:
 - **Source URL:** <https://kaikki.org/dictionary/English/>
 - **Source licenses recorded by the build:** CC BY-SA 4.0 and GFDL
 
-The relevant noun senses in the current bundled database are:
+The relevant noun senses in that historical bundled database were:
 
 | Part of speech | Source sense order | Learner rank | Learner score | Rank reason | Definition |
 |---|---:|---:|---:|---|---|
@@ -97,11 +124,11 @@ The relevant verb senses include:
 
 The exact noun wording and the petty-thieves example are also present in the upstream English Wiktionary entry: [English Wiktionary: harbor](https://en.wiktionary.org/wiki/harbor). This establishes that Kaikki did not invent the unusual-looking content.
 
-The current app shows the automatic `learner_rank` order. The physical nautical
-noun sense is now rank 1 because both optional external sources support it; the
-other senses remain in the database with their Kaikki provenance.
+The historical app showed the automatic `learner_rank` order. The physical
+nautical noun sense was rank 1 because both optional external sources supported
+it; the other senses remained in the database with their Kaikki provenance.
 
-## How the current pipeline creates the result
+## How the historical ranking prototype created the result
 
 ### Example filtering is structural, not sense ranking
 
@@ -138,7 +165,7 @@ keeps `source_order` as the final fallback and computes automatic evidence from:
 ```text
 external alignment support
 - usage/register penalties
-+ a small Kaikki source-order fallback signal
++ a small source-order fallback signal
 ```
 
 The ranker stores `learner_score`, `learner_confidence`, `rank_reason`, and
@@ -158,19 +185,22 @@ perform semantic ranking at runtime.
 
 Then [`Lexilo/Services/LearningService.swift`](../Lexilo/Services/LearningService.swift) maps the first returned sense to `.core`, the next two to `.extended`, and the remainder to `.rare`. The data model already has the concepts `core`, `extended`, and `rare` in [`Lexilo/Models/LearningModels.swift`](../Lexilo/Models/LearningModels.swift), but those priorities currently follow the ranked array position.
 
-## Is this a Kaikki problem?
+## What the historical case teaches
 
 The most accurate diagnosis is:
 
 | Layer | Finding |
 |---|---|
-| Kaikki | Functioning as a structured extract of its upstream source; not intended to be a complete learner dictionary. |
-| English Wiktionary | Contains valid but broad senses, quotations, unusual examples, and ordering that is not guaranteed to reflect learner frequency. |
+| Historical Kaikki/English Wiktionary build | Functioned as a structured extract of a broad community source; it was not intended to be a complete learner dictionary. |
+| Simple English Wiktionary | Now supplies the canonical learner-facing inventory, while still requiring validation and deterministic sense ordering. |
 | Lexilo import validation | Good at rejecting malformed examples and preserving provenance, but does not assess learner naturalness or sense frequency. |
 | Lexilo ranking | The original example-presence/shortness heuristic was the principal product-fit problem; the current automatic ranker separates structural example quality from learner sense order. |
 | Lexilo presentation | Showing only the selected primary sense makes the ranking problem feel like a dictionary error. |
 
-So the answer is **both source fitness and ranking design, but not source corruption**. Kaikki is a reasonable broad lexical foundation; the automatic ranker supplies the learner-oriented ordering.
+So the answer is **source fitness plus ranking design, not source corruption**. The
+active Simple English Wiktionary pipeline supplies the learner-facing inventory;
+the automatic ranker supplies deterministic ordering without pretending that
+source order equals frequency.
 
 ## External research
 
@@ -227,9 +257,13 @@ OEWN is useful for semantic structure, POS/sense alignment, and cross-source sig
 
 Tatoeba can provide additional natural sentences, but sentence-corpus quality, sense alignment, license tracking, and target-word highlighting still need to be solved. wordfreq cannot independently fix the `harbor` noun sense ordering.
 
-## Local coverage checks performed
+## Historical local coverage checks performed (pre-migration)
 
-These were rough lexical-coverage comparisons, not proof of sense-level coverage. They normalized words/titles and compared keys; a matching title does not guarantee matching POS, definition quality, or sense alignment.
+These were rough pre-migration lexical-coverage comparisons, not proof of
+sense-level coverage. They normalized words/titles and compared keys; a
+matching title does not guarantee matching POS, definition quality, or sense
+alignment. The 39,179-term figures below belong to the historical Kaikki build,
+not the current Simple English Wiktionary Learning Core.
 
 ### Simple English Wiktionary title overlap
 
@@ -264,8 +298,8 @@ Again, these are title/key comparisons. OEWN’s value is semantic structure and
 
 | Option | Advantages | Limitations | Recommendation |
 |---|---|---|---|
-| Keep Kaikki and add automatic ranking | Broad coverage, existing pipeline, open-source provenance, low migration cost | Wiktionary breadth and examples remain source-derived | Current implementation |
-| Add Simple English Wiktionary | Simpler definitions and learner intent; open/community supplement | Coverage and consistency gaps; still not a professional learner dictionary | Use as a definition/ranking signal and fallback, not sole source |
+| Keep the historical Kaikki pipeline | Broad coverage, existing pipeline, open-source provenance | Wiktionary breadth and examples remain source-derived | Historical option; not the active source |
+| Use Simple English Wiktionary | Simpler definitions and learner intent; open/community source | Coverage and consistency gaps; still not a professional learner dictionary | **Active canonical source**, with validation and build-time ranking |
 | Add Open English WordNet | Sense graph, POS alignment, semantic relations, physical `harbor` sense first | Definitions/examples are not a full learner presentation; license/attribution still matter | Good open augmentation |
 | Add WordNet/SemCor signals | Sense-tagged corpus evidence may improve ranking and evaluation | Historical/domain limitations; WordNet order is not enough by itself | Use as one ranking feature, not an authority |
 | Add Tatoeba | More natural sentence candidates and multilingual support | Mixed sentence licenses, sense alignment, quality control | Optional example candidate source with provenance |
@@ -379,27 +413,31 @@ Even with better ranking, the UI should communicate that a word can have multipl
 
 The automatic build-time ranking path is implemented:
 
-1. Kaikki remains the canonical user-facing sense inventory.
-2. Simple English Wiktionary and OEWN are optional alignment evidence only.
+1. Simple English Wiktionary is the canonical user-facing sense inventory.
+2. OEWN is optional alignment evidence only; it does not add user-facing rows.
 3. `learner_rank`, confidence, reason, and model version are stored in SQLite.
 4. The app reads the precomputed rank and performs no semantic ranking at runtime.
-5. `harbor` noun ranking is covered by Swift regression tests and the bundled database uses the nautical sense as rank 1.
+5. The bundled Learning Core records source and ranking metadata and is covered by source-quality and sense-order regression tests.
 
 There is intentionally no hand-authored per-word ranking file, database table,
-or content-replacement path. The ranker is fully automatic and falls back to
-Kaikki source order when external evidence is unavailable.
+or content-replacement path. The ranker is fully automatic and uses the active
+Simple English Wiktionary source order only as a weak final signal when other
+ranking evidence is unavailable.
 
 ## Final recommendation
 
 For Lexilo’s current offline architecture, the best default is:
 
-1. **Keep Kaikki/English Wiktionary** for broad lexical coverage and source transparency.
-2. **Add a learner-oriented ranking layer** that is independent of source order.
-3. **Use OEWN and Simple English Wiktionary as open supplements**, with provenance and license metadata.
+1. **Use Simple English Wiktionary** for the canonical user-facing inventory and preserve its provenance.
+2. **Use a learner-oriented ranking layer** that is independent of raw source order.
+3. **Use OEWN only as optional open alignment evidence**, with provenance and license metadata.
 4. **Use frequency resources only for the level they support:** word frequency for lemmas and sense-tagged evidence for sense ranking.
 5. **Investigate a Cambridge/Oxford/Collins license only if professional learner-dictionary quality justifies the cost and contractual complexity.**
 
-In short: **the app needs an automatic learner-oriented ranking layer; it does not immediately need a different complete dictionary.** The `harbor` result is a good regression case showing why structural validation and learner-oriented ranking must be separate decisions.
+In short: **the active app uses Simple English Wiktionary plus automatic
+build-time learner-oriented ranking.** The historical `harbor` result remains a
+useful regression case showing why structural validation, source choice, and
+learner ordering must be separate decisions.
 
 ## Local files examined
 
@@ -411,5 +449,5 @@ In short: **the app needs an automatic learner-oriented ranking layer; it does n
 - [`Lexilo/Resources/LEXICON_NOTICES.md`](../Lexilo/Resources/LEXICON_NOTICES.md)
 
 This document records the research that informed the current implementation;
-the active code and bundled database now implement the automatic ranking design
-described above.
+the active code and bundled database now use Simple English Wiktionary and the
+automatic ranking design described above.
