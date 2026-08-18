@@ -6,6 +6,7 @@ struct SettingsView: View {
     @EnvironmentObject private var speechPlayer: SpeechPlayer
     @AppStorage("newWordLimit") private var newWordLimit = 5
     @AppStorage("soundEnabled") private var soundEnabled = true
+    @AppStorage(PronunciationEngineChoice.preferenceKey) private var pronunciationEngine = PronunciationEngineChoice.defaultChoice.rawValue
     @AppStorage("kittenVoiceID") private var kittenVoiceID = 1
     @AppStorage("kittenSpeechRate") private var kittenSpeechRate = 1.0
     @AppStorage("pronunciationLocale") private var pronunciationLocale = "en-US"
@@ -48,20 +49,30 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     Section("Pronunciation") {
-                        Text("Pronunciation works offline and stays on this device.")
+                        Text("Both pronunciation options work offline and stay on this device.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Toggle("Play pronunciation", isOn: $soundEnabled)
-                        Picker("Neural voice", selection: $kittenVoiceID) {
-                            ForEach(KittenVoice.all) { voice in
-                                Text(voice.name).tag(voice.id)
+                        Picker("Pronunciation method", selection: $pronunciationEngine) {
+                            ForEach(PronunciationEngineChoice.allCases) { choice in
+                                Text(choice.title).tag(choice.rawValue)
                             }
                         }
-                        VStack(alignment: .leading) {
-                            Text("Neural speech rate: \(kittenSpeechRate, specifier: "%.1f")×")
-                            Slider(value: $kittenSpeechRate, in: 0.7...1.2, step: 0.1)
+                        if pronunciationEngine == PronunciationEngineChoice.kitten.rawValue {
+                            Picker("Kitten voice", selection: $kittenVoiceID) {
+                                ForEach(KittenVoice.all) { voice in
+                                    Text(voice.name).tag(voice.id)
+                                }
+                            }
+                            VStack(alignment: .leading) {
+                                Text("Kitten speech rate: \(kittenSpeechRate, specifier: "%.1f")×")
+                                Slider(value: $kittenSpeechRate, in: 0.7...1.2, step: 0.1)
+                            }
+                            Text("Kitten uses Apple TTS only if its offline voice cannot play.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                        Picker("System fallback accent", selection: $pronunciationLocale) {
+                        Picker("Apple TTS accent", selection: $pronunciationLocale) {
                             Text("American English").tag("en-US")
                             Text("British English").tag("en-GB")
                         }
@@ -134,6 +145,19 @@ struct SettingsView: View {
         }
         .onChange(of: soundEnabled) { _, enabled in
             if !enabled { speechPlayer.stop() }
+        }
+        .onChange(of: pronunciationEngine) { _, _ in
+            speechPlayer.stop()
+            speechPlayer.prewarm()
+        }
+        .onChange(of: kittenVoiceID) { _, _ in
+            speechPlayer.stop()
+        }
+        .onChange(of: kittenSpeechRate) { _, _ in
+            speechPlayer.stop()
+        }
+        .onChange(of: pronunciationLocale) { _, _ in
+            speechPlayer.stop()
         }
         .onChange(of: mediumWidgetContent) { _, _ in
             store.refreshWidgetSnapshot()

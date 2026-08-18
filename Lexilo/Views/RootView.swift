@@ -9,7 +9,8 @@ struct RootView: View {
         TabView(selection: $selection) {
             TodayView().tag(0).tabItem { Label("Today", systemImage: "sun.max") }
             WordsView().tag(1).tabItem { Label("Words", systemImage: "text.book.closed") }
-            SettingsView().tag(2).tabItem { Label("Settings", systemImage: "gearshape") }
+            HistoryView().tag(2).tabItem { Label("History", systemImage: "calendar") }
+            SettingsView().tag(3).tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .tint(LexiloTheme.sage)
         .onOpenURL { url in
@@ -30,8 +31,6 @@ struct RootView: View {
 
 private struct OnboardingView: View {
     let complete: () -> Void
-    @AppStorage("translationEnabled") private var translationEnabled = false
-    @AppStorage("translationLanguage") private var translationLanguage = "Spanish"
 
     var body: some View {
         ZStack {
@@ -42,17 +41,6 @@ private struct OnboardingView: View {
                 Text("Remember words you can use").font(.lexiloDisplay(40, weight: .semibold)).foregroundStyle(LexiloTheme.ink)
                 Text("Lexilo checks both understanding and active recall, then adapts each review to your memory.")
                     .font(.title3).foregroundStyle(LexiloTheme.muted)
-                VStack(alignment: .leading, spacing: 14) {
-                    Toggle("Show first-language support", isOn: $translationEnabled)
-                    if translationEnabled {
-                        Picker("My first language", selection: $translationLanguage) {
-                            ForEach(["Spanish", "Simplified Chinese", "Japanese", "Korean", "French", "German", "Other"], id: \.self) { Text($0) }
-                        }
-                        Text("English definitions stay primary. Translations stay labeled as personal until you review them; Lexilo does not silently generate translations.")
-                            .font(.caption).foregroundStyle(LexiloTheme.muted)
-                    }
-                }
-                .padding(20).background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 22))
                 Spacer()
                 Button(action: complete) {
                     Text("Begin learning").font(.headline).foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 58)

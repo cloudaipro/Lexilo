@@ -7,6 +7,11 @@ struct WordEntry: TimelineEntry {
 }
 
 struct WordProvider: TimelineProvider {
+    // WidgetKit controls when a widget is rendered again and recommends
+    // timeline entries no closer than roughly five minutes. Each new timeline
+    // request advances the persisted daily-word cursor.
+    private static let refreshInterval: TimeInterval = 5 * 60
+
     func placeholder(in context: Context) -> WordEntry {
         WordEntry(date: .now, snapshot: fallbackSnapshot())
     }
@@ -18,9 +23,11 @@ struct WordProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<WordEntry>) -> Void) {
         let date = Date.now
-        let snapshot = SharedStudySnapshotStore.load() ?? fallbackSnapshot()
+        let snapshot = SharedStudySnapshotStore.advanceToNextDailyWord()
+            ?? SharedStudySnapshotStore.load()
+            ?? fallbackSnapshot()
         let entry = WordEntry(date: date, snapshot: snapshot)
-        let next = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: date)) ?? date.addingTimeInterval(86_400)
+        let next = date.addingTimeInterval(Self.refreshInterval)
         completion(Timeline(entries: [entry], policy: .after(next)))
     }
 
@@ -177,7 +184,7 @@ struct LexiloWidget: Widget {
             LexiloWidgetView(entry: entry)
         }
         .configurationDisplayName("A word to remember")
-        .description("A not-yet-mastered word from your learning queue.")
+        .description("Today's learning words, one at a time.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

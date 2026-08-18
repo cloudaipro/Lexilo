@@ -4,6 +4,7 @@ struct WordsView: View {
     @EnvironmentObject private var store: LearningStore
     @State private var search = ""
     @State private var section: WordSection = .myWords
+    @State private var collectionFilter: WordFilter = .all
 #if DEBUG
     @State private var dictionaryResults: [LexiconEntry] = []
 #endif
@@ -17,10 +18,33 @@ struct WordsView: View {
         var id: String { rawValue }
     }
 
+    private enum WordFilter: String, CaseIterable, Identifiable {
+        case all = "All"
+        case learning = "Learning"
+        case mastered = "Mastered"
+        case due = "Due"
+
+        var id: String { rawValue }
+    }
+
     private var filtered: [VocabularyItem] {
-        let source = section == .upcoming ? store.upcomingWords : store.words.filter { $0.introducedAt != nil }
+        let source = section == .upcoming ? store.upcomingWords : collectionWords
         let words = source.sorted { $0.frequencyRank < $1.frequencyRank }
         return search.isEmpty ? words : words.filter { $0.word.localizedCaseInsensitiveContains(search) || $0.conciseDefinition.localizedCaseInsensitiveContains(search) }
+    }
+
+    private var collectionWords: [VocabularyItem] {
+        let learned = store.wordsForCollection()
+        switch collectionFilter {
+        case .all:
+            return learned
+        case .learning:
+            return learned.filter { store.learningState(for: $0.id) == .learning }
+        case .mastered:
+            return learned.filter { store.learningState(for: $0.id) == .mastered }
+        case .due:
+            return learned.filter { store.isDue(vocabularyID: $0.id) }
+        }
     }
 
     private var searchPrompt: String {
@@ -43,6 +67,10 @@ struct WordsView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 10)
 
+                    if section == .myWords {
+                        collectionFilters
+                    }
+
 #if DEBUG
                     if section == .dictionary {
                         dictionaryList
@@ -61,6 +89,9 @@ struct WordsView: View {
             .onChange(of: section) { _, _ in updateDictionaryResults() }
 #endif
             .searchable(text: $search, prompt: searchPrompt)
+            .task {
+                store.ensureDailyStudySet()
+            }
         }
     }
 
@@ -73,10 +104,53 @@ struct WordsView: View {
         }
         .overlay {
             if filtered.isEmpty {
-                ContentUnavailableView(section == .upcoming ? "No upcoming words" : "No learned words yet", systemImage: "text.book.closed")
+                ContentUnavailableView(emptyTitle, systemImage: "text.book.closed")
             }
         }
         .scrollContentBackground(.hidden)
+    }
+
+    private var collectionFilters: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(WordFilter.allCases) { filter in
+                    Button {
+                        collectionFilter = filter
+                    } label: {
+                        Text("\(filter.rawValue) \(filterCount(for: filter))")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(collectionFilter == filter ? .white : LexiloTheme.ink)
+                            .padding(.horizontal, 13)
+                            .frame(height: 34)
+                            .background(collectionFilter == filter ? LexiloTheme.ink : .white.opacity(0.65), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("word-filter-\(filter.rawValue.lowercased())")
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private var emptyTitle: String {
+        if section == .upcoming { return "No upcoming words" }
+        switch collectionFilter {
+        case .all: return "No learned words yet"
+        case .learning: return "No words in progress"
+        case .mastered: return "No mastered words yet"
+        case .due: return "Nothing is due"
+        }
+    }
+
+    private func filterCount(for filter: WordFilter) -> Int {
+        let learned = store.wordsForCollection()
+        switch filter {
+        case .all: return learned.count
+        case .learning: return learned.filter { store.learningState(for: $0.id) == .learning }.count
+        case .mastered: return learned.filter { store.learningState(for: $0.id) == .mastered }.count
+        case .due: return learned.filter { store.isDue(vocabularyID: $0.id) }.count
+        }
     }
 
 #if DEBUG
@@ -120,7 +194,14 @@ struct WordsView: View {
                     Text(word.word).font(.lexiloDisplay(22, weight: .medium)).foregroundStyle(LexiloTheme.ink)
                     Text(word.partOfSpeech).font(.caption).italic().foregroundStyle(LexiloTheme.sage)
                 }
-                Text(word.conciseDefinition).font(.caption).foregroundStyle(LexiloTheme.muted).lineLimit(1)
+                HStack(spacing: 7) {
+                    Text(word.conciseDefinition).font(.caption).foregroundStyle(LexiloTheme.muted).lineLimit(1)
+                    if let nextReview = store.nextReviewDate(for: word.id), state != .new {
+                        Text(nextReviewLabel(nextReview))
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(store.isDue(vocabularyID: word.id) ? LexiloTheme.danger : LexiloTheme.sage)
+                    }
+                }
             }
             Spacer()
             StatePill(state: state)
@@ -136,10 +217,12 @@ struct WordsView: View {
 #endif
 
     private func state(for id: UUID) -> LearningState {
-        let related = store.cards.filter { $0.vocabularyID == id && !$0.isPaused }
-        if related.count >= 2 && related.allSatisfy({ $0.learningState == .mastered }) { return .mastered }
-        if related.contains(where: { $0.learningState != .new }) { return .learning }
-        return .new
+        store.learningState(for: id)
+    }
+
+    private func nextReviewLabel(_ date: Date) -> String {
+        if Calendar.current.isDateInToday(date) || date <= .now { return "Due" }
+        return date.formatted(.dateTime.month(.abbreviated).day())
     }
 }
 
@@ -320,10 +403,6 @@ struct WordDetailView: View {
                     editingTranslationFor = sense.id
                     showingTranslationEditor = true
                 }.font(.caption.weight(.semibold)).foregroundStyle(LexiloTheme.sage)
-            }
-            if !sense.isActive || sense.isPaused {
-                Label(sense.isPaused ? "Paused" : "Unlocks after the core meaning is strong", systemImage: sense.isPaused ? "pause.circle" : "lock")
-                    .font(.caption).foregroundStyle(LexiloTheme.muted)
             }
         }
         .padding(18)
