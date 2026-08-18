@@ -112,6 +112,7 @@ struct WordStudyPager: View {
     let words: [VocabularyItem]
     let initialIndex: Int
     let finishTitle: String
+    let onBack: (() -> Void)?
     let onIndexChanged: (Int) -> Void
     let onFinish: () -> Void
     @State private var index: Int
@@ -121,6 +122,7 @@ struct WordStudyPager: View {
         words: [VocabularyItem],
         initialIndex: Int = 0,
         finishTitle: String,
+        onBack: (() -> Void)? = nil,
         onIndexChanged: @escaping (Int) -> Void = { _ in },
         onFinish: @escaping () -> Void
     ) {
@@ -128,6 +130,7 @@ struct WordStudyPager: View {
         self.words = words
         self.initialIndex = initialIndex
         self.finishTitle = finishTitle
+        self.onBack = onBack
         self.onIndexChanged = onIndexChanged
         self.onFinish = onFinish
         _index = State(initialValue: max(0, min(initialIndex, max(words.count - 1, 0))))
@@ -139,11 +142,26 @@ struct WordStudyPager: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(spacing: 12) {
+                if let onBack {
+                    Button(action: onBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.headline.weight(.semibold))
+                            .frame(width: 42, height: 42)
+                            .foregroundStyle(LexiloTheme.ink)
+                            .background(.white.opacity(0.68), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Back to study history")
+                    .accessibilityIdentifier("historical-study-back")
+                }
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.lexiloDisplay(29, weight: .semibold))
                         .foregroundStyle(LexiloTheme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
                 }
                 Spacer(minLength: 12)
                 Text("\(safeIndex + 1) of \(words.count)")
@@ -363,6 +381,7 @@ struct HistoricalStudyView: View {
                     title: title,
                     words: words,
                     finishTitle: "Done",
+                    onBack: { dismiss() },
                     onFinish: { dismiss() }
                 )
             }

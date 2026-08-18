@@ -159,6 +159,13 @@ final class LexiloPracticeFlowTests: XCTestCase {
 
         app.buttons["history-relearn"].tap()
         XCTAssertTrue(app.staticTexts["1 of 5"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["historical-study-back"].exists)
+        app.buttons["historical-study-back"].tap()
+        XCTAssertTrue(app.navigationBars["Study history"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["history-relearn"].exists)
+
+        app.buttons["history-relearn"].tap()
+        XCTAssertTrue(app.staticTexts["1 of 5"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["No words to review"].exists)
         for _ in 0..<4 {
             XCTAssertTrue(app.buttons["daily-study-next"].waitForExistence(timeout: 3))

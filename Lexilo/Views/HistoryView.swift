@@ -197,7 +197,7 @@ struct HistoryView: View {
                     Button {
                         reviewSession = ReviewSession(
                             words: actionWords,
-                            title: selectedIsToday ? "Review today’s words" : "Relearn words"
+                            title: selectedIsToday ? "Review these words" : "Relearn words"
                         )
                     } label: {
                         Label(selectedStudied.isEmpty ? "Study these words" : "Relearn these words", systemImage: "book.pages")
