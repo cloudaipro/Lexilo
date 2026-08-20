@@ -50,18 +50,90 @@ struct LexiloWidgetView: View {
 
     var body: some View {
         content
-            .containerBackground(LexiloWidgetPalette.paper, for: .widget)
+            .containerBackground(widgetBackground, for: .widget)
             .widgetURL(URL(string: "lexilo://today"))
     }
 
     @ViewBuilder
     private var content: some View {
         switch family {
+        case .accessoryInline:
+            accessoryInlineLayout
+        case .accessoryCircular:
+            accessoryCircularLayout
+        case .accessoryRectangular:
+            accessoryRectangularLayout
         case .systemMedium:
             mediumLayout
         default:
             smallLayout
         }
+    }
+
+    private var widgetBackground: Color {
+        switch family {
+        case .accessoryInline, .accessoryCircular, .accessoryRectangular:
+            // Lock Screen widgets should let iOS supply the wallpaper-aware
+            // treatment instead of drawing a Home Screen paper card.
+            return .clear
+        default:
+            return LexiloWidgetPalette.paper
+        }
+    }
+
+    private var accessoryInlineLayout: some View {
+        Text("Learn \(entry.snapshot.word)")
+            .font(.caption2.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .widgetAccentable()
+            .accessibilityLabel("Learn \(entry.snapshot.word)")
+    }
+
+    private var accessoryCircularLayout: some View {
+        VStack(spacing: 1) {
+            Image(systemName: "leaf.fill")
+                .font(.caption2)
+            Text(entry.snapshot.streak > 0 ? "\(entry.snapshot.streak)" : "Start")
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(entry.snapshot.streak == 1 ? "day" : "days")
+                .font(.system(size: 7, weight: .semibold, design: .rounded))
+                .textCase(.uppercase)
+                .opacity(0.8)
+        }
+        .widgetAccentable()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            entry.snapshot.streak > 0
+                ? "Lexilo streak, \(entry.snapshot.streak) days"
+                : "Start learning in Lexilo"
+        )
+    }
+
+    private var accessoryRectangularLayout: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 4) {
+                Text("LEXILO")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .tracking(1.1)
+                Spacer(minLength: 4)
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            Text(verbatim: entry.snapshot.word)
+                .font(.headline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text("Tap to practise")
+                .font(.system(size: 9, weight: .medium, design: .rounded))
+                .opacity(0.8)
+                .lineLimit(1)
+        }
+        .widgetAccentable()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Learn \(entry.snapshot.word) in Lexilo")
     }
 
     private var smallLayout: some View {
@@ -180,7 +252,13 @@ struct LexiloWidget: Widget {
             LexiloWidgetView(entry: entry)
         }
         .configurationDisplayName("A word to remember")
-        .description("Today's learning words, one at a time.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("Today's learning word on the Home Screen or Lock Screen.")
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .accessoryInline,
+            .accessoryCircular,
+            .accessoryRectangular
+        ])
     }
 }

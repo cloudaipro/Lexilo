@@ -248,12 +248,16 @@ The streak is a gentle continuity signal, not a grade or the main measure of lea
 
 ## 18. Widget
 
-Lexilo supports Small and Medium Home Screen widgets. Both use today's planned
-word set, not a separate queue. Each WidgetKit timeline refresh advances to the
-next word in the set, in order, and wraps back to the first word after the last.
+Lexilo supports Small and Medium Home Screen widgets plus Inline, Circular, and
+Rectangular Lock Screen widgets. All variants use today's planned word set, not
+a separate queue. Each WidgetKit timeline refresh advances to the next word in
+the set, in order, and wraps back to the first word after the last.
 
 - **Small** shows the LEXILO label, the complete learning word at an adaptive size, and **Tap to practise**. It does not show an example or definition, keeping the word as the focus.
 - **Medium** shows the LEXILO label, the learning word, and one secondary text block below it. The default secondary content is the complete definition.
+- **Lock Screen Inline** shows a compact “Learn [word]” prompt.
+- **Lock Screen Circular** shows the current learning streak, with a leaf mark.
+- **Lock Screen Rectangular** shows the current learning word and a tap-to-practise prompt.
 - To choose the Medium widget content, open **Settings → Widget → Medium widget shows** and select **Definition** or **Example**. The setting is Definition by default.
 - Medium definitions and examples wrap without intentional truncation or ellipses. If the selected example does not fit at the preferred size, Lexilo tries a smaller presentation and then another complete available example; it never cuts a sentence mid-text.
 - Tap either widget to open Lexilo directly on **Today’s words**. The displayed snapshot is refreshed when learning data or the widget-content setting changes and on the widget's normal timeline schedule. The widget does not start Quiz automatically; use the **Quiz** button in Today when you are ready to test the current set.

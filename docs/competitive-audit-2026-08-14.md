@@ -178,7 +178,7 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 - Local learning history, Simple English Wiktionary Learning Core, adaptive scheduler, and selectable offline text-to-speech.
 - 5,591 learning terms, 13,264 validated usage examples, and pronunciation coverage for selected source entries.
 - Fast, finite daily sessions with failed-card recycling.
-- Direction-specific progress and a Home Screen widget.
+- Direction-specific progress, Home Screen widgets, and Lock Screen widgets.
 - Deterministic scheduler tests, persistence recovery, UI-flow tests, and a healthy build.
 
 ### Current weaknesses
@@ -190,9 +190,10 @@ LEXILO’s two-way practice model is supported by vocabulary-learning research. 
 - Dictionary content is not organized around collocations, confusable words, word families, or learner-friendly senses.
 - There is no separate Progress or Memory dashboard; scheduling diagnostics remain intentionally behind the interface.
 - No reminders, subscription strategy, or cross-platform continuity. Optional iCloud snapshot sync is available for portability.
-- The widget supports Small and Medium layouts and opens Today’s words when
-  tapped. It does not start Quiz automatically; the learner chooses Quiz from
-  the Today navigation bar. See [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L45)
+- The widget supports Small and Medium Home Screen layouts plus Inline,
+  Circular, and Rectangular Lock Screen layouts. It opens Today’s words when
+  tapped and does not start Quiz automatically; the learner chooses Quiz from
+  the Today navigation bar. See [`LexiloWidget.swift`](../LexiloWidget/LexiloWidget.swift#L47)
   and [`RootView.swift`](../Lexilo/Views/RootView.swift#L17).
 
 ### Opportunities
@@ -368,7 +369,7 @@ Avoid decorative charts and trophy collections. Every metric should lead to an a
   a complete selected definition or example, with Definition as the default;
   the choice is available in Settings.
 - Consider an interactive “Hear” action where supported.
-- Ensure the widget works with tinted and high-contrast appearances.
+- Keep the Lock Screen variants legible in tinted and high-contrast appearances.
 
 ## Visual directions to test
 
@@ -624,7 +625,8 @@ The audit recommendations that became product work are now implemented:
    pronunciation and refreshes lexical content without resetting learner
    progress.
 6. Today learning, Quiz, Learn More expansion, calendar History, and the
-   current sequential daily-word widget behavior are implemented.
+   sequential daily-word behavior across Home Screen and Lock Screen widget
+   families are implemented.
 
 ### Next priorities
 

@@ -212,10 +212,13 @@ App 不會在背景中自動產生或覆寫翻譯。
 
 ## 18. 小工具
 
-Lexilo 支援主畫面的 Small 與 Medium 小工具。兩者都使用今天計畫中的單字集合，不是另一套獨立的練習佇列。每次 WidgetKit 時間軸更新時，會依序顯示下一個單字；顯示到最後一個後，會循環回第一個。
+Lexilo 支援主畫面的 Small、Medium，以及鎖定畫面的 Inline、Circular、Rectangular 小工具。所有變體都使用今天計畫中的單字集合，不是另一套獨立的練習佇列。每次 WidgetKit 時間軸更新時，會依序顯示下一個單字；顯示到最後一個後，會循環回第一個。
 
 - **Small** 顯示 LEXILO 標誌、以自適應大小呈現的完整學習單字，以及 **Tap to practise**。它不顯示例句或定義，讓單字保持視覺焦點。
 - **Medium** 顯示 LEXILO 標誌、學習單字，以及位於單字下方的一段輔助文字。預設輔助內容是完整定義。
+- **鎖定畫面 Inline** 顯示簡短的「Learn [word]」提示。
+- **鎖定畫面 Circular** 顯示目前的連續學習天數與葉子圖示。
+- **鎖定畫面 Rectangular** 顯示目前的學習單字與點選練習提示。
 - 若要選擇 Medium 小工具的內容，請前往 **Settings → Widget → Medium widget shows**，再選擇 **Definition** 或 **Example**。預設值是 Definition。
 - Medium 的定義與例句會換行顯示，不會刻意截短或加上刪節號。如果選定的例句在偏好的大小下放不下，Lexilo 會先嘗試較小的呈現方式，必要時改用另一個完整例句；不會把句子從中間截斷。
 - 點選任一小工具會直接開啟 Lexilo 的 **Today’s words**。小工具不會自動進入 Quiz；準備好測驗時，再按 Today 右上角的 **Quiz**。學習資料或小工具內容設定變更時，顯示的快照會更新，此外也會依照小工具正常的時間軸更新。
