@@ -67,6 +67,22 @@ final class LexiloPracticeFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Today’s new words"].exists)
     }
 
+    func testSplashScreenUsesLexiloBranding() throws {
+        app.terminate()
+        app.launchArguments = [
+            "--ui-testing-reset",
+            "--ui-testing-hold-splash",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launch()
+
+        let splash = app.otherElements["lexilo-splash"]
+        XCTAssertTrue(splash.waitForExistence(timeout: 5))
+        XCTAssertEqual(splash.label, "Lexilo. Words, remembered.")
+        capture("00 Splash")
+    }
+
     func testTypedProductionShowsPreciseCorrection() throws {
         app.terminate()
         app.launchArguments.append("--ui-testing-recall")

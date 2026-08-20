@@ -5,6 +5,8 @@ extension Notification.Name {
 }
 
 struct RootView: View {
+    var allowsOnboardingPresentation = true
+
     @State private var selection = 0
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
@@ -23,7 +25,11 @@ struct RootView: View {
             NotificationCenter.default.post(name: .lexiloOpenToday, object: nil)
         }
         .fullScreenCover(isPresented: Binding(
-            get: { !hasCompletedOnboarding && !CommandLine.arguments.contains("--ui-testing-reset") },
+            get: {
+                allowsOnboardingPresentation
+                    && !hasCompletedOnboarding
+                    && !CommandLine.arguments.contains("--ui-testing-reset")
+            },
             set: { if !$0 { hasCompletedOnboarding = true } }
         )) {
             OnboardingView { hasCompletedOnboarding = true }

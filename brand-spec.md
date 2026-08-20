@@ -6,6 +6,8 @@
 
 - App icon: `logo.png`, supplied by the product owner.
 - Xcode icon set: `Lexilo/Assets.xcassets/AppIcon.appiconset/`.
+- Launch mark: `Lexilo/Assets.xcassets/LaunchLogo.imageset/`, derived at native 1×/2×/3× sizes from the supplied app icon.
+- Launch sound: `Lexilo/Assets.xcassets/SplashChime.dataset/`, a one-second, high-frequency warm two-note cue that respects silent mode and the in-app sound preference.
 - Usage: preserve the full lockup and warm paper field; never recolor, stretch, outline, or crop into the central “L”.
 
 ## Visual system
@@ -21,9 +23,9 @@
 ## Signature detail
 
 - Editorial serif vocabulary forms paired with tiny brass rules and low-contrast paper texture.
+- Launch experience: the logo remains perfectly continuous from the static iOS launch frame into one restrained native reveal, followed by the line “Words, remembered.”
 - Practice screens expose one decision at a time; no gamified clutter.
 
 ## Avoid
 
 - Purple/blue gradients, trophy-heavy gamification, decorative icon grids, floating cards without hierarchy, or multiple competing accent colors.
-
