@@ -1,6 +1,6 @@
 # Lexilo User Guide & Design Philosophy
 
-_Updated for the codebase on August 17, 2026._
+_Updated for the codebase on August 19, 2026._
 
 Lexilo is a focused vocabulary-memory coach. It helps you learn precise word senses, practise both understanding and recall, and return to each card when your memory needs it—not merely on a fixed calendar.
 
@@ -28,34 +28,40 @@ Lexilo is organised into four tabs:
 
 | Tab | Purpose |
 |---|---|
-| **Today** | Study today's prepared words, then quiz the current set. |
+| **Today** | Learn today's new words, review due words separately, then quiz the current new-word set. |
 | **Words** | Browse saved and upcoming words; inspect and manage individual senses. |
 | **History** | Select a calendar date, see the words studied that day, and relearn them. |
 | **Settings** | Adjust practice, speech, vocabulary, language support, widget content, imports, backups, and sync. |
 
 ## 3. Today
 
-The Today screen is the normal starting point and opens directly in the daily
-word-learning mode. Lexilo creates one persistent set for the local calendar
-day and presents it in order.
+The Today screen is the normal starting point and opens directly on **Today’s
+new words**. Lexilo creates one persistent new-word set for the local calendar
+day and presents it in order. Previously learned vocabulary never replaces
+these words merely because a recognition or recall card is due.
 
 1. The first word appears with its spelling, part of speech, IPA, audio,
    meaning, and example.
 2. Swipe left or use the right arrow to move forward. Swipe right or use the
    left arrow to return to the previous word.
-3. The top-right **Quiz** button is always available and opens a quiz for the
+3. When previously learned words are due, **Review N** appears at the top left.
+   It opens a separate scheduled-review session and clearly labels each card
+   **Due Review**.
+4. The top-right **Quiz** button is always available and opens a quiz for the
    words currently in today's set. The quiz uses recognition and typed
    meaning-to-word recall; it does not add another round of words.
-4. On the final word, the bottom-right action is **Learn More**. The first tap
+5. On the final word, the bottom-right action is **Learn More**. The first tap
    completes the current learning batch and appends the next configured batch
    (five words by default), changing today's set from 5 to 10, then 15, and so
    on while eligible words are available.
-5. After expansion, the pager starts at the first newly added word. The current
+6. After expansion, the pager starts at the first newly added word. The current
    set remains the source for both Today and the Words tab.
 
-The daily set is built from due words first and upcoming words when more are
-needed. A retry, a second card direction, or taking the quiz does not increase
-the set size; only **Learn More** does.
+The daily set contains only vocabulary that has never been introduced. A retry,
+a second card direction, a due review, or taking the quiz does not increase or
+replace that set; only **Learn More** adds new words. After every current word’s
+latest quiz result succeeds, **Quiz** becomes **Practice Again**. Repeating the
+set does not alter its scheduled review dates.
 
 ## 4. Two different practice directions
 
@@ -109,7 +115,10 @@ Knowing one direction does not automatically prove the other. Lexilo therefore k
 - understanding a word from its form; and
 - recalling the word from its meaning.
 
-When possible, newly introduced sibling cards are placed on separate days. This reduces answer leakage and creates a more honest test of each direction.
+Sibling cards are never served on the same day. After one direction is answered,
+the untouched direction is deferred with it instead of appearing as a newly
+prepared word the next day. This reduces answer leakage and keeps card-level
+scheduling from changing the visible daily word set.
 
 The two directions remain independent inside the scheduler, even though their internal scores are not shown in the interface.
 
@@ -147,8 +156,9 @@ Debug builds may additionally expose a development-only **Dictionary** section f
 
 **My Words** can be filtered by **All**, **Learning**, **Mastered**, and **Due**.
 The current planned Today set is included immediately, so these counts update
-when Learn More adds words. **Upcoming** shows words that have not yet entered
-the active collection.
+when Learn More adds words. **Due** counts only previously introduced words
+whose review date has arrived; today's new words are not labelled due.
+**Upcoming** shows words that have not yet entered the active collection.
 
 Open a word to see its state, part of speech, pronunciation, and meanings. Meanings are displayed as a stack, with inactive ones visually quieter than the current learning target. Word detail is for inspection; it does not include a separate **Study this word** action.
 
@@ -227,10 +237,12 @@ Practice definitions preserve the complete available text. When a definition is 
 ## 17. Daily rhythm and streaks
 
 A study day follows the device's local calendar. Today first presents the
-configured batch of distinct words (five by default). Reaching the last card
-and tapping **Learn More** records that learning batch as completed before
-adding the next batch. Quiz answers are recorded as practice for the current
-set. Consecutive completed days build the streak; adding more words is optional.
+configured batch of distinct, never-introduced words (five by default).
+Reaching the last card and tapping **Learn More** records that learning batch
+as completed before adding the next batch. Quiz answers are recorded for the
+current set. Due reviews remain a separate queue and do not consume the daily
+new-word allowance. Consecutive completed days build the streak; adding more
+words is optional.
 
 The streak is a gentle continuity signal, not a grade or the main measure of learning.
 
@@ -250,7 +262,8 @@ next word in the set, in order, and wraps back to the first word after the last.
 
 | If you want to… | Go to… |
 |---|---|
-| Study today's words | **Today**; move through the pager with swipe or arrows |
+| Study today's new words | **Today**; move through the pager with swipe or arrows |
+| Review previously learned words that are due | **Today → Review N** |
 | Quiz today's words | **Today → Quiz** |
 | Add more words today | Last word → **Learn More** |
 | Review a previous date | **History → select a date → Relearn these words** |
@@ -271,7 +284,7 @@ next word in the set, in order, and wraps back to the first word after the last.
 
 ### No cards are available
 
-Lexilo may have no other eligible due or upcoming words, or the relevant meanings may be paused. Check **Words** for paused content. If today's set is not empty, you can still study it or use **Today → Quiz**.
+Lexilo may have no eligible new words, no due reviews, or the relevant meanings may be paused. Check **Words** for paused content. If today's new-word set is not empty, you can still study it or use **Today → Quiz**.
 
 ### A missed card appeared again immediately
 
@@ -381,9 +394,10 @@ Secondary controls live in hints, disclosure sections, and menus. The main actio
 ## 10. A finite learning set with optional expansion is a feature
 
 Lexilo is designed for repeatable practice rather than an endless feed. Today
-opens with a clear, configurable learning batch, and due cards come first.
-After the final word, **Learn More** gives the learner explicit control over
-whether another batch is added to today's set.
+opens with a clear, configurable batch of new words. Due cards remain available
+through the separately labelled **Review N** action. After the final new word,
+**Learn More** gives the learner explicit control over whether another batch is
+added to today's set.
 
 The system should make stopping after the current batch feel valid. Continuing
 is a deliberate learner choice. The quiz checks the current set, while Learn

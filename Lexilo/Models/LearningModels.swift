@@ -237,9 +237,9 @@ struct StudyDay: Identifiable, Codable, Hashable {
     }
 }
 
-/// The small, persistent set that the learner sees when opening Today.
-/// Review logs remain the source of truth for answered cards; this snapshot
-/// preserves the chosen words and the learner's place in the first study pass.
+/// The small, persistent set of new vocabulary shown when opening Today.
+/// Previously introduced words live in the separate due-review queue; this
+/// snapshot preserves the chosen new words and the learner's place.
 struct DailyStudySet: Identifiable, Codable, Hashable {
     let date: Date
     var vocabularyIDs: [UUID]

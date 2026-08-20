@@ -20,11 +20,27 @@ struct TodayView: View {
 
 struct DailyStudyView: View {
     @EnvironmentObject private var store: LearningStore
-    @State private var showingPractice = false
+    @State private var practiceMode: PracticeMode?
+
+    private enum PracticeMode: String, Identifiable {
+        case quiz
+        case practiceAgain
+        case dueReview
+
+        var id: String { rawValue }
+    }
 
     private var todayWords: [VocabularyItem] {
         guard let set = store.dailyStudySet else { return [] }
         return set.vocabularyIDs.compactMap { store.word(for: $0) }
+    }
+
+    private var quizCompleted: Bool {
+        store.dailyPracticeCompleted()
+    }
+
+    private var dueReviewCount: Int {
+        store.dueReviewWordCount()
     }
 
     private func learnMore() {
@@ -43,16 +59,29 @@ struct DailyStudyView: View {
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if dueReviewCount > 0 {
+                        Button {
+                            practiceMode = .dueReview
+                        } label: {
+                            Label("Review \(dueReviewCount)", systemImage: "clock.arrow.circlepath")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .foregroundStyle(LexiloTheme.sage)
+                        .accessibilityLabel("Review \(dueReviewCount) due words")
+                        .accessibilityIdentifier("daily-review-due")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showingPractice = true
+                        practiceMode = quizCompleted ? .practiceAgain : .quiz
                     } label: {
-                        Text("Quiz")
+                        Text(quizCompleted ? "Practice Again" : "Quiz")
                             .font(.subheadline.weight(.semibold))
                     }
                     .foregroundStyle(LexiloTheme.ink)
                     .disabled(todayWords.isEmpty)
-                    .accessibilityLabel("Start quiz")
+                    .accessibilityLabel(quizCompleted ? "Practice Again" : "Start quiz")
                     .accessibilityIdentifier("daily-study-start-quiz")
                 }
             }
@@ -60,12 +89,14 @@ struct DailyStudyView: View {
                 store.ensureDailyStudySet()
             }
             .onReceive(NotificationCenter.default.publisher(for: .lexiloOpenToday)) { _ in
-                showingPractice = false
+                practiceMode = nil
             }
-            .fullScreenCover(isPresented: $showingPractice) {
+            .fullScreenCover(item: $practiceMode) { mode in
                 PracticeSessionView(
-                    focusVocabularyIDs: Set(todayWords.map(\.id)),
-                    allowsLearningExpansion: true
+                    focusVocabularyIDs: mode == .dueReview ? nil : Set(todayWords.map(\.id)),
+                    startWithPracticeAgain: mode == .practiceAgain,
+                    dueReviewOnly: mode == .dueReview,
+                    allowsLearningExpansion: mode == .quiz
                 )
             }
         }
@@ -81,7 +112,7 @@ struct DailyStudyView: View {
             )
         } else if let set = store.dailyStudySet, !todayWords.isEmpty {
             WordStudyPager(
-                title: "Today’s words",
+                title: "Today’s new words",
                 words: todayWords,
                 initialIndex: set.currentIndex,
                 finishTitle: "Learn More",
@@ -95,7 +126,7 @@ struct DailyStudyView: View {
         } else {
             VStack(spacing: 14) {
                 ProgressView().tint(LexiloTheme.sage)
-                Text("Preparing today’s words…")
+                Text("Preparing today’s new words…")
                     .font(.subheadline)
                     .foregroundStyle(LexiloTheme.muted)
             }

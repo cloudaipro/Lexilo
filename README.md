@@ -26,7 +26,8 @@ xcodegen generate
 ## Included
 
 - SwiftUI app with focused Today, Words, History, and Settings tabs
-- Learning-first Today flow: study the daily word set, then use Quiz for recognition and active recall
+- Learning-first Today flow: study **Today’s new words**, then use Quiz for recognition and active recall
+- A separate **Review N** action serves previously learned words only when they are due, without replacing the day’s new-word set
 - Learn More adds the next batch of words to today; the default batch is five
 - Compact adaptive scheduler using difficulty, stability, retrievability, response time, and hints (capped at 3,650 days), with paired-card same-day exclusion
 - Atomic offline JSON persistence with last-known-good recovery and immutable review history
@@ -35,7 +36,7 @@ xcodegen generate
 - Apple TTS is the default offline pronunciation engine; Kitten Nano v0.2 is an optional neural voice through sherpa-onnx, with a bounded on-device audio cache and fallback handling
 - Small and medium WidgetKit widgets backed by an App Group study snapshot; each refresh advances through today’s words in order and wraps around, while tapping a widget opens Today’s words directly and the medium widget shows the full definition or example selected in Settings (Definition by default)
 - Calendar-based History shows one combined list of words studied on a selected day and can start a relearning session
-- Daily new-word cap, explicit StudyDay streak records, and migration-safe persistence
+- Daily new-word cap, explicit StudyDay streak records, migration-safe persistence, and repair of legacy daily sets that mixed new and due words
 - Unit tests for adaptive intervals, content migration, example quality, pronunciation fallbacks, persistence, new-word limits, streaks, and paired-card constraints
 - XCUITest coverage for the daily practice flow and simplified word-detail hierarchy
 - App icon generated from the supplied `logo.png`
@@ -48,7 +49,7 @@ Validated on **iPhone 17 Pro, iOS 26.2 Simulator**:
 
 - Full simulator build: passed
 - Practice-flow XCUITest: 4 tests passed
-- ReviewSchedulerTests: 43/43 passed, including source-aware seeding, exact-band rotation, daily expansion, History/Words persistence, widget snapshots, example-quality regression, persistence recovery, adaptive scheduling, pronunciation fallback, cache, and real Kitten inference
+- ReviewSchedulerTests: 47/47 passed, including new-word/review separation, paired-direction deferral, daily expansion, History/Words persistence, widget snapshots, persistence recovery, adaptive scheduling, pronunciation fallback, cache, and real Kitten inference
 - Unsigned arm64 iPhone build: passed
 - Visual checks: Today, recognition front, revealed answer, failure recycling, and completion
 

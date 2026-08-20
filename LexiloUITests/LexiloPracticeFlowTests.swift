@@ -19,6 +19,7 @@ final class LexiloPracticeFlowTests: XCTestCase {
 
         let start = app.buttons["daily-study-start-quiz"]
         XCTAssertTrue(start.waitForExistence(timeout: 8), "Today should offer the quiz action in the navigation bar")
+        XCTAssertFalse(app.buttons["daily-review-due"].exists, "Today’s new words must not be mislabeled as due reviews")
         capture("01 Today")
         start.tap()
 
@@ -47,7 +48,12 @@ final class LexiloPracticeFlowTests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["6 of 10"].waitForExistence(timeout: 5), "Completing the daily quiz should return to Today")
         XCTAssertFalse(app.buttons["Next Round"].exists)
-        XCTAssertTrue(app.buttons["daily-study-start-quiz"].exists, "The top action should remain Quiz")
+        let practiceAgain = app.buttons["Practice Again"]
+        XCTAssertTrue(practiceAgain.exists, "A completed quiz should offer explicit repeat practice")
+        practiceAgain.tap()
+        XCTAssertTrue(app.buttons["Reveal answer"].waitForExistence(timeout: 5), "Repeat practice should remain open with the completed words")
+        app.buttons["Close practice"].tap()
+        XCTAssertTrue(app.staticTexts["6 of 10"].waitForExistence(timeout: 5))
         for _ in 0..<4 {
             let next = app.buttons["daily-study-next"]
             XCTAssertTrue(next.waitForExistence(timeout: 4), "The learner should be able to reach the end of the expanded set")
@@ -58,7 +64,7 @@ final class LexiloPracticeFlowTests: XCTestCase {
 
         app.buttons["daily-study-learn-more"].tap()
         XCTAssertTrue(app.staticTexts["11 of 15"].waitForExistence(timeout: 5), "Learn More should append five words and start on the first new word")
-        XCTAssertTrue(app.staticTexts["Today’s words"].exists)
+        XCTAssertTrue(app.staticTexts["Today’s new words"].exists)
     }
 
     func testTypedProductionShowsPreciseCorrection() throws {

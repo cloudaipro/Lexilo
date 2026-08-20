@@ -57,7 +57,10 @@ enum ReviewScheduler {
 
         let target = min(0.97, max(0.8, desiredRetention))
         let rawInterval = stability * log(target) / log(0.9)
-        let interval = outcome == .again ? 1 : min(maximumInterval, max(1, Int(rawInterval.rounded())))
+        // A completed first pass should not immediately occupy tomorrow's
+        // learning set again. Failed cards still return tomorrow, while a
+        // successful review gets at least one clear day before it is due.
+        let interval = outcome == .again ? 1 : min(maximumInterval, max(2, Int(rawInterval.rounded())))
         let start = calendar.startOfDay(for: date)
         let next = calendar.date(byAdding: .day, value: interval, to: start) ?? start
         return Update(
@@ -85,6 +88,11 @@ final class LearningStore: ObservableObject {
     @Published private(set) var contentReports: [ContentReport] = []
 
     let lexicon: LexiconStore
+
+    private struct CardPairKey: Hashable {
+        let vocabularyID: UUID
+        let senseID: UUID?
+    }
 
     private struct Snapshot: Codable {
         let words: [VocabularyItem]
@@ -197,6 +205,7 @@ final class LearningStore: ObservableObject {
         if refreshStoredLexiconContentIfNeeded() { changed = true }
         if repairStoredLexiconContent() { changed = true }
         if migrateSenseAwareState() { changed = true }
+        if repairPairedReviewSchedules() { changed = true }
         if replenishVocabularyIfNeeded() > 0 { changed = true }
         if changed { save() }
         isInitializing = false
@@ -227,42 +236,48 @@ final class LearningStore: ObservableObject {
         if let existing = dailyStudySet,
            calendar.isDate(existing.date, inSameDayAs: day),
            !existing.vocabularyIDs.isEmpty,
-           existing.vocabularyIDs.allSatisfy({ vocabularyID in
-               words.contains { $0.id == vocabularyID }
-           }) {
+           existing.vocabularyIDs.allSatisfy({ isEligibleForDailyNewWords($0, on: day, calendar: calendar) }) {
             return existing
         }
 
         var selectedIDs: [UUID] = []
 
         // A learner may upgrade after using the previous practice-first
-        // screen. Reconstruct today's set from its review logs so the new
-        // learning mode never leaves an already-active day blank.
+        // screen. Reconstruct only words actually introduced today; older due
+        // reviews belong to the separate review queue.
         let previouslyPracticedIDs = practicedVocabularyIDs(on: now, calendar: calendar)
         let reusablePracticeIDs = previouslyPracticedIDs.filter { vocabularyID in
-            words.contains { $0.id == vocabularyID }
+            guard let introducedAt = word(for: vocabularyID)?.introducedAt else { return false }
+            return calendar.isDate(introducedAt, inSameDayAs: day)
         }
         for vocabularyID in reusablePracticeIDs.prefix(configuredNewWordLimit)
             where words.contains(where: { $0.id == vocabularyID }) {
             selectedIDs.append(vocabularyID)
         }
 
-        if selectedIDs.isEmpty {
-            let selectedCards = roundCards(wordCount: configuredNewWordLimit, now: now, calendar: calendar)
-            for card in selectedCards where !selectedIDs.contains(card.vocabularyID) {
-                selectedIDs.append(card.vocabularyID)
-            }
+        if reusablePracticeIDs.isEmpty {
+            let selectedCards = roundCards(
+                wordCount: configuredNewWordLimit,
+                now: now,
+                calendar: calendar
+            )
+            selectedIDs.append(contentsOf: selectedCards.map(\.vocabularyID))
         }
         guard !selectedIDs.isEmpty else {
             dailyStudySet = nil
             return nil
         }
 
+        let learningCompleted = selectedIDs.allSatisfy { vocabularyID in
+            guard let introducedAt = word(for: vocabularyID)?.introducedAt else { return false }
+            return calendar.isDate(introducedAt, inSameDayAs: day)
+        }
+
         let set = DailyStudySet(
             date: day,
             vocabularyIDs: selectedIDs,
-            currentIndex: reusablePracticeIDs.isEmpty ? 0 : selectedIDs.count - 1,
-            learningCompleted: !reusablePracticeIDs.isEmpty
+            currentIndex: learningCompleted ? selectedIDs.count - 1 : 0,
+            learningCompleted: learningCompleted
         )
         dailyStudySet = set
         save()
@@ -309,13 +324,17 @@ final class LearningStore: ObservableObject {
     }
 
     func dailyPracticeCompleted(now: Date = .now, calendar: Calendar = .current) -> Bool {
-        guard let set = ensureDailyStudySet(now: now, calendar: calendar), set.learningCompleted else { return false }
+        guard let set = ensureDailyStudySet(now: now, calendar: calendar) else { return false }
         let selected = Set(set.vocabularyIDs)
-        let reviewed = Set(logs.compactMap { log -> UUID? in
-            guard selected.contains(log.vocabularyID), calendar.isDate(log.reviewedAt, inSameDayAs: now) else { return nil }
-            return log.vocabularyID
-        })
-        return !selected.isEmpty && selected.isSubset(of: reviewed)
+        let latestOutcomes = logs
+            .filter { selected.contains($0.vocabularyID) && calendar.isDate($0.reviewedAt, inSameDayAs: now) }
+            .reduce(into: [UUID: ReviewOutcome]()) { result, log in
+                result[log.vocabularyID] = log.outcome
+            }
+        return !selected.isEmpty && selected.allSatisfy {
+            guard let outcome = latestOutcomes[$0] else { return false }
+            return outcome == .correct || outcome == .easy
+        }
     }
 
     func wordsIntroduced(on date: Date, calendar: Calendar = .current) -> [VocabularyItem] {
@@ -397,11 +416,15 @@ final class LearningStore: ObservableObject {
     }
 
     func isDue(vocabularyID: UUID, now: Date = .now, calendar: Calendar = .current) -> Bool {
-        cards.contains {
+        guard let introducedAt = word(for: vocabularyID)?.introducedAt,
+              !calendar.isDate(introducedAt, inSameDayAs: now)
+        else { return false }
+        return cards.contains {
             $0.vocabularyID == vocabularyID
                 && !$0.isPaused
                 && $0.nextReviewDate <= now
                 && !ReviewScheduler.isSameDay($0.lastReviewedDate, now, calendar: calendar)
+                && !pairedCardWasPresentedToday(for: $0, now: now, calendar: calendar)
         }
     }
 
@@ -764,6 +787,7 @@ final class LearningStore: ObservableObject {
         }
         apply(snapshot)
         _ = migrateSenseAwareState()
+        _ = repairPairedReviewSchedules()
         save()
     }
 
@@ -870,8 +894,9 @@ final class LearningStore: ObservableObject {
         return result
     }
 
-    /// Selects the next group of distinct words for today's cumulative set.
-    /// Due reviews remain first; unseen vocabulary fills any remaining slots.
+    /// Selects distinct, never-introduced words for today's learning set.
+    /// Previously introduced vocabulary is handled by the separate due-review
+    /// queue, so a review card can never masquerade as a new daily word.
     func roundCards(
         wordCount: Int? = nil,
         excludingVocabularyIDs: Set<UUID> = [],
@@ -881,15 +906,11 @@ final class LearningStore: ObservableObject {
         let count = max(1, wordCount ?? configuredNewWordLimit)
         let alreadyPractised = Set(practicedVocabularyIDs(on: now, calendar: calendar))
         let ordered = cards.sorted { lhs, rhs in
-            let lhsWord = word(for: lhs.vocabularyID)
-            let rhsWord = word(for: rhs.vocabularyID)
-            let lhsIsNew = lhsWord?.introducedAt == nil
-            let rhsIsNew = rhsWord?.introducedAt == nil
-
-            if lhsIsNew != rhsIsNew { return !lhsIsNew }
             if lhs.nextReviewDate != rhs.nextReviewDate { return lhs.nextReviewDate < rhs.nextReviewDate }
             if lhs.successCount != rhs.successCount { return lhs.successCount < rhs.successCount }
-            if lhsWord?.frequencyRank != rhsWord?.frequencyRank { return (lhsWord?.frequencyRank ?? .max) < (rhsWord?.frequencyRank ?? .max) }
+            let lhsRank = word(for: lhs.vocabularyID)?.frequencyRank ?? .max
+            let rhsRank = word(for: rhs.vocabularyID)?.frequencyRank ?? .max
+            if lhsRank != rhsRank { return lhsRank < rhsRank }
             if lhs.direction != rhs.direction { return lhs.direction == .recognition }
             return lhs.id.uuidString < rhs.id.uuidString
         }
@@ -897,7 +918,7 @@ final class LearningStore: ObservableObject {
         var servedVocabulary = Set<UUID>()
         var result: [StudyCard] = []
         for card in ordered where card.nextReviewDate <= now && !card.isPaused {
-            guard word(for: card.vocabularyID) != nil,
+            guard word(for: card.vocabularyID)?.introducedAt == nil,
                   !alreadyPractised.contains(card.vocabularyID),
                   !excludingVocabularyIDs.contains(card.vocabularyID),
                   !servedVocabulary.contains(card.vocabularyID),
@@ -911,6 +932,66 @@ final class LearningStore: ObservableObject {
             if result.count == count { break }
         }
         return result
+    }
+
+    /// Returns one due card for each previously introduced word. Words first
+    /// introduced today stay in the daily quiz until the next calendar day.
+    func dueReviewCards(
+        limit: Int = .max,
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> [StudyCard] {
+        guard limit > 0 else { return [] }
+        let ordered = cards.sorted { lhs, rhs in
+            if lhs.nextReviewDate != rhs.nextReviewDate { return lhs.nextReviewDate < rhs.nextReviewDate }
+            if lhs.successCount != rhs.successCount { return lhs.successCount < rhs.successCount }
+            let lhsRetrievability = currentRetrievability(for: lhs, now: now)
+            let rhsRetrievability = currentRetrievability(for: rhs, now: now)
+            if lhsRetrievability != rhsRetrievability { return lhsRetrievability < rhsRetrievability }
+            if lhs.direction != rhs.direction { return lhs.direction == .recognition }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+
+        var servedVocabulary = Set<UUID>()
+        var result: [StudyCard] = []
+        for card in ordered where card.nextReviewDate <= now && !card.isPaused {
+            guard let introducedAt = word(for: card.vocabularyID)?.introducedAt,
+                  !calendar.isDate(introducedAt, inSameDayAs: now),
+                  !servedVocabulary.contains(card.vocabularyID),
+                  sense(for: card)?.isPaused != true,
+                  !ReviewScheduler.isSameDay(card.lastReviewedDate, now, calendar: calendar),
+                  !pairedCardWasPresentedToday(for: card, now: now, calendar: calendar)
+            else { continue }
+
+            servedVocabulary.insert(card.vocabularyID)
+            result.append(card)
+            if result.count == limit { break }
+        }
+        return result
+    }
+
+    func dueReviewWordCount(now: Date = .now, calendar: Calendar = .current) -> Int {
+        dueReviewCards(now: now, calendar: calendar).count
+    }
+
+    @discardableResult
+    func startDueReviewSession(
+        limit: Int = .max,
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> [StudyCard] {
+        let selected = dueReviewCards(limit: limit, now: now, calendar: calendar)
+        for card in selected {
+            if let index = cards.firstIndex(where: { $0.id == card.id }) {
+                cards[index].lastPresentedDate = now
+            }
+        }
+        if !selected.isEmpty { save() }
+        return selected.map { card in
+            var presented = card
+            presented.lastPresentedDate = now
+            return presented
+        }
     }
 
     /// Returns whether the completed daily set can be expanded with another
@@ -1052,7 +1133,24 @@ final class LearningStore: ObservableObject {
                     && !ReviewScheduler.isSameDay($0.lastReviewedDate, now, calendar: calendar)
                     && !pairedCardWasPresentedToday(for: $0, now: now, calendar: calendar)
             }
-            if let weakest = candidates.min(by: { currentRetrievability(for: $0, now: now) < currentRetrievability(for: $1, now: now) }) {
+            if let weakest = candidates.min(by: { lhs, rhs in
+                // An unseen direction has no memory evidence yet. Treat it as
+                // needing practice before a reviewed direction; the scheduler's
+                // neutral retrievability value of 1 must not starve it forever.
+                if (lhs.lastReviewedDate == nil) != (rhs.lastReviewedDate == nil) {
+                    return lhs.lastReviewedDate == nil
+                }
+                if lhs.nextReviewDate != rhs.nextReviewDate {
+                    return lhs.nextReviewDate < rhs.nextReviewDate
+                }
+                let lhsRetrievability = currentRetrievability(for: lhs, now: now)
+                let rhsRetrievability = currentRetrievability(for: rhs, now: now)
+                if lhsRetrievability != rhsRetrievability {
+                    return lhsRetrievability < rhsRetrievability
+                }
+                if lhs.direction != rhs.direction { return lhs.direction == .recognition }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }) {
                 selected.append(weakest)
             }
         }
@@ -1104,6 +1202,7 @@ final class LearningStore: ObservableObject {
 
         cards[index].lastReviewedDate = now
         cards[index].lastPresentedDate = now
+        deferPairedCards(afterAnswering: cards[index], until: update.nextReviewDate)
         logs.append(ReviewLog(
             card: cards[index],
             correct: correct,
@@ -1274,11 +1373,81 @@ final class LearningStore: ObservableObject {
 
     private func pairedCardWasPresentedToday(for card: StudyCard, now: Date, calendar: Calendar) -> Bool {
         cards.contains { other in
-            other.vocabularyID == card.vocabularyID && other.id != card.id && (
+            other.vocabularyID == card.vocabularyID
+                && other.senseID == card.senseID
+                && other.id != card.id && (
                 ReviewScheduler.isSameDay(other.lastPresentedDate, now, calendar: calendar)
                     || ReviewScheduler.isSameDay(other.lastReviewedDate, now, calendar: calendar)
             )
         }
+    }
+
+    /// A daily-learning word is either still prepared and unseen, or was
+    /// introduced on this same calendar day. Older words are reviews.
+    private func isEligibleForDailyNewWords(_ vocabularyID: UUID, on day: Date, calendar: Calendar) -> Bool {
+        guard let item = word(for: vocabularyID) else { return false }
+        guard let introducedAt = item.introducedAt else { return true }
+        return calendar.isDate(introducedAt, inSameDayAs: day)
+    }
+
+    /// The two directions are intentionally not served on the same day. Move
+    /// the untouched direction forward with the reviewed card so it does not
+    /// remain visibly overdue while the session rules make it unavailable.
+    private func deferPairedCards(afterAnswering card: StudyCard, until nextReviewDate: Date) {
+        for index in cards.indices where cards[index].vocabularyID == card.vocabularyID
+            && cards[index].senseID == card.senseID
+            && cards[index].id != card.id
+            && !cards[index].isPaused
+            && cards[index].nextReviewDate < nextReviewDate {
+            cards[index].nextReviewDate = nextReviewDate
+        }
+    }
+
+    /// Repairs snapshots written before paired directions advanced together.
+    /// It also applies the successful-review minimum to cards scheduled by the
+    /// previous one-day rule, so an upgrade fixes an already-completed quiz.
+    @discardableResult
+    private func repairPairedReviewSchedules(calendar: Calendar = .current) -> Bool {
+        var changed = false
+
+        for index in cards.indices {
+            guard let lastReviewedDate = cards[index].lastReviewedDate,
+                  cards[index].lastOutcome == .correct || cards[index].lastOutcome == .easy,
+                  let minimumNextReview = calendar.date(
+                      byAdding: .day,
+                      value: 2,
+                      to: calendar.startOfDay(for: lastReviewedDate)
+                  ),
+                  cards[index].nextReviewDate < minimumNextReview
+            else { continue }
+
+            cards[index].nextReviewDate = minimumNextReview
+            changed = true
+        }
+
+        let pairKeys = Set(cards.filter { !$0.isPaused }.map {
+            CardPairKey(vocabularyID: $0.vocabularyID, senseID: $0.senseID)
+        })
+        for key in pairKeys {
+            let indices = cards.indices.filter {
+                !cards[$0].isPaused
+                    && cards[$0].vocabularyID == key.vocabularyID
+                    && cards[$0].senseID == key.senseID
+            }
+            guard let latestReviewedIndex = indices.compactMap({ index -> Int? in
+                cards[index].lastReviewedDate == nil ? nil : index
+            }).max(by: {
+                (cards[$0].lastReviewedDate ?? .distantPast) < (cards[$1].lastReviewedDate ?? .distantPast)
+            }) else { continue }
+
+            let nextReviewDate = cards[latestReviewedIndex].nextReviewDate
+            for index in indices where index != latestReviewedIndex && cards[index].nextReviewDate < nextReviewDate {
+                cards[index].nextReviewDate = nextReviewDate
+                changed = true
+            }
+        }
+
+        return changed
     }
 
     private func upsertStudyDay(on date: Date, reviewedCount: Int, newWordsIntroduced: Int, calendar: Calendar) {
@@ -1550,6 +1719,7 @@ final class LearningStore: ObservableObject {
         else { return }
         apply(snapshot)
         _ = migrateSenseAwareState()
+        _ = repairPairedReviewSchedules()
         save()
     }
 

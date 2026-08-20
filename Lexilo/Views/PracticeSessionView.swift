@@ -3,6 +3,7 @@ import SwiftUI
 struct PracticeSessionView: View {
     let focusVocabularyIDs: Set<UUID>?
     let startWithPracticeAgain: Bool
+    let dueReviewOnly: Bool
     let allowsLearningExpansion: Bool
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var store: LearningStore
@@ -30,10 +31,12 @@ struct PracticeSessionView: View {
     init(
         focusVocabularyIDs: Set<UUID>? = nil,
         startWithPracticeAgain: Bool = false,
+        dueReviewOnly: Bool = false,
         allowsLearningExpansion: Bool = false
     ) {
         self.focusVocabularyIDs = focusVocabularyIDs
         self.startWithPracticeAgain = startWithPracticeAgain
+        self.dueReviewOnly = dueReviewOnly
         self.allowsLearningExpansion = allowsLearningExpansion
     }
 
@@ -55,6 +58,8 @@ struct PracticeSessionView: View {
         let roundSize = configuredRoundSize
         queue = if startWithPracticeAgain {
             store.practiceAgainCards()
+        } else if dueReviewOnly {
+            store.startDueReviewSession()
         } else if let focusVocabularyIDs {
             store.startFocusedSession(vocabularyIDs: focusVocabularyIDs, limit: focusVocabularyIDs.count)
         } else {
@@ -73,6 +78,7 @@ struct PracticeSessionView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark").font(.headline).frame(width: 42, height: 42).background(.white.opacity(0.65), in: Circle())
                 }
+                .accessibilityLabel("Close practice")
                 Spacer()
                 Text("\(min(index + 1, queue.count)) of \(queue.count)").font(.subheadline.weight(.semibold)).foregroundStyle(LexiloTheme.muted)
                 Spacer()
@@ -83,7 +89,7 @@ struct PracticeSessionView: View {
                 .tint(LexiloTheme.sage).padding(.horizontal, 24).padding(.top, 12)
 
             Spacer(minLength: 20)
-            Text(isExtraPractice ? "PRACTICE AGAIN · \(card.direction.label.uppercased())" : card.direction.label.uppercased())
+            Text(sessionLabel(for: card))
                 .font(.caption.bold()).tracking(1.5).foregroundStyle(LexiloTheme.brass)
             Spacer().frame(height: 16)
 
@@ -349,7 +355,14 @@ struct PracticeSessionView: View {
     }
 
     private var isDailyQuiz: Bool {
-        allowsLearningExpansion && focusVocabularyIDs != nil && !startWithPracticeAgain
+        allowsLearningExpansion && focusVocabularyIDs != nil && !startWithPracticeAgain && !dueReviewOnly
+    }
+
+    private func sessionLabel(for card: StudyCard) -> String {
+        let direction = card.direction.label.uppercased()
+        if isExtraPractice { return "PRACTICE AGAIN · \(direction)" }
+        if dueReviewOnly { return "DUE REVIEW · \(direction)" }
+        return direction
     }
 
     private func startSession(with cards: [StudyCard], practiceAgain: Bool) {
@@ -399,6 +412,7 @@ struct PracticeSessionView: View {
 
     private var completionTitle: String {
         if isExtraPractice { return "Practice Again complete" }
+        if dueReviewOnly { return "Review complete" }
         return "Practice complete"
     }
 
@@ -407,6 +421,9 @@ struct PracticeSessionView: View {
         if isExtraPractice {
             let todayCount = store.practicedWordCount()
             return "You practised today’s \(todayCount) words again. Your scheduled reviews are unchanged."
+        }
+        if dueReviewOnly {
+            return "You finished the words that were due for review. New words remain separate in Today."
         }
         let todayCount = store.practicedWordCount()
         return "\(todayCount) word\(todayCount == 1 ? "" : "s") practised today. You can practise them again later."

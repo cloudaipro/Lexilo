@@ -562,6 +562,172 @@ final class ReviewSchedulerTests: XCTestCase {
     }
 
     @MainActor
+    func testCompletedDailyQuizClearsDueAndRoutesScheduledWordsToReviewQueue() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let calendar = Calendar.current
+        let firstDay = Date.now
+        let secondDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: firstDay))
+        let thirdDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: firstDay))
+        let store = makeStore(persistenceURL: persistenceURL)
+        let firstSet = try XCTUnwrap(store.ensureDailyStudySet(now: firstDay, calendar: calendar))
+        store.completeDailyLearning(now: firstDay, calendar: calendar)
+
+        let quiz = store.startFocusedSession(
+            vocabularyIDs: Set(firstSet.vocabularyIDs),
+            limit: firstSet.vocabularyIDs.count,
+            now: firstDay,
+            calendar: calendar
+        )
+        XCTAssertEqual(quiz.count, firstSet.vocabularyIDs.count)
+        let firstDirectionByWord = Dictionary(uniqueKeysWithValues: quiz.map { ($0.vocabularyID, $0.direction) })
+
+        for card in quiz {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: firstDay, calendar: calendar)
+        }
+
+        XCTAssertTrue(store.dailyPracticeCompleted(now: firstDay, calendar: calendar))
+        XCTAssertTrue(firstSet.vocabularyIDs.allSatisfy {
+            !store.isDue(vocabularyID: $0, now: firstDay, calendar: calendar)
+        })
+        for vocabularyID in firstSet.vocabularyIDs {
+            let relatedCards = store.cards.filter { $0.vocabularyID == vocabularyID && !$0.isPaused }
+            XCTAssertFalse(relatedCards.isEmpty)
+            XCTAssertTrue(relatedCards.allSatisfy {
+                calendar.isDate($0.nextReviewDate, inSameDayAs: thirdDay)
+            })
+        }
+
+        let secondSet = try XCTUnwrap(store.ensureDailyStudySet(now: secondDay, calendar: calendar))
+        XCTAssertTrue(Set(firstSet.vocabularyIDs).isDisjoint(with: Set(secondSet.vocabularyIDs)))
+
+        let thirdSet = try XCTUnwrap(store.ensureDailyStudySet(now: thirdDay, calendar: calendar))
+        XCTAssertTrue(Set(firstSet.vocabularyIDs).isDisjoint(with: Set(thirdSet.vocabularyIDs)))
+        let dueReviews = store.startDueReviewSession(
+            limit: firstSet.vocabularyIDs.count,
+            now: thirdDay,
+            calendar: calendar
+        )
+        XCTAssertEqual(Set(dueReviews.map(\.vocabularyID)), Set(firstSet.vocabularyIDs))
+        XCTAssertTrue(dueReviews.allSatisfy { card in
+            card.lastReviewedDate == nil && firstDirectionByWord[card.vocabularyID] != card.direction
+        })
+    }
+
+    @MainActor
+    func testOverdueWordsStayOutOfNextDaysNewWordsAndEnterReviewQueue() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let calendar = Calendar.current
+        let firstDay = Date.now
+        let secondDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: firstDay))
+        let store = makeStore(persistenceURL: persistenceURL)
+        let firstSet = try XCTUnwrap(store.ensureDailyStudySet(now: firstDay, calendar: calendar))
+        store.completeDailyLearning(now: firstDay, calendar: calendar)
+        let quiz = store.startFocusedSession(
+            vocabularyIDs: Set(firstSet.vocabularyIDs),
+            limit: firstSet.vocabularyIDs.count,
+            now: firstDay,
+            calendar: calendar
+        )
+        let forgottenCard = try XCTUnwrap(quiz.first)
+        store.answer(cardID: forgottenCard.id, correct: false, now: firstDay, calendar: calendar)
+        for card in quiz.dropFirst() {
+            store.answer(cardID: card.id, correct: true, now: firstDay, calendar: calendar)
+        }
+
+        let secondSet = try XCTUnwrap(store.ensureDailyStudySet(now: secondDay, calendar: calendar))
+        XCTAssertTrue(Set(firstSet.vocabularyIDs).isDisjoint(with: Set(secondSet.vocabularyIDs)))
+        XCTAssertTrue(secondSet.vocabularyIDs.allSatisfy { store.word(for: $0)?.introducedAt == nil })
+        XCTAssertTrue(secondSet.vocabularyIDs.allSatisfy {
+            !store.isDue(vocabularyID: $0, now: secondDay, calendar: calendar)
+        })
+        XCTAssertTrue(store.isDue(vocabularyID: forgottenCard.vocabularyID, now: secondDay, calendar: calendar))
+
+        let dueReviews = store.dueReviewCards(now: secondDay, calendar: calendar)
+        XCTAssertEqual(dueReviews.map(\.vocabularyID), [forgottenCard.vocabularyID])
+        XCTAssertTrue(dueReviews.allSatisfy { card in
+            guard let introducedAt = store.word(for: card.vocabularyID)?.introducedAt else { return false }
+            return !calendar.isDate(introducedAt, inSameDayAs: secondDay)
+        })
+    }
+
+    @MainActor
+    func testDailyQuizIsCompleteOnlyAfterEveryLatestOutcomeSucceeds() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let now = Date.now
+        let store = makeStore(persistenceURL: persistenceURL)
+        _ = try XCTUnwrap(store.ensureDailyStudySet(now: now))
+        store.completeDailyLearning(now: now)
+        XCTAssertEqual(store.addMoreDailyWords(count: 1, now: now).count, 1)
+        let expandedSet = try XCTUnwrap(store.dailyStudySet)
+        XCTAssertFalse(expandedSet.learningCompleted)
+        let quiz = store.startFocusedSession(
+            vocabularyIDs: Set(expandedSet.vocabularyIDs),
+            limit: expandedSet.vocabularyIDs.count,
+            now: now
+        )
+        let failedCard = try XCTUnwrap(quiz.first)
+
+        store.answer(cardID: failedCard.id, correct: false, responseTime: 2, now: now)
+        for card in quiz.dropFirst() {
+            store.answer(cardID: card.id, correct: true, responseTime: 2, now: now)
+        }
+        XCTAssertFalse(store.dailyPracticeCompleted(now: now))
+
+        store.answer(cardID: failedCard.id, correct: true, responseTime: 2, now: now)
+        XCTAssertTrue(store.dailyPracticeCompleted(now: now))
+    }
+
+    @MainActor
+    func testLegacyPairedCardScheduleIsRepairedWhenLoaded() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let persistenceURL = directory.appending(path: "store.json")
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+
+        let calendar = Calendar.current
+        let firstDay = Date.now
+        let thirdDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: firstDay))
+        let store = makeStore(persistenceURL: persistenceURL)
+        let set = try XCTUnwrap(store.ensureDailyStudySet(now: firstDay, calendar: calendar))
+        store.completeDailyLearning(now: firstDay, calendar: calendar)
+        let vocabularyID = try XCTUnwrap(set.vocabularyIDs.first)
+        let card = try XCTUnwrap(store.startFocusedSession(
+            vocabularyIDs: [vocabularyID],
+            limit: 1,
+            now: firstDay,
+            calendar: calendar
+        ).first)
+        store.answer(cardID: card.id, correct: true, responseTime: 2, now: firstDay, calendar: calendar)
+
+        let exported = try store.exportData()
+        var snapshot = try XCTUnwrap(JSONSerialization.jsonObject(with: exported) as? [String: Any])
+        var cards = try XCTUnwrap(snapshot["cards"] as? [[String: Any]])
+        let legacyDueDate = calendar.startOfDay(for: firstDay).timeIntervalSinceReferenceDate
+        for index in cards.indices where cards[index]["vocabularyID"] as? String == vocabularyID.uuidString {
+            cards[index]["nextReviewDate"] = legacyDueDate
+        }
+        snapshot["cards"] = cards
+        let legacyData = try JSONSerialization.data(withJSONObject: snapshot)
+        try legacyData.write(to: persistenceURL, options: .atomic)
+
+        let reloaded = makeStore(persistenceURL: persistenceURL)
+        let repairedCards = reloaded.cards.filter { $0.vocabularyID == vocabularyID && !$0.isPaused }
+        XCTAssertFalse(repairedCards.isEmpty)
+        XCTAssertTrue(repairedCards.allSatisfy {
+            calendar.isDate($0.nextReviewDate, inSameDayAs: thirdDay)
+        })
+        XCTAssertFalse(reloaded.isDue(vocabularyID: vocabularyID, now: firstDay, calendar: calendar))
+    }
+
+    @MainActor
     func testDailyStudySetReconstructsAnAlreadyPractisedLegacyDay() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         let persistenceURL = directory.appending(path: "store.json")
